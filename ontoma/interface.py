@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 __all__ = ["OnToma"]
 
-from . import helpers
+from ontoma.helpers import get_opentargets_zooma_to_efo_mappings
 
 
 import requests
@@ -15,7 +15,8 @@ import python_jsonschema_objects as pjs
 import logging
 logger = logging.getLogger(__name__)
 
-
+# if you want to use across classes
+# _cache = {"files":None}
 
 EFO_URL = 'https://github.com/EBISPOT/efo/raw/v2018-01-15/efo.obo'
 HP_URL = 'http://purl.obolibrary.org/obo/hp.obo'
@@ -64,6 +65,8 @@ class OnToma(object):
         self.name_to_hp = {data['name']: id_ 
                            for id_, data in self.hp.nodes(data=True)}
 
+        self.zooma = get_opentargets_zooma_to_efo_mappings()
+
         # self.icd9_to_efo = {}
         # payload={"ids":[],"inputSource":"ICD9CM","mappingTarget":["EFO"],"distance":"3"}
         # r = requests.post('https://www.ebi.ac.uk/spot/oxo/api/search?size=1000', data= payload)
@@ -91,24 +94,7 @@ class OnToma(object):
             self.omim_to_efo_map[omim].append({'efo_uri': efo_uri, 'efo_label': efo_label})
         return line_count
 
-    def get_opentargets_zooma_to_efo_mappings(self):
-        self._logger.info("ZOOMA to EFO parsing - requesting from URL %s" % Config.ZOOMA_TO_EFO_MAP_URL)
-        response = urllib.request.urlopen(Config.ZOOMA_TO_EFO_MAP_URL)
-        self._logger.info("ZOOMA to EFO parsing - response code %s" % response.status)
-        n = 0
-        for line in response.readlines():
-            '''
-            STUDY	BIOENTITY	PROPERTY_TYPE	PROPERTY_VALUE	SEMANTIC_TAG	ANNOTATOR	ANNOTATION_DATE
-            disease	Amyotrophic lateral sclerosis 1	http://www.ebi.ac.uk/efo/EFO_0000253
-            '''
-            n +=1
-            if n > 1:
-                #self._logger.info("[%s]"%line)
-                (study, bioentity, property_type, property_value, semantic_tag, annotator, annotation_date) = line.decode('utf8').strip().split("\t")
-                if property_value.lower() not in self.omim_to_efo_map:
-                    self.zooma_to_efo_map[property_value.lower()] = []
-                self.zooma_to_efo_map[property_value.lower()].append({'efo_uri': semantic_tag, 'efo_label': semantic_tag})
-        return n
+    
 
 
 
