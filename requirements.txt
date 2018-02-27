@@ -1,4 +1,0 @@
-pytest
-python_jsonschema_objects
-requests
-obonet
