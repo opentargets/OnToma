@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+__all__ = ["OnToma"]
+
 from . import helpers
 
 
@@ -69,6 +71,46 @@ class OnToma(object):
         #     while oxo.json().get('next') == True:
         # for row in oxomappings:
         #     self.icd9_to_efo[ row['curie'].split(':')[1] ] = row['mappingResponseList'][0]['curie']
+
+        self.omim_to_efo_map = OrderedDict()
+        self.zooma_to_efo_map = OrderedDict()
+
+    def get_omim_to_efo_mappings(self):
+        self._logger.info("OMIM to EFO parsing - requesting from URL %s" % Config.OMIM_TO_EFO_MAP_URL)
+        response = urllib.request.urlopen(Config.OMIM_TO_EFO_MAP_URL)
+        self._logger.info("OMIM to EFO parsing - response code %s" % response.status)
+        line_count = 0
+        for line in response.readlines():
+            '''
+            omim	efo_uri	efo_label	source	status
+            '''
+            line_count += 1
+            (omim, efo_uri, efo_label, source, status) = line.decode('utf8').strip().split("\t")
+            if omim not in self.omim_to_efo_map:
+                self.omim_to_efo_map[omim] = []
+            self.omim_to_efo_map[omim].append({'efo_uri': efo_uri, 'efo_label': efo_label})
+        return line_count
+
+    def get_opentargets_zooma_to_efo_mappings(self):
+        self._logger.info("ZOOMA to EFO parsing - requesting from URL %s" % Config.ZOOMA_TO_EFO_MAP_URL)
+        response = urllib.request.urlopen(Config.ZOOMA_TO_EFO_MAP_URL)
+        self._logger.info("ZOOMA to EFO parsing - response code %s" % response.status)
+        n = 0
+        for line in response.readlines():
+            '''
+            STUDY	BIOENTITY	PROPERTY_TYPE	PROPERTY_VALUE	SEMANTIC_TAG	ANNOTATOR	ANNOTATION_DATE
+            disease	Amyotrophic lateral sclerosis 1	http://www.ebi.ac.uk/efo/EFO_0000253
+            '''
+            n +=1
+            if n > 1:
+                #self._logger.info("[%s]"%line)
+                (study, bioentity, property_type, property_value, semantic_tag, annotator, annotation_date) = line.decode('utf8').strip().split("\t")
+                if property_value.lower() not in self.omim_to_efo_map:
+                    self.zooma_to_efo_map[property_value.lower()] = []
+                self.zooma_to_efo_map[property_value.lower()].append({'efo_uri': semantic_tag, 'efo_label': semantic_tag})
+        return n
+
+
 
 
 
