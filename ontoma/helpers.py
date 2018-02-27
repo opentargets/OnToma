@@ -4,40 +4,40 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-    def search_request_to_ols(self, query=None, ontology='efo', type='class'):
-        in_ols = False
-        if query in self.ols_synonyms:
-            return True
-        elif query in self.not_ols_synonyms:
-            return False
+def search_request_to_ols(self, query=None, ontology='efo', type='class'):
+    in_ols = False
+    if query in self.ols_synonyms:
+        return True
+    elif query in self.not_ols_synonyms:
+        return False
+    else:
+        # curl 'http://www.ebi.ac.uk/ols/api/search?q=Myofascial%20Pain%20Syndromes&queryFields=synonym&exact=true&ontology=efo,ordo' -i -H 'Accept: application/json'
+        url = 'http://www.ebi.ac.uk/ols/api/search?q=%s&queryFields=synonym&exact=true&ontology=efo,ordo,hpo'%(query)
+        self._logger.info("Requesting '%s' as synonym to OLS"%(query))
+        print("Requesting '%s' as synonym to OLS" %(query))
+        r = requests.get(
+            'http://www.ebi.ac.uk/ols/api/search',
+            params={'q': query, 'queryFields': 'synonym', 'exact': 'true', 'ontology': 'efo,ordo,hpo'})
+        print(r.text)
+        results = r.json()
+        if results["response"]["numFound"] > 0:
+            in_ols = True
+            docs = results["response"]["docs"]
+            for doc in docs:
+                if doc["ontology_name"] == 'efo':
+                    self.ols_synonyms[query] = { "iri" : doc["iri"], "label" : doc["label"], "ontology_name" : doc["ontology_name"] }
+                    return True
+            for doc in docs:
+                if doc["ontology_name"] == 'hpo':
+                    self.ols_synonyms[query] = { "iri" : doc["iri"], "label" : doc["label"], "ontology_name" : doc["ontology_name"] }
+                    return True
+            for doc in docs:
+                if doc["ontology_name"] == 'ordo':
+                    self.ols_synonyms[query] = { "iri" : doc["iri"], "label" : doc["label"], "ontology_name" : doc["ontology_name"] }
+                    return True
         else:
-            # curl 'http://www.ebi.ac.uk/ols/api/search?q=Myofascial%20Pain%20Syndromes&queryFields=synonym&exact=true&ontology=efo,ordo' -i -H 'Accept: application/json'
-            url = 'http://www.ebi.ac.uk/ols/api/search?q=%s&queryFields=synonym&exact=true&ontology=efo,ordo,hpo'%(query)
-            self._logger.info("Requesting '%s' as synonym to OLS"%(query))
-            print("Requesting '%s' as synonym to OLS" %(query))
-            r = requests.get(
-                'http://www.ebi.ac.uk/ols/api/search',
-                params={'q': query, 'queryFields': 'synonym', 'exact': 'true', 'ontology': 'efo,ordo,hpo'})
-            print(r.text)
-            results = r.json()
-            if results["response"]["numFound"] > 0:
-                in_ols = True
-                docs = results["response"]["docs"]
-                for doc in docs:
-                    if doc["ontology_name"] == 'efo':
-                        self.ols_synonyms[query] = { "iri" : doc["iri"], "label" : doc["label"], "ontology_name" : doc["ontology_name"] }
-                        return True
-                for doc in docs:
-                    if doc["ontology_name"] == 'hpo':
-                        self.ols_synonyms[query] = { "iri" : doc["iri"], "label" : doc["label"], "ontology_name" : doc["ontology_name"] }
-                        return True
-                for doc in docs:
-                    if doc["ontology_name"] == 'ordo':
-                        self.ols_synonyms[query] = { "iri" : doc["iri"], "label" : doc["label"], "ontology_name" : doc["ontology_name"] }
-                        return True
-            else:
-                self.not_ols_synonyms.add(query)
-        return in_ols
+            self.not_ols_synonyms.add(query)
+    return in_ols
 
 
 def use_zooma(self):

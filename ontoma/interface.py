@@ -18,8 +18,6 @@ logger = logging.getLogger(__name__)
 # if you want to use across classes
 # _cache = {"files":None}
 
-EFO_URL = 'https://github.com/EBISPOT/efo/raw/v2018-01-15/efo.obo'
-HP_URL = 'http://purl.obolibrary.org/obo/hp.obo'
 
 class OnToma(object):
     '''Open Targets ontology mapping cascade
