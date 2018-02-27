@@ -15,7 +15,7 @@ setup(
     description='Ontology mapping for Open Targets',
     long_description=readme,
     author='Open Targets dev team',
-    author_email='ops@opentargets.org,
+    author_email='ops@opentargets.org',
     url='https://github.com/opentargets/OnToma',
     license=license,
     packages=find_packages(exclude=('tests', 'docs'))
