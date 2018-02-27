@@ -14,6 +14,10 @@ import logging
 logger = logging.getLogger(__name__)
 
 
+
+EFO_URL = 'https://github.com/EBISPOT/efo/raw/v2018-01-15/efo.obo'
+HP_URL = 'http://purl.obolibrary.org/obo/hp.obo'
+
 class OTOntoMapper(object):
     '''Open Targets ontology mapping cascade
 
@@ -43,9 +47,10 @@ class OTOntoMapper(object):
 
         '''Parse the ontology obo files for exact match lookup'''
 
-        self.efo = obonet.read_obo(Config.EFO_URL)
+        self.efo = obonet.read_obo(EFO_URL)
+        logger.debug('yeah!')
         logger.info('EFO parsed. Size: {} nodes'.format(len(self.efo)))
-        self.hp = obonet.read_obo(Config.HP_URL)
+        self.hp = obonet.read_obo(HP_URL)
         logger.info('HP parsed. Size: {} nodes'.format(len(self.hp)))
 
         '''Create name mappings'''

@@ -1,15 +1,15 @@
 # -*- coding: utf-8 -*-
 
-from .context import sample
+from .context import ontoma
 
 import unittest
 
 
-class AdvancedTestSuite(unittest.TestCase):
-    """Advanced test cases."""
+# class AdvancedTestSuite(unittest.TestCase):
+#     """Advanced test cases."""
 
-    def test_thoughts(self):
-        self.assertIsNone(sample.hmm())
+#     def test_thoughts(self):
+#         self.assertIsNone(sample.hmm())
 
 
 if __name__ == '__main__':
