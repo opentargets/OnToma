@@ -1,1 +1,1 @@
-# from .core import hmm
+from ontoma.core import OnToma

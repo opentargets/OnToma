@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 EFO_URL = 'https://github.com/EBISPOT/efo/raw/v2018-01-15/efo.obo'
 HP_URL = 'http://purl.obolibrary.org/obo/hp.obo'
 
-class OTOntoMapper(object):
+class OnToma(object):
     '''Open Targets ontology mapping cascade
 
     if you have an id, find a xref to EFO
@@ -28,7 +28,7 @@ class OTOntoMapper(object):
     elif search in Zooma High confidence set
 
     Initialize the class (which will download EFO,OBO and others):
-    >>> t=OTOntoMapper()
+    >>> t=OnToma()
 
     We can now lookup "asthma" and get:
     >>> t.efo_lookup('asthma')
