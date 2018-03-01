@@ -14,3 +14,6 @@ pytest = "*"
 python-jsonschema-objects = "*"
 requests = "*"
 obonet = "*"
+
+[requires]
+python_version = "3"

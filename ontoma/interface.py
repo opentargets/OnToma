@@ -3,6 +3,7 @@ __all__ = ["OnToma"]
 
 from ontoma.helpers import get_opentargets_zooma_to_efo_mappings
 
+from ontoma import OntologyURL
 
 import requests
 import csv
@@ -48,10 +49,10 @@ class OnToma(object):
 
         '''Parse the ontology obo files for exact match lookup'''
 
-        self.efo = obonet.read_obo(EFO_URL)
+        self.efo = obonet.read_obo(OntologyURL.EFO)
         logger.debug('yeah!')
         logger.info('EFO parsed. Size: {} nodes'.format(len(self.efo)))
-        self.hp = obonet.read_obo(HP_URL)
+        self.hp = obonet.read_obo(OntologyURL.HP)
         logger.info('HP parsed. Size: {} nodes'.format(len(self.hp)))
 
         '''Create name mappings'''
@@ -63,7 +64,7 @@ class OnToma(object):
         self.name_to_hp = {data['name']: id_ 
                            for id_, data in self.hp.nodes(data=True)}
 
-        self.zooma = get_opentargets_zooma_to_efo_mappings()
+        # self.zooma = get_opentargets_zooma_to_efo_mappings()
 
         # self.icd9_to_efo = {}
         # payload={"ids":[],"inputSource":"ICD9CM","mappingTarget":["EFO"],"distance":"3"}
@@ -73,8 +74,8 @@ class OnToma(object):
         # for row in oxomappings:
         #     self.icd9_to_efo[ row['curie'].split(':')[1] ] = row['mappingResponseList'][0]['curie']
 
-        self.omim_to_efo_map = OrderedDict()
-        self.zooma_to_efo_map = OrderedDict()
+        # self.omim_to_efo_map = OrderedDict()
+        # self.zooma_to_efo_map = OrderedDict()
 
     def get_omim_to_efo_mappings(self):
         self._logger.info("OMIM to EFO parsing - requesting from URL %s" % Config.OMIM_TO_EFO_MAP_URL)

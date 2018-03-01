@@ -4,7 +4,7 @@ from .context import ontoma
 
 import unittest
 
-print(ontoma.EFO_URL)
+
 class BasicTestSuite(unittest.TestCase):
     """Basic test cases."""
 
