@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 __all__ = ["OnToma"]
 
-from ontoma.helpers import get_opentargets_zooma_to_efo_mappings
+from ontoma.downloaders import get_opentargets_zooma_to_efo_mappings
+from ontoma.query import ols
 
-from ontoma import OntologyURL
+from ontoma import URLS
 
 import requests
 import csv
@@ -45,15 +46,16 @@ class OnToma(object):
     'EFO:0000701'
     '''
 
-    def __init__(self):
+    def __init__(self, efourl = URLS.EFO, 
+                        hpurl = URLS.HP):
+
+        self.logger = logging.getLogger(__name__)
 
         '''Parse the ontology obo files for exact match lookup'''
-
-        self.efo = obonet.read_obo(OntologyURL.EFO)
-        logger.debug('yeah!')
-        logger.info('EFO parsed. Size: {} nodes'.format(len(self.efo)))
-        self.hp = obonet.read_obo(OntologyURL.HP)
-        logger.info('HP parsed. Size: {} nodes'.format(len(self.hp)))
+        self.efo = obonet.read_obo(efourl)
+        self.logger.info('EFO parsed. Size: {} nodes'.format(len(self.efo)))
+        self.hp = obonet.read_obo(hpurl)
+        self.logger.info('HP parsed. Size: {} nodes'.format(len(self.hp)))
 
         '''Create name mappings'''
 
@@ -78,9 +80,9 @@ class OnToma(object):
         # self.zooma_to_efo_map = OrderedDict()
 
     def get_omim_to_efo_mappings(self):
-        self._logger.info("OMIM to EFO parsing - requesting from URL %s" % Config.OMIM_TO_EFO_MAP_URL)
-        response = urllib.request.urlopen(Config.OMIM_TO_EFO_MAP_URL)
-        self._logger.info("OMIM to EFO parsing - response code %s" % response.status)
+        self.logger.debug("OMIM to EFO parsing - requesting from URL %s" % URLS.OMIM_EFO_MAP)
+        response = urllib.request.urlopen(URLS.OMIM_EFO_MAP)
+        self.logger.info("OMIM to EFO parsing - response code %s" % response.status)
         line_count = 0
         for line in response.readlines():
             '''

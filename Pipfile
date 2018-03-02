@@ -8,6 +8,7 @@ name = "pypi"
 [dev-packages]
 
 pytest = "*"
+pylint = "*"
 
 [packages]
 
@@ -16,4 +17,4 @@ requests = "*"
 obonet = "*"
 
 [requires]
-python_version = "3"
+python_version = "3.6"
