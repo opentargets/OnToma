@@ -29,6 +29,19 @@ DO:124125
 
 # Developing
 
+## set up your environment
+
+[Install pipenv](https://pipenv.readthedocs.io/en/latest/install/#homebrew-installation-of-pipenv) and then run
+```sh
+pipenv install --dev
+```
+to get all development dependencies installed. 
+
+Test everything is working:
+```sh
+pipenv run pytest
+```
+
 ## add a dependency with pipenv + setup.py
 To add a dep for a library, add it by hand to `setup.py`, then add it separately to Pipfile, so that it shows up both as a transitive dependency and in your locked dev environment
 
