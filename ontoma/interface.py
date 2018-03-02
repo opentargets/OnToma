@@ -3,6 +3,7 @@ __all__ = ["OnToma"]
 
 from ontoma.downloaders import get_opentargets_zooma_to_efo_mappings
 from ontoma.query import ols
+from ontoma.ols import OlsClient
 
 from ontoma import URLS
 
@@ -12,7 +13,7 @@ import json
 from io import BytesIO, TextIOWrapper
 import obonet
 import python_jsonschema_objects as pjs 
-
+from ols_client import OlsClient
 
 import logging
 logger = logging.getLogger(__name__)
@@ -41,6 +42,10 @@ class OnToma(object):
     >>> t.hp_lookup('Phenotypic abnormality')
     'HP:0000118'
 
+    Lookup in OLS
+    >>> t.ols_lookup('asthma')
+    'EFO:0000270'
+
     Searching the ICD9 code for 'other dermatoses' returns EFO's skin disease:
     >>> t.oxo_lookup('702')
     'EFO:0000701'
@@ -66,6 +71,7 @@ class OnToma(object):
         self.name_to_hp = {data['name']: id_ 
                            for id_, data in self.hp.nodes(data=True)}
 
+        self._ols = OlsClient()
         # self.zooma = get_opentargets_zooma_to_efo_mappings()
 
         # self.icd9_to_efo = {}
@@ -96,11 +102,8 @@ class OnToma(object):
         return line_count
 
     
-
-
-
-
-
+    def ols_lookup(self, name):
+        return self._ols.search(name)
 
     def hp_lookup(self, name):
         return self.name_to_hp[name]

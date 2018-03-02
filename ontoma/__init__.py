@@ -1,6 +1,19 @@
 
+# -*- coding: utf-8 -*-
+
+import json
+import os
+
+__all__ = [
+    'URLS',
+]
+
+
+
 class URLS:
-    '''constants for urls for ontology files'''
+    '''constants for urls for ontology files, mapping and API'''
+
+    OLS = 'http://www.ebi.ac.uk/ols'
 
     EFO = 'https://github.com/EBISPOT/efo/raw/v2018-01-15/efo.obo'
     HP = 'http://purl.obolibrary.org/obo/hp.obo'

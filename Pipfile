@@ -15,7 +15,6 @@ pylint = "*"
 
 requests = "*"
 obonet = "*"
-ols_client = {git = "https://github.com/opentargets/ols-client.git"}
 
 
 [requires]

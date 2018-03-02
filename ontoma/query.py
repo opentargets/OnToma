@@ -1,5 +1,6 @@
 __all__ = ["ols"]
 
+import requests
 import logging
 logger = logging.getLogger(__name__)
 
