@@ -1,4 +1,3 @@
-# from ontoma.interface import OnToma
 
 class URLS:
     '''constants for urls for ontology files'''

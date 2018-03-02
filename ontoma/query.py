@@ -7,7 +7,7 @@ def ols(query=None, ontology='efo', type='class'):
     ''' 
     Launch an API request to the OLS service similar to:
     curl 'http://www.ebi.ac.uk/ols/api/search?q=Myofascial%20Pain%20Syndromes&queryFields=synonym&exact=true&ontology=efo,ordo' -i -H 'Accept: application/json'
-    >>> query_ols('Myofascial Pain Syndrome')
+    >>> ols('Myofascial Pain Syndrome')
     'EFO_1001054'
     '''
     logger.debug("Requesting '{}' as synonym to OLS".format(query))
