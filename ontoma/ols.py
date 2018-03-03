@@ -38,20 +38,36 @@ class OlsClient:
     >>> r[0]['iri']
     'http://www.ebi.ac.uk/efo/EFO_0000270'
 
+    >>> ols.search('Myofascial Pain Syndrome',ontology=['efo'])[0]['short_form']
+    'EFO_1001054'
+
     >>> [x['short_form'] for x in ols.select('alzheimer')[:2]]
     ['NCIT_C2866', 'NCIT_C38778']
+
+    You can also pass your favourite parameters at class instantiation:
+    >>> ot_ols = OlsClient(ontology=['efo'],field_list=['short_form'])
+    >>> ot_ols.search('asthma')[0]['short_form']
+    'EFO_0000270'
+    >>> ot_ols.besthit('asthma')['short_form']
+    'EFO_0000270'
     """
 
-    def __init__(self, ols_base=None):
+    def __init__(self, ols_base=None, ontology=None, field_list=None, query_fields=None):
         """
         :param ols_base: An optional, custom URL for the OLS RESTful API.
         """
-        self.base = (ols_base if ols_base is not None else URLS.OLS).rstrip('/')
+        self.base = (ols_base if ols_base else URLS.OLS).rstrip('/')
+
+        self.ontology = ontology if ontology else None
+        self.field_list = field_list if field_list else None
+        self.query_fields = query_fields if query_fields else None
 
         self.ontology_suggest = self.base + api_suggest
         self.ontology_select = self.base + api_select
         self.ontology_search = self.base + api_search
 
+    def besthit(self, name):
+        return self.search(name)[0]
 
     def search(self, name, query_fields=None, ontology=None, field_list=None):
         """Searches the OLS with the given term
@@ -70,10 +86,19 @@ class OlsClient:
 
         if ontology:
             params['ontology'] = ','.join(ontology)
+        elif self.ontology:
+            params['ontology'] = ','.join(self.ontology)
+
         if query_fields:
             params['queryFields'] = ','.join(query_fields)
+        elif self.query_fields:
+            params['queryFields'] = ','.join(self.query_fields)
+
         if field_list:
             params['fieldList'] = ','.join(field_list)
+        elif self.field_list:
+            params['fieldList'] = ','.join(self.field_list)
+
         r = requests.get(self.ontology_search, params=params)
         r.raise_for_status()
         if r.json()['response']['numFound']:
