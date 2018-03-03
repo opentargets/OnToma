@@ -6,5 +6,6 @@
     "python.unitTest.promptToConfigure": false,
     "python.unitTest.unittestEnabled": false,
     "python.unitTest.nosetestsEnabled": false,
-    "python.pythonPath": "/Users/epapa/.local/share/virtualenvs/OnToma-OkduNjCF/bin/python"
+    "python.pythonPath": "/Users/epapa/.local/share/virtualenvs/OnToma-OkduNjCF/bin/python",
+    "python.linting.enabled": true
 }

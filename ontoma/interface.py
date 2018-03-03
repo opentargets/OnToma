@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 __all__ = ["OnToma"]
 
-from ontoma.downloaders import get_opentargets_zooma_to_efo_mappings
+from ontoma.downloaders import get_omim_to_efo_mappings
 from ontoma.query import ols
 from ontoma.ols import OlsClient
 
@@ -13,7 +13,6 @@ import json
 from io import BytesIO, TextIOWrapper
 import obonet
 import python_jsonschema_objects as pjs 
-from ols_client import OlsClient
 
 import logging
 logger = logging.getLogger(__name__)
@@ -46,6 +45,12 @@ class OnToma(object):
     >>> t.ols_lookup('asthma')
     'EFO:0000270'
 
+    OMIM code lookup
+    TODO: should have a logic for what is the better hit here
+    >>> t.omim_lookup('230650')
+    ['http://www.orpha.net/ORDO/Orphanet_354','http://www.orpha.net/ORDO/Orphanet_79257']
+    
+
     Searching the ICD9 code for 'other dermatoses' returns EFO's skin disease:
     >>> t.oxo_lookup('702')
     'EFO:0000701'
@@ -57,21 +62,23 @@ class OnToma(object):
         self.logger = logging.getLogger(__name__)
 
         '''Parse the ontology obo files for exact match lookup'''
-        self.efo = obonet.read_obo(efourl)
-        self.logger.info('EFO parsed. Size: {} nodes'.format(len(self.efo)))
-        self.hp = obonet.read_obo(hpurl)
-        self.logger.info('HP parsed. Size: {} nodes'.format(len(self.hp)))
+        self._efo = obonet.read_obo(efourl)
+        self.logger.info('EFO parsed. Size: {} nodes'.format(len(self._efo)))
+        self._hp = obonet.read_obo(hpurl)
+        self.logger.info('HP parsed. Size: {} nodes'.format(len(self._hp)))
 
         '''Create name mappings'''
 
         # id_to_name = {id_: data['name'] for id_, data in efo.nodes(data=True)}
         self.name_to_efo = {data['name']: id_ 
-                            for id_, data in self.efo.nodes(data=True)}
+                            for id_, data in self._efo.nodes(data=True)}
         
         self.name_to_hp = {data['name']: id_ 
-                           for id_, data in self.hp.nodes(data=True)}
+                           for id_, data in self._hp.nodes(data=True)}
 
-        self._ols = OlsClient()
+        '''Initialize API clients'''
+
+        self._ols = OlsClient(ontology=['efo'],field_list=['short_form'])
         # self.zooma = get_opentargets_zooma_to_efo_mappings()
 
         # self.icd9_to_efo = {}
@@ -82,28 +89,15 @@ class OnToma(object):
         # for row in oxomappings:
         #     self.icd9_to_efo[ row['curie'].split(':')[1] ] = row['mappingResponseList'][0]['curie']
 
-        # self.omim_to_efo_map = OrderedDict()
         # self.zooma_to_efo_map = OrderedDict()
+        self._omim_to_efo = get_omim_to_efo_mappings(URLS.OMIM_EFO_MAP)
 
-    def get_omim_to_efo_mappings(self):
-        self.logger.debug("OMIM to EFO parsing - requesting from URL %s" % URLS.OMIM_EFO_MAP)
-        response = urllib.request.urlopen(URLS.OMIM_EFO_MAP)
-        self.logger.info("OMIM to EFO parsing - response code %s" % response.status)
-        line_count = 0
-        for line in response.readlines():
-            '''
-            omim	efo_uri	efo_label	source	status
-            '''
-            line_count += 1
-            (omim, efo_uri, efo_label, source, status) = line.decode('utf8').strip().split("\t")
-            if omim not in self.omim_to_efo_map:
-                self.omim_to_efo_map[omim] = []
-            self.omim_to_efo_map[omim].append({'efo_uri': efo_uri, 'efo_label': efo_label})
-        return line_count
 
+    def omim_lookup(self, omimcode):
+        return self._omim_to_efo[omimcode]
     
     def ols_lookup(self, name):
-        return self._ols.search(name)
+        return self._ols.besthit(name)
 
     def hp_lookup(self, name):
         return self.name_to_hp[name]

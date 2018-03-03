@@ -1,9 +1,37 @@
-__all__ = ["get_answer","get_opentargets_zooma_to_efo_mappings"]
+__all__ = [
+    "get_opentargets_zooma_to_efo_mappings",
+    "get_omim_to_efo_mappings"
+    ]
 
+import csv
+import requests
 import logging
 logger = logging.getLogger(__name__)
 
+def get_omim_to_efo_mappings(url):
+    '''returns a dictionary that maps OMIM codes to EFO_uri
+    >>> d = get_omim_to_efo_mappings('https://raw.githubusercontent.com/opentargets/platform_semantic/master/resources/xref_mappings/omim_to_efo.txt')
+    >>> d['609909']
+    ['http://www.orpha.net/ORDO/Orphanet_154', 'http://www.orpha.net/ORDO/Orphanet_217607']
+    '''
+    mappings = {}
+    logger.debug("OMIM to EFO mappings - requesting from URL {}".format(url))
+    with requests.get(url, stream=True) as r:
+        for i,row in enumerate(csv.DictReader(r.iter_lines(),delimiter='\t')):
+            if row['OMIM'] not in mappings:
+                mappings[row['OMIM']] = []
+            mappings[row['OMIM']].append(row['efo_uri'])
+    logger.debug("Parsed {} rows".format(i))
+    return mappings
 
+
+
+# payload={"ids":[],"inputSource":"ICD9CM","mappingTarget":["EFO"],"distance":"3"}
+# r = requests.post('https://www.ebi.ac.uk/spot/oxo/api/search?size=1000', data= payload)
+# oxomappings = r.json()['_embedded']['searchResults']
+#     while oxo.json().get('next') == True:
+# for row in oxomappings:
+#     self.icd9_to_efo[ row['curie'].split(':')[1] ] = row['mappingResponseList'][0]['curie']
 
 
 def use_zooma():
@@ -57,8 +85,3 @@ def get_opentargets_zooma_to_efo_mappings():
     
 #     return zooma_to_efo_map
 
-
-
-def get_answer():
-    """Get an answer."""
-    return True
