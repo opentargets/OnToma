@@ -23,24 +23,23 @@ class OlsClient:
     """Wraps the functions to query the Ontology Lookup Service such that alternative base URL's can be used.
     
     >>> ols = OlsClient()
-    >>> r = ols.search('asthma')
-    >>> r['response']['docs'][0]['iri']
+    >>> ols.search('asthma')[0]['iri']
     'http://purl.obolibrary.org/obo/NCIT_C28397'
 
-    >>> r = ols.search('asthma',ontology=['efo'],query_fields=['synonims'],field_list=['iri','label'])
-    >>> r['response']['docs'][0]['iri']
-    'http://purl.obolibrary.org/obo/NCIT_C28397'
+    >>> r = ols.search('asthma',ontology=['efo'],query_fields=['synonym'],field_list=['iri','label'])
+    >>> r[0]['iri']
+    'http://www.ebi.ac.uk/efo/EFO_1002011'
 
     >>> r = ols.suggest('asthma', ontology=['efo','ordo','hpo'])
-    >>> r['response']['docs'][0]['autosuggest']
-    u'asthma'
+    >>> r[0]['autosuggest']
+    'asthma'
 
-    >>> r= ols.select('asthma', ontology=['efo','ordo','hpo'])
-    >>> r['response']['docs'][0]['iri']
-    u'http://purl.obolibrary.org/obo/NCIT_C28397'
+    >>> r= ols.select('asthma', ontology=['efo','ordo','hpo'],field_list=['iri'])
+    >>> r[0]['iri']
+    'http://www.ebi.ac.uk/efo/EFO_0000270'
 
-    >>> [x['short_form'] for x in t.select('alzheimer')['response']['docs'][:2]]
-    [u'NCIT_C2866', u'NCIT_C38778']
+    >>> [x['short_form'] for x in ols.select('alzheimer')[:2]]
+    ['NCIT_C2866', 'NCIT_C38778']
     """
 
     def __init__(self, ols_base=None):
@@ -54,8 +53,7 @@ class OlsClient:
         self.ontology_search = self.base + api_search
 
 
-    def search(self, name, query_fields=None, ontology=None, 
-                    field_list=None):
+    def search(self, name, query_fields=None, ontology=None, field_list=None):
         """Searches the OLS with the given term
         :param str name:
         :param list[str] query_fields: Fields to query
@@ -81,24 +79,31 @@ class OlsClient:
         if r.json()['response']['numFound']:
             return r.json()['response']['docs']
         else:
-            logger.debug('OLS returned empty response for {}'.format(name))
+            logger.debug('OLS search returned empty response for {}'.format(name))
             return None
+
 
     def suggest(self, name, ontology=None):
         """Suggest terms from an optional list of ontologies
         :param str name:
         :param list[str] ontology:
-        :rtype: dict
+        :rtype: list
         .. seealso:: https://www.ebi.ac.uk/ols/docs/api#_suggest_term
         """
         params = {'q': name}
         if ontology:
             params['ontology'] = ','.join(ontology)
-        response = requests.get(self.ontology_suggest, params=params)
+        r = requests.get(self.ontology_suggest, params=params)
+        r.raise_for_status()
 
-        return response.json()
+        if r.json()['response']['numFound']:
+            return r.json()['response']['docs']
+        else:
+            logger.debug('OLS suggest returned empty response for {}'.format(name))
+            return None
 
-    def select(self, name, ontology=None, type=None):
+
+    def select(self, name, ontology=None, type=None, field_list=None):
         """Select terms
         Tuned specifically to support applications such as autocomplete.
         
@@ -107,8 +112,15 @@ class OlsClient:
         params = {'q': name}
         if ontology:
             params['ontology'] = ','.join(ontology)
-        response = requests.get(self.ontology_select, params=params)
+        if field_list:
+            params['fieldList'] = ','.join(field_list)
+        r = requests.get(self.ontology_select, params=params)
+        r.raise_for_status()
 
-        return response.json()
+        if r.json()['response']['numFound']:
+            return r.json()['response']['docs']
+        else:
+            logger.debug('OLS select returned empty response for {}'.format(name))
+            return None
 
     
