@@ -55,7 +55,7 @@ class OlsClient:
 
 
     def search(self, name, query_fields=None, ontology=None, 
-                    field_list=None, facet=False, hl=False):
+                    field_list=None):
         """Searches the OLS with the given term
         :param str name:
         :param list[str] query_fields: Fields to query
@@ -69,7 +69,6 @@ class OlsClient:
         :return: list
         """
         params = {'q': name}
-        params['facet'] = 'true' if facet else 'false'
 
         if ontology:
             params['ontology'] = ','.join(ontology)
