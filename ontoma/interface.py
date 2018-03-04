@@ -49,6 +49,9 @@ class OnToma(object):
     >>> t.omim_lookup('230650')
     ['http://www.orpha.net/ORDO/Orphanet_354','http://www.orpha.net/ORDO/Orphanet_79257']
     
+    >>> t.zooma_lookup('asthma')
+    'http://www.ebi.ac.uk/efo/EFO_0000270'
+
 
     Searching the ICD9 code for 'other dermatoses' returns EFO's skin disease:
     >>> t.oxo_lookup('702')
@@ -78,12 +81,15 @@ class OnToma(object):
         '''Initialize API clients'''
 
         self._ols = OlsClient(ontology=['efo'],field_list=['short_form'])
-        # self.zooma = get_opentargets_zooma_to_efo_mappings()
+        self._zooma = ZoomaClient()
 
         # self.icd9_to_efo = {}
 
         self._zooma_to_efo_map = get_ot_zooma_to_efo_mappings(URLS.ZOOMA_EFO_MAP)
         self._omim_to_efo = get_omim_to_efo_mappings(URLS.OMIM_EFO_MAP)
+
+    def zooma_lookup(self, name):
+        return self._zooma.besthit(name)
 
     def otzooma_map_lookup(self, name):
         '''NOTE: this is not a lookup to zooma service, but rather the manual 

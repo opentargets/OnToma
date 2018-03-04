@@ -27,7 +27,8 @@ class ZoomaClient:
     ['http://purl.obolibrary.org/obo/NCBITaxon_10090']
     >>> r[0]['confidence']
     'HIGH'
-    
+    >>> z.besthit("mus musculus")
+    'http://purl.obolibrary.org/obo/NCBITaxon_10090'
     """
 
     def __init__(self, zooma_base=None,
@@ -37,6 +38,13 @@ class ZoomaClient:
         """
         self.base = (zooma_base if zooma_base else URLS.ZOOMA).rstrip('/')
         self._annotate = self.base + '/services/annotate'
+
+    def highconfhits(self, name):
+        return [m for m in self.annotate(name) if m['confidence'] == 'HIGH']
+    
+    def besthit(self, name):
+        return self.highconfhits(name)[0]['semanticTags'][0]
+
 
     @staticmethod
     def _make_filter_string(reqd, prefd, ontos):
