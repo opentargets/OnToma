@@ -45,7 +45,7 @@ def get_ot_zooma_to_efo_mappings(url):
 
 
 
-
+### OXO
 # payload={"ids":[],"inputSource":"ICD9CM","mappingTarget":["EFO"],"distance":"3"}
 # r = requests.post('https://www.ebi.ac.uk/spot/oxo/api/search?size=1000', data= payload)
 # oxomappings = r.json()['_embedded']['searchResults']
@@ -53,28 +53,5 @@ def get_ot_zooma_to_efo_mappings(url):
 # for row in oxomappings:
 #     self.icd9_to_efo[ row['curie'].split(':')[1] ] = row['mappingResponseList'][0]['curie']
 
-
-# def use_zooma():
-#         '''
-#         Call request to Zooma function
-#         :return: None.
-#         '''
-
-
-#         logger.info("use Zooma")
-#         for phenotype in self.phenotype_set:
-#             if phenotype:
-#                 self._logger.info("Mapping '%s' with zooma..."%(phenotype))
-#                 self.request_to_zooma(phenotype)
-
-#         with open(Config.GE_ZOOMA_DISEASE_MAPPING, 'w') as outfile:
-#             tsv_writer = csv.writer(outfile, delimiter='\t')
-#             for phenotype, value in self.high_confidence_mappings.items():
-#                 tsv_writer.writerow([phenotype, value['uri'], value['label'], value['omim_id']])
-
-#         with open(Config.GE_ZOOMA_DISEASE_MAPPING_NOT_HIGH_CONFIDENT, 'w') as map_file:
-#             csv_writer = csv.writer(map_file, delimiter='\t')
-#             for phenotype, value in self.other_zooma_mappings.items():
-#                 csv_writer.writerow([phenotype, value['uri'], value['label'], value['omim_id']])
 
 
