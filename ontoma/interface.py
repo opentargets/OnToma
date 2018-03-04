@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 __all__ = ["OnToma"]
 
-from ontoma.downloaders import get_omim_to_efo_mappings
-from ontoma.query import ols
+from ontoma.downloaders import get_omim_to_efo_mappings, get_ot_zooma_to_efo_mappings
 from ontoma.ols import OlsClient
 
 from ontoma import URLS
@@ -82,16 +81,15 @@ class OnToma(object):
         # self.zooma = get_opentargets_zooma_to_efo_mappings()
 
         # self.icd9_to_efo = {}
-        # payload={"ids":[],"inputSource":"ICD9CM","mappingTarget":["EFO"],"distance":"3"}
-        # r = requests.post('https://www.ebi.ac.uk/spot/oxo/api/search?size=1000', data= payload)
-        # oxomappings = r.json()['_embedded']['searchResults']
-        #     while oxo.json().get('next') == True:
-        # for row in oxomappings:
-        #     self.icd9_to_efo[ row['curie'].split(':')[1] ] = row['mappingResponseList'][0]['curie']
 
-        # self.zooma_to_efo_map = OrderedDict()
+        self._zooma_to_efo_map = get_ot_zooma_to_efo_mappings(URLS.ZOOMA_EFO_MAP)
         self._omim_to_efo = get_omim_to_efo_mappings(URLS.OMIM_EFO_MAP)
 
+    def otzooma_map_lookup(self, name):
+        '''NOTE: this is not a lookup to zooma service, but rather the manual 
+        OpenTargets mapping we submitted to zooma.
+        '''
+        return self._zooma_to_efo_map[name]
 
     def omim_lookup(self, omimcode):
         return self._omim_to_efo[omimcode]
