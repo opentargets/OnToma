@@ -3,6 +3,7 @@ __all__ = ["OnToma"]
 
 from ontoma.downloaders import get_omim_to_efo_mappings, get_ot_zooma_to_efo_mappings
 from ontoma.ols import OlsClient
+from ontoma.zooma import ZoomaClient
 
 from ontoma import URLS
 
