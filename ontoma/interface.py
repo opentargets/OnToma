@@ -102,7 +102,7 @@ class OnToma(object):
         return self._omim_to_efo[omimcode]
     
     def ols_lookup(self, name):
-        return self._ols.besthit(name)
+        return self._ols.besthit(name)['short_form']
 
     def hp_lookup(self, name):
         return self.name_to_hp[name]
