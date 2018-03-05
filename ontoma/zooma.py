@@ -4,7 +4,7 @@ import logging
 import time
 import requests
 
-from ontoma import URLS
+ZOOMA = 'https://www.ebi.ac.uk/spot/zooma/v2/api'
 
 __all__ = [
     'ZoomaClient'
@@ -36,7 +36,7 @@ class ZoomaClient:
         """
         :param zooma_base: An optional, custom URL for the Zooma RESTful API.
         """
-        self.base = (zooma_base if zooma_base else URLS.ZOOMA).rstrip('/')
+        self.base = (zooma_base if zooma_base else ZOOMA).rstrip('/')
         self._annotate = self.base + '/services/annotate'
 
     def highconfhits(self, name):

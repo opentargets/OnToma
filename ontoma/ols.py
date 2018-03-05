@@ -6,7 +6,8 @@ import logging
 import time
 import requests
 
-from ontoma import URLS
+OLS = 'http://www.ebi.ac.uk/ols'
+    
 
 __all__ = [
     'OlsClient'
@@ -56,7 +57,7 @@ class OlsClient:
         """
         :param ols_base: An optional, custom URL for the OLS RESTful API.
         """
-        self.base = (ols_base if ols_base else URLS.OLS).rstrip('/')
+        self.base = (ols_base if ols_base else OLS).rstrip('/')
 
         self.ontology = ontology if ontology else None
         self.field_list = field_list if field_list else None

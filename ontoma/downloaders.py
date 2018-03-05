@@ -43,15 +43,3 @@ def get_ot_zooma_to_efo_mappings(url):
     return mappings
 
 
-
-
-### OXO
-# payload={"ids":[],"inputSource":"ICD9CM","mappingTarget":["EFO"],"distance":"3"}
-# r = requests.post('https://www.ebi.ac.uk/spot/oxo/api/search?size=1000', data= payload)
-# oxomappings = r.json()['_embedded']['searchResults']
-#     while oxo.json().get('next') == True:
-# for row in oxomappings:
-#     self.icd9_to_efo[ row['curie'].split(':')[1] ] = row['mappingResponseList'][0]['curie']
-
-
-

@@ -13,9 +13,6 @@ __all__ = [
 class URLS:
     '''constants for urls for ontology files, mapping and API'''
 
-    OLS = 'http://www.ebi.ac.uk/ols'
-    ZOOMA = 'https://www.ebi.ac.uk/spot/zooma/v2/api'
-
     EFO = 'https://github.com/EBISPOT/efo/raw/v2018-01-15/efo.obo'
     HP = 'http://purl.obolibrary.org/obo/hp.obo'
 
