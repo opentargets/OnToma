@@ -22,13 +22,7 @@ logger = logging.getLogger(__name__)
 
 
 class OnToma(object):
-    '''Open Targets ontology mapping cascade
-
-    if you have an id, find a xref to EFO
-    elif search exact match to name in EFO (or synonyms)
-    elif search fuzzy match to name in EFO
-    elif search in OLS
-    elif search in Zooma High confidence set
+    '''Open Targets ontology mapping wrapper
 
     Initialize the class (which will download EFO,OBO and others):
     >>> t=OnToma()
@@ -113,3 +107,20 @@ class OnToma(object):
     def oxo_lookup(self, other_ontology_id):
         '''should return an EFO code for any given xref'''
         return None
+
+
+    def find_efo(self, query):
+        '''wrapper method
+
+        if you have a code:
+            if you have an OMIMid, use omim_lookup to find one of our curated mapping to EFO
+            if you have an ICD9id, find a xref to EFO from oxo
+        
+        however, if you don't have a code and just a string:
+            1. search exact match to name in EFO (or synonyms)
+            2. (search fuzzy match to name in EFO)
+            3. search within our open targets zooma mappings
+            3. search in OLS
+            4. search in Zooma High confidence set
+        '''
+        raise NotImplementedError
