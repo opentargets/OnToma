@@ -9,7 +9,7 @@ __all__ = [
     'OxoClient'
 ]
 
-OXO = https://www.ebi.ac.uk/spot/oxo/api
+OXO = 'https://www.ebi.ac.uk/spot/oxo/api'
 
 logger = logging.getLogger(__name__)
 
