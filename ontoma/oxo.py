@@ -18,9 +18,9 @@ class OxoClient:
     def __init__(self, base_url=OXO.rstrip('/')):
         self._baseapi = base_url
         self._searchapi = base_url + '/search'
-        self._mappingsapi = base_rul + '/mappings'
+        self._mappingsapi = base_url + '/mappings'
     
-    def search(ids = None, input_source = None, mapping_target = 'EFO', distance = 1):
+    def search(self, ids = None, input_source = None, mapping_target = 'EFO', distance = 1):
         '''search the mappings to EFO
         >>> oxo = OxoClient()
         >>> oxo.search(input_source="ICD9CM", distance=2)
