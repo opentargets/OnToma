@@ -1,5 +1,10 @@
 # OnToma
 
+## Installing
+
+`pip install git+https://github.com/opentargets/OnToma.git`
+
+## Usage
 
 We want:
 
@@ -30,6 +35,11 @@ DO:124125
 # Developing
 
 ## set up your environment
+First clone this repo
+
+```
+git clone https://github.com/opentargets/OnToma.git
+```
 
 [Install pipenv](https://pipenv.readthedocs.io/en/latest/install/#homebrew-installation-of-pipenv) and then run
 ```sh
