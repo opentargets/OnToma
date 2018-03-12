@@ -1,7 +1,13 @@
 # -*- coding: utf-8 -*-
-# borrowed from https://github.com/cthoyt/ols-client/blob/master/src/ols_client/client.py
-# Removed ontology and term methods. 
-# Adding details/parameters for all search methods
+
+"""
+OLS api wrapper
+
+borrowed from https://github.com/cthoyt/ols-client/blob/master/src/ols_client/client.py
+- Removed ontology and term methods. 
+- Adding details/parameters for all search methods
+"""
+
 import logging
 import time
 import requests

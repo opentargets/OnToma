@@ -1,5 +1,9 @@
 # -*- coding: utf-8 -*-
 
+'''
+ZOOMA api wrapper
+'''
+
 import logging
 import time
 import requests
