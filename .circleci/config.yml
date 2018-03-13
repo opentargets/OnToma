@@ -24,11 +24,7 @@ jobs:
       - run:
           command: |
             pipenv run "pytest"
-      - store_test_results:
-          path: test-results
-      - store_artifacts:
-          path: test-results
-          destination: tr1
+
 
   deploy:
     docker:
@@ -41,12 +37,8 @@ jobs:
           command: |
             sudo pip install pipenv
             pipenv install
-      - save_cache:
-          key: deps9-{{ .Branch }}-{{ checksum "Pipfile.lock" }}
-          paths:
-            - ".venv"
-            - "/usr/local/bin"
-            - "/usr/local/lib/python3.6/site-packages"
+            pipenv install --dev twine
+
       - run:
           name: verify git tag vs. version
           command: |
@@ -67,7 +59,7 @@ jobs:
       - run:
           name: upload to pypi
           command: |
-            pipenv "twine upload dist/*""
+            pipenv run "twine upload dist/*""
 
 workflows:
   version: 2
