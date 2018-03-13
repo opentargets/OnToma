@@ -51,6 +51,12 @@ class OnToma(object):
     Searching the ICD9 code for 'other dermatoses' returns EFO's skin disease:
     >>> t.icd9_lookup('696')
     'EFO:0000676'
+
+
+    >>> t.find_efo('asthma')
+    'EFO_0000270'
+    >>> t.find_efo('615877',code='OMIM')
+    'http://www.orpha.net/ORDO/Orphanet_202948'
     '''
 
     def __init__(self, efourl = URLS.EFO, 
@@ -117,7 +123,7 @@ class OnToma(object):
                                 distance = 2)
 
 
-    def find_efo(self, query):
+    def find_efo(self, query, code=None):
         '''wrapper method
 
         if you have a code:
@@ -131,4 +137,34 @@ class OnToma(object):
             3. search in OLS
             4. search in Zooma High confidence set
         '''
-        raise NotImplementedError
+        if code:
+            try:
+                return _find_efo_from_code(query, code=code)
+            except Exception as e
+                logger.error(e)
+                return None
+        else:
+            return _find_efo_from_string(query)
+
+
+    def _find_efo_from_code(self, query, code):
+        if code is not in ['OMIM','ICD9CM']: raise Exception
+        pass
+    
+
+    def _find_efo_from_string(self, query):
+        pass
+
+
+        find_efo('172649125',id='OMIM') find_efo('alzheimer',code=OMIM)
+            if 'OMIM':
+                omim_lookup: 
+
+        find_efo('OMIM:1287135')  find_efo('alzheimer')
+            if : in input:
+                if OMIM: 
+                    omim lookup
+                elif ICD9:
+                    icd9 lokup
+            else:
+                find_Efo_String()
