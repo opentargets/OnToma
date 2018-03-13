@@ -64,15 +64,14 @@ To add a dep for a library, add it by hand to `setup.py`, then add it separately
 
 ## TODO:
 
-- [ ] look into tokenizer
-- [ ] import OMIM logic
-- [ ] memoize/lru_cache the OBO file requests
+- [ ] write a function that matches the query to the right lookup function
+- [ ] memoize/lru_cache the OBO/__init__ file requests
     https://docs.python.org/3/library/functools.html
     https://stackoverflow.com/questions/3012421/python-memoising-deferred-lookup-property-decorator
     https://stackoverflow.com/questions/17486104/python-lazy-loading-of-class-attributes
     https://stackoverflow.com/questions/14946264/python-lru-cache-decorator-per-instance
     singleton implementation at module level - defer loading
 
-- [ ] oxo wrapper for ICD9
-- [ ] oxo wrapper for more ontologies
+- [x] oxo wrapper for ICD9
+- [x] oxo wrapper for more ontologies
 - [x] ~zooma wrapper~
