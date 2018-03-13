@@ -13,7 +13,6 @@ import csv
 import json
 from io import BytesIO, TextIOWrapper
 import obonet
-import python_jsonschema_objects as pjs 
 
 import logging
 logger = logging.getLogger(__name__)

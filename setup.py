@@ -46,7 +46,8 @@ setup(
     keywords='opentargets ontology efo mapper',
     install_requires=[
         'requests',
-        'obonet'
+        'obonet',
+        'python_jsonschema_objects'
     ],
     dependency_links=[
         "git+https://github.com/opentargets/ols-client.git#egg=ols_client"
