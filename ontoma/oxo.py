@@ -49,9 +49,12 @@ class OxoClient:
         r.raise_for_status()
         resp = r.json()
         yield resp
+        if 'next' not in resp['_links']:
+            return
         while 'next' in resp['_links']:
             if sleep:
                 time.sleep(sleep)
+            logger.debug(resp['_links']['next']['href'])
             r = method(resp['_links']['next']['href'],*args,**kwargs)
             r.raise_for_status()
             resp = r.json()
@@ -89,9 +92,10 @@ class OxoClient:
             'mappingTarget': mapping_target,
             'distance': str(distance)
         }
-
+        logger.error(payload)
         try:
             for page in self._pages(requests.post, self._searchapi, data=payload):
+                logger.debug('Returned {} mappings'.format(len(page['_embedded']['searchResults']))
                 for mapping in page['_embedded']['searchResults']:
                     yield mapping
         except HTTPError as e:
