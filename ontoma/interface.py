@@ -4,6 +4,7 @@ __all__ = ["OnToma"]
 from ontoma.downloaders import get_omim_to_efo_mappings, get_ot_zooma_to_efo_mappings
 from ontoma.ols import OlsClient
 from ontoma.zooma import ZoomaClient
+from ontoma.oxo import OxoClient
 
 from ontoma import URLS
 
@@ -49,8 +50,8 @@ class OnToma(object):
 
 
     Searching the ICD9 code for 'other dermatoses' returns EFO's skin disease:
-    >>> t.oxo_lookup('702')
-    'EFO:0000701'
+    >>> t.icd9_lookup('696')
+    'EFO:0000676'
     '''
 
     def __init__(self, efourl = URLS.EFO, 
@@ -77,8 +78,10 @@ class OnToma(object):
 
         self._ols = OlsClient(ontology=['efo'],field_list=['short_form'])
         self._zooma = ZoomaClient()
+        self._oxo = OxoClient()
 
-        # self.icd9_to_efo = {}
+        self.icd9_to_efo = self._oxo.make_mappings(input_source = "ICD9CM",
+                                                   mapping_target= 'EFO')
 
         self._zooma_to_efo_map = get_ot_zooma_to_efo_mappings(URLS.ZOOMA_EFO_MAP)
         self._omim_to_efo = get_omim_to_efo_mappings(URLS.OMIM_EFO_MAP)
@@ -88,9 +91,12 @@ class OnToma(object):
 
     def otzooma_map_lookup(self, name):
         '''NOTE: this is not a lookup to zooma service, but rather the manual 
-        OpenTargets mapping we submitted to zooma.
+        OpenTargets mapping we submitted to zooma.      
         '''
         return self._zooma_to_efo_map[name]
+
+    def icd9_lookup(self, icd9code):
+        return self.icd9_to_efo[icd9code]
 
     def omim_lookup(self, omimcode):
         return self._omim_to_efo[omimcode]
@@ -104,9 +110,12 @@ class OnToma(object):
     def efo_lookup(self, name):
         return self.name_to_efo[name]
 
-    def oxo_lookup(self, other_ontology_id):
+    def oxo_lookup(self, other_ontology_id, input_source="ICD9CM"):
         '''should return an EFO code for any given xref'''
-        return None
+        return self._oxo.search(ids=[other_ontology_id],
+                                input_source=input_source,
+                                mapping_target = 'EFO', 
+                                distance = 2)
 
 
     def find_efo(self, query):

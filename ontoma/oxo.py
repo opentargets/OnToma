@@ -29,6 +29,14 @@ class OxoClient:
     >>> oxo = OxoClient()
     >>> len(oxo._sources)
     940
+
+    >>> list(oxo.search(input_source="ICD9CM"))[:1]
+    [{'queryId': None, 'querySource': 'ICD9CM', 'curie': 'ICD9CM:730.92', 'label': '', 'mappingResponseList': [{'curie': 'EFO:0003102', 'label': 'osteomyelitis', 'sourcePrefixes': ['EFO'], 'targetPrefix': 'EFO', 'distance': 1}], '_links': {'self': {'href': 'https://www.ebi.ac.uk/spot/oxo/api/terms/ICD9CM:730.92'}, 'mappings': {'href': 'https://www.ebi.ac.uk/spot/oxo/api/mappings?fromId=ICD9CM:730.92'}}}]
+
+    >>> for r in oxo.search(ids=['ICD9CM:171.6'],input_source="ICD9CM"):
+    ...     print(r['label'])
+    Malignant neoplasm of connective and other soft tissue of pelvis
+
     >>> oxo.search(input_source="ICD9CM", distance=2)
     '''
 
@@ -92,10 +100,10 @@ class OxoClient:
             'mappingTarget': mapping_target,
             'distance': str(distance)
         }
-        logger.error(payload)
+        logger.debug('Passing parameters: {}'. format(payload))
         try:
             for page in self._pages(requests.post, self._searchapi, data=payload):
-                logger.debug('Returned {} mappings'.format(len(page['_embedded']['searchResults']))
+                logger.debug('Returned {} mappings'.format(len(page['_embedded']['searchResults'])))
                 for mapping in page['_embedded']['searchResults']:
                     yield mapping
         except HTTPError as e:
@@ -103,15 +111,14 @@ class OxoClient:
             return None
 
 
-
-
-        # return r.json()['_embedded']['searchResults']
-        #     while oxo.json().get('next') == True:
     
-    def get_mappings(input_source = "ICD9CM", mapping_target='EFO'):
-        self.search(input_source=input_source, mapping_target=mapping_target)
-        # for row in oxomappings:
-        #     self.icd9_to_efo[ row['curie'].split(':')[1] ] = row['mappingResponseList'][0]['curie']
+    def make_mappings(self, input_source = "ICD9CM", mapping_target='EFO'):
+        src = self.search(input_source=input_source, mapping_target=mapping_target)
+        mappings = {}
+        for row in src:
+            mappings[ row['curie'].split(':')[1] ] = row['mappingResponseList'][0]['curie']
+        return mappings
+
 
 
 
