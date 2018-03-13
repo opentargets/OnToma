@@ -8,7 +8,7 @@ __all__ = [
     "get_omim_to_efo_mappings"
     ]
 
-from ontoma import URLS
+from ontoma.constants import URLS
 import csv
 import requests
 import logging
