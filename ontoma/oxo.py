@@ -5,11 +5,10 @@ wrapper for the OXO api
 (reverse engineered! argh!)
 """
 
-
-
 import logging
 import time
 import requests
+from requests import HTTPError
 
 
 __all__ = [
@@ -17,14 +16,19 @@ __all__ = [
 ]
 
 OXO = 'https://www.ebi.ac.uk/spot/oxo/api'
+MAXSIZE = 500
 
 logger = logging.getLogger(__name__)
+
+
 
 
 class OxoClient:
     ''' OXO wrapper class
 
     >>> oxo = OxoClient()
+    >>> len(oxo._sources)
+    940
     >>> oxo.search(input_source="ICD9CM", distance=2)
     '''
 
@@ -32,31 +36,69 @@ class OxoClient:
         self._baseapi = base_url
         self._searchapi = base_url + '/search'
         self._mappingsapi = base_url + '/mappings'
+        self._datasourcesapi = base_url + '/datasources'
+
+        self.get_data_sources()
+
+
+    @staticmethod
+    def _pages(method, url, sleep = None, *args, **kwargs):
+        '''generator expression to paginate through OXO methods
+        '''
+        r = method(url,*args,**kwargs)
+        r.raise_for_status()
+        resp = r.json()
+        yield resp
+        while 'next' in resp['_links']:
+            if sleep:
+                time.sleep(sleep)
+            r = method(resp['_links']['next']['href'],*args,**kwargs)
+            r.raise_for_status()
+            resp = r.json()
+            yield resp
+
+
+    def get_data_sources(self):
+        self._sources = set()
+        payload = {'size': MAXSIZE}
+        for p in self._pages(requests.get, self._datasourcesapi, params=payload):
+            self._sources.update([x['prefix'] for x in p['_embedded']['datasources']])
+        return
+
+
     
-    def search(self, ids = None, input_source = None, mapping_target = 'EFO', distance = 1):
+    def search(self, ids = None, input_source = None, mapping_target = 'EFO', distance = 1, size = MAXSIZE):
+        
+        assert input_source in self._sources
+        if size > MAXSIZE:
+            raise ValueError('Maximum size is {}. Given: {}'.format(MAXSIZE,size))
+
         payload = {
-            "size": 500,
+            "size": size,
             "ids": ids,
             'inputSource': input_source,
             'mappingTarget': mapping_target,
             'distance': str(distance)
         }
 
-        payload={"ids":ids,"inputSource":"ICD9CM","mappingTarget":["EFO"],"distance":"3"}
-        r = requests.post(self._searchapi, data=payload)
+        try:
+            for p in self._post_pages(self._searchapi,data=payload):
+                yield p['_embedded']
+        except HTTPError as e:
+            logger.error(e.response.json()['message'])
+            return None
 
-        #TODO must paginate!
-        #https://www.ebi.ac.uk/spot/oxo/api/search?page=1&size=500
-        # Pagination - if there is a "next" link, update URL and read next page	
-        # try:
-        #     url = r.links['next']['url']
-        # except KeyError:						# If there is no "next" link
-        #     break
 
-        return r.json()['_embedded']['searchResults']
+
+
+        # return r.json()['_embedded']['searchResults']
         #     while oxo.json().get('next') == True:
+    
+    def get_mappings(input_source = "ICD9CM", mapping_target='EFO'):
+        self.search(input_source=input_source, mapping_target=mapping_target)
         # for row in oxomappings:
         #     self.icd9_to_efo[ row['curie'].split(':')[1] ] = row['mappingResponseList'][0]['curie']
+
 
 
 

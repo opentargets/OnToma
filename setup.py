@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-
+import os
+import sys
 from setuptools import setup, find_packages
 
 VERSION = "0.0.1"
@@ -49,8 +50,8 @@ setup(
     ],
     dependency_links=[
         "git+https://github.com/opentargets/ols-client.git#egg=ols_client"
-    ]
-    python_requires='>=3',
+    ],
+    python_requires='>=3.2',
     cmdclass={
         'verify': VerifyVersionCommand,
     }
