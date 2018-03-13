@@ -28,7 +28,7 @@ class VerifyVersionCommand(install):
             sys.exit(info)
 
 setup(
-    name='OnToma',
+    name='ontoma',
     version=VERSION,
     description='Ontology mapping for Open Targets',
     long_description=readme,
