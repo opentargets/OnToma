@@ -5,10 +5,10 @@ import json
 import os
 
 __all__ = [
-    'URLS',
+    'URLS', 'OnToma'
 ]
 
-
+from ontoma.interface import OnToma
 
 class URLS:
     '''constants for urls for ontology files, mapping and API'''
