@@ -68,7 +68,16 @@ class OxoClient:
 
     
     def search(self, ids = None, input_source = None, mapping_target = 'EFO', distance = 1, size = MAXSIZE):
-        
+        '''iterates over the mappings, each being a dict with the following keys:
+        [
+        "_links",
+        "curie",
+        "label",
+        "mappingResponseList",
+        "queryId",
+        "querySource"
+        ]
+        '''
         assert input_source in self._sources
         if size > MAXSIZE:
             raise ValueError('Maximum size is {}. Given: {}'.format(MAXSIZE,size))
@@ -82,8 +91,9 @@ class OxoClient:
         }
 
         try:
-            for p in self._post_pages(self._searchapi,data=payload):
-                yield p['_embedded']
+            for page in self._pages(requests.post, self._searchapi, data=payload):
+                for mapping in page['_embedded']['searchResults']:
+                    yield mapping
         except HTTPError as e:
             logger.error(e.response.json()['message'])
             return None
