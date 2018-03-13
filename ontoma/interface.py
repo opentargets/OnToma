@@ -6,7 +6,7 @@ from ontoma.ols import OlsClient
 from ontoma.zooma import ZoomaClient
 from ontoma.oxo import OxoClient
 
-from ontoma import URLS
+from ontoma.constants import URLS
 
 import requests
 import csv
