@@ -37,12 +37,12 @@ class OnToma(object):
 
     Lookup in OLS
     >>> t.ols_lookup('asthma')
-    'EFO:0000270'
+    'EFO_0000270'
 
     OMIM code lookup
     TODO: should have a logic for what is the better hit here
     >>> t.omim_lookup('230650')
-    ['http://www.orpha.net/ORDO/Orphanet_354','http://www.orpha.net/ORDO/Orphanet_79257']
+    ['http://www.orpha.net/ORDO/Orphanet_354', 'http://www.orpha.net/ORDO/Orphanet_79257']
     
     >>> t.zooma_lookup('asthma')
     'http://www.ebi.ac.uk/efo/EFO_0000270'

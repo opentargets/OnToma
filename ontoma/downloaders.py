@@ -1,3 +1,8 @@
+'''
+Functions that download mapping flat-files from github repo or other
+repositories
+'''
+
 __all__ = [
     "get_ot_zooma_to_efo_mappings",
     "get_omim_to_efo_mappings"

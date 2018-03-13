@@ -30,14 +30,17 @@ class OxoClient:
     >>> len(oxo._sources)
     940
 
-    >>> list(oxo.search(input_source="ICD9CM"))[:1]
-    [{'queryId': None, 'querySource': 'ICD9CM', 'curie': 'ICD9CM:730.92', 'label': '', 'mappingResponseList': [{'curie': 'EFO:0003102', 'label': 'osteomyelitis', 'sourcePrefixes': ['EFO'], 'targetPrefix': 'EFO', 'distance': 1}], '_links': {'self': {'href': 'https://www.ebi.ac.uk/spot/oxo/api/terms/ICD9CM:730.92'}, 'mappings': {'href': 'https://www.ebi.ac.uk/spot/oxo/api/mappings?fromId=ICD9CM:730.92'}}}]
+    >>> first_result = list(oxo.search(input_source="ICD9CM"))[:1][0]
+    >>> first_result['curie']
+    'ICD9CM:730.92'
 
     >>> for r in oxo.search(ids=['ICD9CM:171.6'],input_source="ICD9CM"):
     ...     print(r['label'])
     Malignant neoplasm of connective and other soft tissue of pelvis
 
-    >>> oxo.search(input_source="ICD9CM", distance=2)
+    >>> icd9s = oxo.make_mappings(input_source="ICD9CM", distance=2)
+    >>> icd9s['733.0']
+    'EFO:0003882'
     '''
 
     def __init__(self, base_url=OXO.rstrip('/')):
@@ -112,8 +115,8 @@ class OxoClient:
 
 
     
-    def make_mappings(self, input_source = "ICD9CM", mapping_target='EFO'):
-        src = self.search(input_source=input_source, mapping_target=mapping_target)
+    def make_mappings(self, input_source = "ICD9CM",**kwargs):
+        src = self.search(input_source=input_source,**kwargs )
         mappings = {}
         for row in src:
             mappings[ row['curie'].split(':')[1] ] = row['mappingResponseList'][0]['curie']
