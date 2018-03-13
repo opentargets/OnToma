@@ -2,6 +2,8 @@
 import os
 import sys
 from setuptools import setup, find_packages
+from setuptools.command.install import install
+
 
 VERSION = "0.0.1"
 
