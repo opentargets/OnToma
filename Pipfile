@@ -9,6 +9,7 @@ name = "pypi"
 
 pytest = "*"
 pylint = "*"
+ipython = "*"
 
 
 [packages]

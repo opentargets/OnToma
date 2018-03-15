@@ -21,8 +21,29 @@ logger = logging.getLogger(__name__)
 # _cache = {"files":None}
 
 
+def name_to_label_mapping(obonetwork):
+    '''
+    builds name <=> label lookup dictionaries starting
+    from an OBO file
+    '''
+    id_to_name = {}
+    name_to_id = {}
+    for nodeid, data in obonetwork.nodes(data=True):
+        id_to_name[nodeid] = data['name']
+        name_to_id[data['name']] = nodeid 
+        if 'synonym' in data:
+            for s in data['synonym']:
+                #some str.split voodoo is necessary to unpact the synonyms
+                # as specified in the obo file
+                name_to_id[s.split('\"')[1]] = nodeid
+    return id_to_name, name_to_id
+
+
+
 class OnToma(object):
     '''Open Targets ontology mapping wrapper
+
+    The output should always be a EFO/OpenTargets ontology URI.
 
     Initialize the class (which will download EFO,OBO and others):
     >>> t=OnToma()
@@ -31,9 +52,22 @@ class OnToma(object):
     >>> t.efo_lookup('asthma')
     'EFO:0000270'
 
-    We can now lookup "Phenotypic abnormality" on HP: 
+    Search by synonyms coming from the OBO file is also supported
+    >>> t.efo_lookup('Asthma unspecified')
+    'EFO:0000270'
+
+    Reverse lookups uses the get_efo_label() method
+    >>> t.get_efo_label('EFO_0000270')
+    'asthma'
+    >>> t.get_efo_label('EFO:0000270')
+    'asthma'
+
+
+    Similarly, we can now lookup "Phenotypic abnormality" on HP: 
     >>> t.hp_lookup('Phenotypic abnormality')
     'HP:0000118'
+    >>> t.hp_lookup('Narrow nasal tip')
+    'HP:0011832'
 
     Lookup in OLS
     >>> t.ols_lookup('asthma')
@@ -52,7 +86,8 @@ class OnToma(object):
     >>> t.icd9_lookup('696')
     'EFO:0000676'
 
-
+    There is also a semi-intelligent wrapper, which tries to guess the 
+    best matching strategy:
     >>> t.find_efo('asthma')
     'EFO_0000270'
     >>> t.find_efo('615877',code='OMIM')
@@ -65,19 +100,17 @@ class OnToma(object):
         self.logger = logging.getLogger(__name__)
 
         '''Parse the ontology obo files for exact match lookup'''
+        #TODO delay download of the OBO files until the class instance is used
         self._efo = obonet.read_obo(efourl)
         self.logger.info('EFO parsed. Size: {} nodes'.format(len(self._efo)))
         self._hp = obonet.read_obo(hpurl)
         self.logger.info('HP parsed. Size: {} nodes'.format(len(self._hp)))
 
-        '''Create name mappings'''
-
-        # id_to_name = {id_: data['name'] for id_, data in efo.nodes(data=True)}
-        self.name_to_efo = {data['name']: id_ 
-                            for id_, data in self._efo.nodes(data=True)}
+        '''Create name <=> label mappings'''
+        self.efo_to_name, self.name_to_efo = name_to_label_mapping(self._efo)
         
-        self.name_to_hp = {data['name']: id_ 
-                           for id_, data in self._hp.nodes(data=True)}
+        self.hp_to_name, self.name_to_hp = name_to_label_mapping(self._hp)
+        
 
         '''Initialize API clients'''
 
@@ -90,6 +123,16 @@ class OnToma(object):
 
         self._zooma_to_efo_map = get_ot_zooma_to_efo_mappings(URLS.ZOOMA_EFO_MAP)
         self._omim_to_efo = get_omim_to_efo_mappings(URLS.OMIM_EFO_MAP)
+
+
+    def get_efo_label(self, efocode):
+        '''given an EFO code, returns name/label
+        '''
+        try:
+            return self.efo_to_name[efocode.replace('_',':')]
+        except KeyError:
+            logger.error('EFO ID {} not found'.format(efocode))
+            return None
 
     def zooma_lookup(self, name):
         return self._zooma.besthit(name)
@@ -140,7 +183,7 @@ class OnToma(object):
         if code:
             try:
                 return _find_efo_from_code(query, code=code)
-            except Exception as e
+            except Exception as e:
                 logger.error(e)
                 return None
         else:
@@ -148,23 +191,8 @@ class OnToma(object):
 
 
     def _find_efo_from_code(self, query, code):
-        if code is not in ['OMIM','ICD9CM']: raise Exception
         pass
     
 
     def _find_efo_from_string(self, query):
         pass
-
-
-        find_efo('172649125',id='OMIM') find_efo('alzheimer',code=OMIM)
-            if 'OMIM':
-                omim_lookup: 
-
-        find_efo('OMIM:1287135')  find_efo('alzheimer')
-            if : in input:
-                if OMIM: 
-                    omim lookup
-                elif ICD9:
-                    icd9 lokup
-            else:
-                find_Efo_String()
