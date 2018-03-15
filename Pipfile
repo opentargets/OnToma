@@ -10,6 +10,7 @@ name = "pypi"
 pytest = "*"
 pylint = "*"
 ipython = "*"
+twine = "*"
 
 
 [packages]

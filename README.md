@@ -64,7 +64,6 @@ To add a dep for a library, add it by hand to `setup.py`, then add it separately
 
 ## TODO:
 
-- [ ] write a function that matches the query to the right lookup function
 - [ ] memoize/lru_cache the OBO/__init__ file requests
     https://docs.python.org/3/library/functools.html
     https://stackoverflow.com/questions/3012421/python-memoising-deferred-lookup-property-decorator
