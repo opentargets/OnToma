@@ -61,7 +61,7 @@ jobs:
       - run:
           name: upload to pypi
           command: |
-            pipenv run "twine upload dist/*""
+            pipenv run "twine upload dist/*"
 
 workflows:
   version: 2
