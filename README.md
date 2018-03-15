@@ -72,6 +72,3 @@ To add a dep for a library, add it by hand to `setup.py`, then add it separately
     https://stackoverflow.com/questions/14946264/python-lru-cache-decorator-per-instance
     singleton implementation at module level - defer loading
 
-- [x] oxo wrapper for ICD9
-- [x] oxo wrapper for more ontologies
-- [x] ~zooma wrapper~

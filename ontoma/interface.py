@@ -39,6 +39,30 @@ def name_to_label_mapping(obonetwork):
     return id_to_name, name_to_id
 
 
+def make_uri(ontology_short_form):
+    '''
+    >>> make_uri('EFO:0000270')
+    'http://www.ebi.ac.uk/efo/EFO_0000270'
+    
+    >>> make_uri('HP_0000270')
+    'http://purl.obolibrary.org/obo/HP_0000270'
+    
+    >>> make_uri('http://purl.obolibrary.org/obo/HP_0000270')
+    'http://purl.obolibrary.org/obo/HP_0000270'
+    '''
+    if ontology_short_form.startswith('http'): 
+        return ontology_short_form
+    ontology_code = ontology_short_form.replace(':',"_")
+    if ontology_code.startswith('EFO'):
+        return 'http://www.ebi.ac.uk/efo/'+ontology_code
+    elif ontology_code.startswith('HP') or ontology_code.startswith('MP') :
+        return 'http://purl.obolibrary.org/obo/' + ontology_code
+    elif ontology_code.startswith('Orphanet') :
+        return 'http://www.orpha.net/ORDO/' + ontology_code
+    else:
+        logger.error("Could not build an URI. {} not recognized".format(ontology_code))
+        raise Exception
+
 
 class OnToma(object):
     '''Open Targets ontology mapping wrapper
@@ -74,9 +98,8 @@ class OnToma(object):
     'EFO_0000270'
 
     OMIM code lookup
-    TODO: should have a logic for what is the better hit here
     >>> t.omim_lookup('230650')
-    ['http://www.orpha.net/ORDO/Orphanet_354', 'http://www.orpha.net/ORDO/Orphanet_79257']
+    'http://www.orpha.net/ORDO/Orphanet_354'
     
     >>> t.zooma_lookup('asthma')
     'http://www.ebi.ac.uk/efo/EFO_0000270'
@@ -89,7 +112,7 @@ class OnToma(object):
     There is also a semi-intelligent wrapper, which tries to guess the 
     best matching strategy:
     >>> t.find_efo('asthma')
-    'EFO_0000270'
+    'http://www.ebi.ac.uk/efo/EFO_0000270'
     >>> t.find_efo('615877',code='OMIM')
     'http://www.orpha.net/ORDO/Orphanet_202948'
     '''
@@ -118,9 +141,11 @@ class OnToma(object):
         self._zooma = ZoomaClient()
         self._oxo = OxoClient()
 
-        self.icd9_to_efo = self._oxo.make_mappings(input_source = "ICD9CM",
+        '''ICD9 <=> EFO mappings '''
+        self._icd9_to_efo = self._oxo.make_mappings(input_source = "ICD9CM",
                                                    mapping_target= 'EFO')
 
+        '''OT specific mappings in our github repos'''
         self._zooma_to_efo_map = get_ot_zooma_to_efo_mappings(URLS.ZOOMA_EFO_MAP)
         self._omim_to_efo = get_omim_to_efo_mappings(URLS.OMIM_EFO_MAP)
 
@@ -144,10 +169,11 @@ class OnToma(object):
         return self._zooma_to_efo_map[name]
 
     def icd9_lookup(self, icd9code):
-        return self.icd9_to_efo[icd9code]
+        return self._icd9_to_efo[icd9code]
 
     def omim_lookup(self, omimcode):
-        return self._omim_to_efo[omimcode]
+        #FIXME assumes the first is the best hit. is this ok?
+        return self._omim_to_efo[omimcode][0]
     
     def ols_lookup(self, name):
         return self._ols.besthit(name)['short_form']
@@ -182,17 +208,37 @@ class OnToma(object):
         '''
         if code:
             try:
-                return _find_efo_from_code(query, code=code)
+                return make_uri(self._find_efo_from_code(query, code=code))
             except Exception as e:
                 logger.error(e)
                 return None
         else:
-            return _find_efo_from_string(query)
+            return make_uri(self._find_efo_from_string(query))
 
 
     def _find_efo_from_code(self, query, code):
-        pass
+        #FIXME need to properly deal with NotFound scenario
+        if code == 'OMIM':
+            return self.omim_lookup(query)
+        if code == 'ICD9CM':
+            return self.icd9_lookup(query)
+        logger.warning('Could not find EFO for ID: {} in {}'.format(query, code))
+        return None
     
 
     def _find_efo_from_string(self, query):
-        pass
+        '''
+        operations roughly ordered from least expensive to most expensive
+        and also from most authorative to least authorative
+        '''
+        if self.efo_lookup(query):
+            return self.efo_lookup(query)
+        if self.otzooma_map_lookup(query):
+            return self.otzooma_map_lookup(query)
+        if self.ols_lookup(query):
+            return self.ols_lookup(query)
+        if self.zooma_lookup(query):
+            return self.zooma_lookup(query)
+        logger.warning('Could not find EFO for string: {}'.format(query))
+        return None
+
