@@ -208,6 +208,7 @@ class OnToma(object):
             3. search within our open targets zooma mappings
             3. search in OLS
             4. search in Zooma High confidence set
+        
         '''
         if code:
             try:
