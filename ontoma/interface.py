@@ -42,7 +42,7 @@ def name_to_label_mapping(obonetwork):
     return id_to_name, name_to_id
 
 
-def make_uri(ontology_short_form: str) -> str:
+def make_uri(ontology_short_form):
     '''
     Transform a short form ontology code in a full URI. 
     Currently works for EFO, HPO, ORDO and MP. 
@@ -206,9 +206,11 @@ class OnToma(object):
 
 
     def find_efo(self, query, code=None):
-        '''wrapper method
+        '''Finds the most likely EFO code for a given string or ontology code.
 
-        if you have a code:
+        Args:
+            query: 
+        If you have a code:
             if you have an OMIMid, use omim_lookup to find one of our curated mapping to EFO
             if you have an ICD9id, find a xref to EFO from oxo
         

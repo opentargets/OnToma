@@ -11,11 +11,10 @@ pytest = "*"
 pylint = "*"
 ipython = "*"
 twine = "*"
-sphinx = "*"
+Sphinx = "*"
 sphinx-autobuild = "*"
 recommonmark = "*"
-sphinx-rtd-theme = "*"
-sphinx-autodoc-typehints = "*"
+sphinx_rtd_theme = "*"
 
 
 [packages]
