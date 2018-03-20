@@ -42,16 +42,26 @@ def name_to_label_mapping(obonetwork):
     return id_to_name, name_to_id
 
 
-def make_uri(ontology_short_form):
+def make_uri(ontology_short_form: str) -> str:
     '''
-    >>> make_uri('EFO:0000270')
-    'http://www.ebi.ac.uk/efo/EFO_0000270'
-    
-    >>> make_uri('HP_0000270')
-    'http://purl.obolibrary.org/obo/HP_0000270'
-    
-    >>> make_uri('http://purl.obolibrary.org/obo/HP_0000270')
-    'http://purl.obolibrary.org/obo/HP_0000270'
+    Transform a short form ontology code in a full URI. 
+    Currently works for EFO, HPO, ORDO and MP. 
+
+    Args:
+        ontology_short_form: An ontology code in the short format, like 'EFO:0000270'.
+
+    Returns:
+        A full URI.
+
+    Example:
+        >>> make_uri('EFO:0000270')
+        'http://www.ebi.ac.uk/efo/EFO_0000270'
+        
+        >>> make_uri('HP_0000270')
+        'http://purl.obolibrary.org/obo/HP_0000270'
+        
+        >>> make_uri('http://purl.obolibrary.org/obo/HP_0000270')
+        'http://purl.obolibrary.org/obo/HP_0000270'
     '''
     if ontology_short_form.startswith('http'): 
         return ontology_short_form
