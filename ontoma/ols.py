@@ -35,7 +35,7 @@ class OlsClient:
 
     >>> r = ols.search('asthma',ontology=['efo'],query_fields=['synonym'],field_list=['iri','label'])
     >>> r[0]['iri']
-    'http://www.ebi.ac.uk/efo/EFO_1002011'
+    'http://www.ebi.ac.uk/efo/EFO_0004591'
 
     >>> r = ols.suggest('asthma', ontology=['efo','ordo','hpo'])
     >>> r[0]['autosuggest']
