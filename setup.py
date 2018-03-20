@@ -4,7 +4,8 @@ import sys
 from setuptools import setup, find_packages
 from setuptools.command.install import install
 
-from ontoma import __version__ as VERSION
+with open('VERSION') as version_file:
+    VERSION = version_file.read().strip()
 
 with open('README.md') as f:
     readme = f.read()

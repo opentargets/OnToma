@@ -63,7 +63,8 @@ copyright = u'2018, Open Targets dev team'
 # built documents.
 #
 # The short X.Y version.
-from ontoma import __version__ as VERSION
+with open(os.path.join('..','VERSION')) as version_file:
+    VERSION = version_file.read().strip()
 version = VERSION
 # The full version, including alpha/beta/rc tags.
 release = VERSION
