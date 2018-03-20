@@ -1,10 +1,13 @@
-# OnToma
+OnToma is a python module that helps you map your disease/phenotype terms to the
+ontology we use in the Open Targets platform. 
+
+# Usage
 
 ## Installing
 
 `pip install git+https://github.com/opentargets/OnToma.git`
 
-## Usage
+## Quickstart
 
 We want:
 
@@ -14,7 +17,7 @@ from ontoma import find_efo
 print(find_efo('asthma'))
 
 #outputs:
-'EFO:000270'
+'EFO_000270'
 ```
 
 or the command line version
@@ -25,7 +28,7 @@ ontoma -i <input_file> -o <output_dir>
 
 where input file is a file of diseases/traits in either codes or text
 
-```txt
+```
 ICD9:720
 asthma
 alzheimer's
@@ -65,9 +68,12 @@ To add a dep for a library, add it by hand to `setup.py`, then add it separately
 ## TODO:
 
 - [ ] memoize/lru_cache the OBO/__init__ file requests
+
+see one of :
     https://docs.python.org/3/library/functools.html
     https://stackoverflow.com/questions/3012421/python-memoising-deferred-lookup-property-decorator
     https://stackoverflow.com/questions/17486104/python-lazy-loading-of-class-attributes
     https://stackoverflow.com/questions/14946264/python-lru-cache-decorator-per-instance
     singleton implementation at module level - defer loading
 
+- [ ] command line interface

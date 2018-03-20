@@ -4,8 +4,7 @@ import sys
 from setuptools import setup, find_packages
 from setuptools.command.install import install
 
-
-VERSION = "0.0.1"
+from ontoma import __version__ as VERSION
 
 with open('README.md') as f:
     readme = f.read()
@@ -48,11 +47,7 @@ setup(
     keywords='opentargets ontology efo mapper',
     install_requires=[
         'requests',
-        'obonet',
-        'python_jsonschema_objects'
-    ],
-    dependency_links=[
-        "git+https://github.com/opentargets/ols-client.git#egg=ols_client"
+        'obonet'
     ],
     python_requires='>=3.2',
     cmdclass={

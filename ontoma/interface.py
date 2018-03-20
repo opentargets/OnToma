@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
-__all__ = ["OnToma"]
+__all__ = [
+    "OnToma",
+    "make_uri"
+    ]
 
 from ontoma.downloaders import get_omim_to_efo_mappings, get_ot_zooma_to_efo_mappings
 from ontoma.ols import OlsClient
