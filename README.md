@@ -59,6 +59,16 @@ Test everything is working:
 pipenv run pytest
 ```
 
+**if you don't like pipenv** you can stick with the more traditional
+setuptools/virtualenv setup:
+
+```sh
+git clone https://github.com/opentargets/OnToma.git
+virtualenv -p python3 venv
+source venv/bin/activate
+pip install --editable .
+```
+
 ## How to add a dependency
 
 **Add to both pipenv AND setup.py**
