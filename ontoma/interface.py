@@ -267,8 +267,8 @@ class OnToma(object):
             query (str): the disease/phenotype to be matched to an EFO code
             code: accepts one of "ICD9CM", "OMIM"
                 **TODO** expand to more ontologies
-                If a code is passed, it will attempt to find the code in one of our
-                curated mapping datasources. Defaults to None.
+                If a code is passed, it will attempt to find the code in one of 
+                our curated mapping datasources. Defaults to None.
         
         Returns:
             A valid OT ontology URI. `None` if no EFO code was found
@@ -276,19 +276,17 @@ class OnToma(object):
         if code:
             try:
                 return make_uri(self._find_efo_from_code(query, code=code))
-            except ValueError as ve:
-                logger.error(ve)
             except KeyError as ke:
-                logger.error(ke)
-            return None
+                logger.error('Could not find a match '
+                             'for {} in {} mappings. '.format(ke,code)
+                             'Should you be using another ontology?')
+                return None
         else:
             try:
                 return make_uri(self._find_efo_from_string(query))
-            except ValueError as ve:
-                logger.error(ve)
             except KeyError as ke:
                 logger.error(ke)
-            return None
+                return None
 
     def _find_efo_from_code(self, query, code):
         '''Finds EFO code given another ontology code
@@ -299,7 +297,7 @@ class OnToma(object):
             return self.omim_lookup(query)
         if code == 'ICD9CM':
             return self.icd9_lookup(query)
-        logger.warning('Could not find EFO for ID: {} in {}'.format(query, code))
+        logger.error('Code {} is not currently supported.'.format(code))
         return None
     
 
@@ -316,14 +314,33 @@ class OnToma(object):
         4. search in Zooma High confidence set
 
         '''
-        if self.efo_lookup(query):
+
+        try:
             return self.efo_lookup(query)
-        if self.otzooma_map_lookup(query):
+        except KeyError as e:
+            logger.debug('Failed EFO OBO lookup for {}'.format(e))
+        
+        try:
             return self.otzooma_map_lookup(query)
-        if self.ols_lookup(query):
+        except KeyError as e:
+            logger.debug('Failed Zooma Mappings lookup for {}'.format(e))
+        
+        try:
             return self.ols_lookup(query)
-        if self.zooma_lookup(query):
+        except KeyError as e:
+            logger.debug('Failed OLS API lookup for {}'.format(e))
+        
+        try:
             return self.zooma_lookup(query)
+        except KeyError as e:
+            logger.debug('Failed Zooma API lookup for {}'.format(e))
+
+        try:
+            return self.hp_lookup(query)
+        except KeyError as e:
+            logger.debug('Failed HP OBO lookup for {}'.format(e))
+
+
         logger.warning('Could not find EFO for string: {}'.format(query))
         return None
 
