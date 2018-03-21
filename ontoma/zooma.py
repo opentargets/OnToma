@@ -50,7 +50,10 @@ class ZoomaClient:
         return [m for m in self.annotate(name) if m['confidence'] == 'HIGH']
     
     def besthit(self, name):
-        return self.highconfhits(name)[0]['semanticTags'][0]
+        if self.highconfhits(name):
+            return self.highconfhits(name)[0]['semanticTags'][0]
+        else:
+            return
 
 
     @staticmethod
