@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
 
 """
-OLS api wrapper
+OLS API wrapper
 
-borrowed from https://github.com/cthoyt/ols-client/blob/master/src/ols_client/client.py
+Original code borrowed from https://github.com/cthoyt/ols-client/blob/master/src/ols_client/client.py
+
 - Removed ontology and term methods. 
-- Adding details/parameters for all search methods
+- Added details/parameters for all search methods
 """
 
 import logging
@@ -27,7 +28,7 @@ api_select = '/api/select'
 
 
 class OlsClient:
-    """Wraps the functions to query the Ontology Lookup Service such that alternative base URL's can be used.
+    """Wraps the functions to query the Ontology Lookup Service.
     
     >>> ols = OlsClient()
     >>> ols.search('asthma')[0]['iri']
@@ -35,7 +36,7 @@ class OlsClient:
 
     >>> r = ols.search('asthma',ontology=['efo'],query_fields=['synonym'],field_list=['iri','label'])
     >>> r[0]['iri']
-    'http://www.ebi.ac.uk/efo/EFO_1002011'
+    'http://www.ebi.ac.uk/efo/EFO_0004591'
 
     >>> r = ols.suggest('asthma', ontology=['efo','ordo','hpo'])
     >>> r[0]['autosuggest']
@@ -52,6 +53,7 @@ class OlsClient:
     ['NCIT_C2866', 'NCIT_C38778']
 
     You can also pass your favourite parameters at class instantiation:
+
     >>> ot_ols = OlsClient(ontology=['efo'],field_list=['short_form'])
     >>> ot_ols.search('asthma')[0]['short_form']
     'EFO_0000270'
@@ -78,16 +80,12 @@ class OlsClient:
 
     def search(self, name, query_fields=None, ontology=None, field_list=None):
         """Searches the OLS with the given term
-        :param str name:
-        :param list[str] query_fields: Fields to query
 
         By default the search is performed over term labels, synonyms, 
         descriptions, identifiers and annotation properties.
         Specify the fields to query, the defaults are 
         {label, synonym, description, short_form, obo_id, annotations, logical_description, iri}
 
-        :param list[str] ontology: list of ontologies id
-        :return: list
         """
         params = {'q': name}
 
@@ -117,9 +115,7 @@ class OlsClient:
 
     def suggest(self, name, ontology=None):
         """Suggest terms from an optional list of ontologies
-        :param str name:
-        :param list[str] ontology:
-        :rtype: list
+
         .. seealso:: https://www.ebi.ac.uk/ols/docs/api#_suggest_term
         """
         params = {'q': name}
@@ -136,7 +132,7 @@ class OlsClient:
 
 
     def select(self, name, ontology=None, type=None, field_list=None):
-        """Select terms
+        """Select terms,
         Tuned specifically to support applications such as autocomplete.
         
         .. seealso:: https://www.ebi.ac.uk/ols/docs/api#_select

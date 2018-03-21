@@ -1,20 +1,24 @@
-# OnToma
+OnToma is a python module that helps you map your disease/phenotype terms to the
+ontology we use in the Open Targets platform. 
+
+# Usage
 
 ## Installing
 
-`pip install git+https://github.com/opentargets/OnToma.git`
+`pip install ontoma`
 
-## Usage
+## Quickstart
 
-We want:
+Basic usage should be simple:
 
 ```python
-from ontoma import find_efo
+from ontoma import OnToma
 
-print(find_efo('asthma'))
+otmap = OnToma()
+print(otmap.find_efo('asthma'))
 
 #outputs:
-'EFO:000270'
+'EFO_000270'
 ```
 
 or the command line version
@@ -25,12 +29,15 @@ ontoma -i <input_file> -o <output_dir>
 
 where input file is a file of diseases/traits in either codes or text
 
-```txt
+```
 ICD9:720
 asthma
 alzheimer's
 DO:124125
 ```
+
+More detailed documentation is at [![Documentation Status](https://readthedocs.org/projects/ontoma/badge/?version=latest)](http://ontoma.readthedocs.io/en/latest/?badge=latest)
+http://ontoma.readthedocs.io/en/stable/
 
 # Developing
 
@@ -52,23 +59,40 @@ Test everything is working:
 pipenv run pytest
 ```
 
-## add a dependency with pipenv + setup.py
-To add a dep for a library, add it by hand to `setup.py`, then add it separately to Pipfile, so that it shows up both as a transitive dependency and in your locked dev environment
+**if you don't like pipenv** you can stick with the more traditional
+setuptools/virtualenv setup:
+
+```sh
+git clone https://github.com/opentargets/OnToma.git
+virtualenv -p python3 venv
+source venv/bin/activate
+pip install --editable .
+```
+
+## How to add a dependency
+
+**Add to both pipenv AND setup.py**
+
+To add a dep for a library, add it by hand to `setup.py`, then add it separately
+to `Pipfile`, so that it shows up both as a transitive dependency and in your
+locked dev environment
 
 ## Release to PyPi
-1. Once you are ready to cut a new release, update the version in setup.py and create a new git tag with git tag $VERSION.
-2. Once you push the tag to GitHub with git push --tags a new CircleCI build is triggered.
-3. You run a verification step to ensure that the git tag matches the version of ontoma that you added in step 1.
-4. CircleCI performs all tests.
-5. Once all of your test pass, you create a new Python package and upload it to PyPI using twine.
+
+Simply run `./bumpversion.sh`
+
+The script will tag, push and trigger a new CI run. 
+The package will be automatically uploaded to pypi. 
 
 ## TODO:
 
-- [ ] write a function that matches the query to the right lookup function
 - [ ] memoize/lru_cache the OBO/__init__ file requests
+
+see one of :
     https://docs.python.org/3/library/functools.html
     https://stackoverflow.com/questions/3012421/python-memoising-deferred-lookup-property-decorator
     https://stackoverflow.com/questions/17486104/python-lazy-loading-of-class-attributes
     https://stackoverflow.com/questions/14946264/python-lru-cache-decorator-per-instance
     singleton implementation at module level - defer loading
 
+- [ ] command line interface

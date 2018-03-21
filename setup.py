@@ -4,8 +4,8 @@ import sys
 from setuptools import setup, find_packages
 from setuptools.command.install import install
 
-
-VERSION = "0.0.1"
+with open('VERSION') as version_file:
+    VERSION = version_file.read().strip()
 
 with open('README.md') as f:
     readme = f.read()
@@ -49,11 +49,12 @@ setup(
     install_requires=[
         'requests',
         'obonet',
-        'python_jsonschema_objects'
+        'click'
     ],
-    dependency_links=[
-        "git+https://github.com/opentargets/ols-client.git#egg=ols_client"
-    ],
+    entry_points='''
+        [console_scripts]
+        ontoma=ontoma.cli:ontoma
+    ''',
     python_requires='>=3.2',
     cmdclass={
         'verify': VerifyVersionCommand,

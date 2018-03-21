@@ -10,12 +10,18 @@ name = "pypi"
 pytest = "*"
 pylint = "*"
 ipython = "*"
+twine = "*"
+sphinx = "*"
+sphinx-autobuild = "*"
+recommonmark = "*"
+sphinx-rtd-theme = "*"
 
 
 [packages]
 
 requests = "*"
 obonet = "*"
+click = "*"
 
 
 [requires]

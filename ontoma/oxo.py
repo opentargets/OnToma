@@ -111,7 +111,7 @@ class OxoClient:
                     yield mapping
         except HTTPError as e:
             logger.error(e.response.json()['message'])
-            return None
+            return
 
 
     
