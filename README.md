@@ -5,16 +5,17 @@ ontology we use in the Open Targets platform.
 
 ## Installing
 
-`pip install git+https://github.com/opentargets/OnToma.git`
+`pip install ontoma`
 
 ## Quickstart
 
-We want:
+Basic usage should be simple:
 
 ```python
-from ontoma import find_efo
+from ontoma import OnToma
 
-print(find_efo('asthma'))
+otmap = OnToma()
+print(otmap.find_efo('asthma'))
 
 #outputs:
 'EFO_000270'
@@ -34,6 +35,9 @@ asthma
 alzheimer's
 DO:124125
 ```
+
+More detailed documentation is at [![Documentation Status](https://readthedocs.org/projects/ontoma/badge/?version=latest)](http://ontoma.readthedocs.io/en/latest/?badge=latest)
+http://ontoma.readthedocs.io/en/stable/
 
 # Developing
 
@@ -55,15 +59,20 @@ Test everything is working:
 pipenv run pytest
 ```
 
-## add a dependency with pipenv + setup.py
-To add a dep for a library, add it by hand to `setup.py`, then add it separately to Pipfile, so that it shows up both as a transitive dependency and in your locked dev environment
+## How to add a dependency
+
+**Add to both pipenv AND setup.py**
+
+To add a dep for a library, add it by hand to `setup.py`, then add it separately
+to `Pipfile`, so that it shows up both as a transitive dependency and in your
+locked dev environment
 
 ## Release to PyPi
-1. Once you are ready to cut a new release, update the version in setup.py and create a new git tag with git tag $VERSION.
-2. Once you push the tag to GitHub with git push --tags a new CircleCI build is triggered.
-3. You run a verification step to ensure that the git tag matches the version of ontoma that you added in step 1.
-4. CircleCI performs all tests.
-5. Once all of your test pass, you create a new Python package and upload it to PyPI using twine.
+
+Simply run `./bumpversion.sh`
+
+The script will tag, push and trigger a new CI run. 
+The package will be automatically uploaded to pypi. 
 
 ## TODO:
 
