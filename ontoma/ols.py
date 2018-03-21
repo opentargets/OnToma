@@ -76,7 +76,11 @@ class OlsClient:
         self.ontology_search = self.base + api_search
 
     def besthit(self, name):
-        return self.search(name)[0]
+        try:
+            return self.search(name)[0]
+        except TypeError:
+            #this is probably a None
+            return self.search(name)
 
     def search(self, name, query_fields=None, ontology=None, field_list=None):
         """Searches the OLS with the given term

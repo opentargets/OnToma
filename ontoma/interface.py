@@ -70,6 +70,8 @@ def make_uri(ontology_short_form):
             ...
         ValueError: Could not build an URI. Short form: TEST_0000270 not recognized
     '''
+    if ontology_short_form is None: 
+        return 
     if ontology_short_form.startswith('http'): 
         return ontology_short_form
     ontology_code = ontology_short_form.replace(':',"_")
@@ -145,6 +147,13 @@ class OnToma(object):
         'http://www.ebi.ac.uk/efo/EFO_0000270'
         >>> t.find_efo('615877',code='OMIM')
         'http://www.orpha.net/ORDO/Orphanet_202948'
+
+        It returns `None` if it cannot find an EFO id:
+        
+        >>> t.find_efo('notadisease') is None
+        True
+
+
     '''
 
     def __init__(self, efourl = URLS.EFO, 
@@ -218,7 +227,11 @@ class OnToma(object):
     def ols_lookup(self, name):
         '''Searches the EBI OLS API for a best match from the EFO
         '''
-        return self._ols.besthit(name)['short_form']
+        s = self._ols.besthit(name)
+        if s:
+            return s['short_form']
+        else:
+            return None
 
     def hp_lookup(self, name):
         '''Searches the HP OBO file for a direct match
@@ -271,15 +284,16 @@ class OnToma(object):
                 our curated mapping datasources. Defaults to None.
         
         Returns:
-            A valid OT ontology URI. `None` if no EFO code was found
+            A valid OT ontology URI. `None` if no EFO code was found        
         '''
+
         if code:
             try:
                 return make_uri(self._find_efo_from_code(query, code=code))
             except KeyError as ke:
                 logger.error('Could not find a match '
-                             'for {} in {} mappings. '.format(ke,code)
-                             'Should you be using another ontology?')
+                             'for {} in {} mappings. '
+                             'Should you be using another ontology?'.format(ke,code))
                 return None
         else:
             try:
@@ -326,16 +340,18 @@ class OnToma(object):
             logger.debug('Failed Zooma Mappings lookup for {}'.format(e))
         
         try:
-            return self.ols_lookup(query)
-        except KeyError as e:
-            logger.debug('Failed OLS API lookup for {}'.format(e))
-        
-        try:
             return self.zooma_lookup(query)
         except KeyError as e:
             logger.debug('Failed Zooma API lookup for {}'.format(e))
 
         try:
+            return self.ols_lookup(query)
+        except KeyError as e:
+            logger.debug('Failed OLS API lookup for {}'.format(e)) 
+
+        try:
+            logger.error('Used an HP term. Please check if it is'
+                         'actually contained in the Open Targets ontology.')
             return self.hp_lookup(query)
         except KeyError as e:
             logger.debug('Failed HP OBO lookup for {}'.format(e))
