@@ -49,9 +49,11 @@ def make_uri(ontology_short_form):
 
     Args:
         ontology_short_form: An ontology code in the short format, like 'EFO:0000270'.
+                             The function won't break if a valid URI is passed.
 
     Returns:
-        A full URI.
+        A full URI. Raises a `ValueError` if the short form code was not 
+        one of the supported ones.
 
     Example:
         >>> make_uri('EFO:0000270')
@@ -62,6 +64,11 @@ def make_uri(ontology_short_form):
         
         >>> make_uri('http://purl.obolibrary.org/obo/HP_0000270')
         'http://purl.obolibrary.org/obo/HP_0000270'
+
+        >>> make_uri('TEST_0000270')
+        Traceback (most recent call last):
+            ...
+        ValueError: Could not build an URI. Short form: TEST_0000270 not recognized
     '''
     if ontology_short_form.startswith('http'): 
         return ontology_short_form
@@ -73,8 +80,8 @@ def make_uri(ontology_short_form):
     elif ontology_code.startswith('Orphanet') :
         return 'http://www.orpha.net/ORDO/' + ontology_code
     else:
-        logger.error("Could not build an URI. {} not recognized".format(ontology_code))
-        raise Exception
+        raise ValueError("Could not build an URI. "
+                         "Short form: {} not recognized".format(ontology_code))
 
 
 class OnToma(object):
@@ -263,19 +270,31 @@ class OnToma(object):
                 If a code is passed, it will attempt to find the code in one of our
                 curated mapping datasources. Defaults to None.
         
+        Returns:
+            A valid OT ontology URI. `None` if no EFO code was found
         '''
         if code:
             try:
                 return make_uri(self._find_efo_from_code(query, code=code))
-            except Exception as e:
-                logger.error(e)
-                return None
+            except ValueError as ve:
+                logger.error(ve)
+            except KeyError as ke:
+                logger.error(ke)
+            return None
         else:
-            return make_uri(self._find_efo_from_string(query))
-
+            try:
+                return make_uri(self._find_efo_from_string(query))
+            except ValueError as ve:
+                logger.error(ve)
+            except KeyError as ke:
+                logger.error(ke)
+            return None
 
     def _find_efo_from_code(self, query, code):
-        #FIXME need to properly deal with NotFound scenario
+        '''Finds EFO code given another ontology code
+
+        Returns: `None` if no EFO code was found by this method
+        '''
         if code == 'OMIM':
             return self.omim_lookup(query)
         if code == 'ICD9CM':
