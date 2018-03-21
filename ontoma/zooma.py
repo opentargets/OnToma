@@ -50,9 +50,10 @@ class ZoomaClient:
         return [m for m in self.annotate(name) if m['confidence'] == 'HIGH']
     
     def besthit(self, name):
-        if self.highconfhits(name):
+        try:
             return self.highconfhits(name)[0]['semanticTags'][0]
-        else:
+        except IndexError:
+            logger.info('Empty response from ZOoma API for {}'.format(name))
             return
 
 

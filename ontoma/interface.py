@@ -291,9 +291,8 @@ class OnToma(object):
             try:
                 return make_uri(self._find_efo_from_code(query, code=code))
             except KeyError as ke:
-                logger.error('Could not find a match '
-                             'for {} in {} mappings. '
-                             'Should you be using another ontology?'.format(ke,code))
+                logger.debug('Could not find a match '
+                             'for {} in {} mappings. '.format(ke,code))             
                 return None
         else:
             try:
@@ -339,15 +338,15 @@ class OnToma(object):
         except KeyError as e:
             logger.debug('Failed Zooma Mappings lookup for {}'.format(e))
         
-        try:
+        if self.zooma_lookup(query):
             return self.zooma_lookup(query)
-        except KeyError as e:
-            logger.debug('Failed Zooma API lookup for {}'.format(e))
+        else:
+            logger.debug('Failed Zooma API lookup for {}'.format(query))
 
-        try:
+        if self.ols_lookup(query):
             return self.ols_lookup(query)
-        except KeyError as e:
-            logger.debug('Failed OLS API lookup for {}'.format(e)) 
+        else:
+            logger.debug('Failed OLS API lookup for {}'.format(query)) 
 
         try:
             logger.error('Used an HP term. Please check if it is'
