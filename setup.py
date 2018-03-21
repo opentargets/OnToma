@@ -48,8 +48,13 @@ setup(
     keywords='opentargets ontology efo mapper',
     install_requires=[
         'requests',
-        'obonet'
+        'obonet',
+        'click'
     ],
+    entry_points='''
+        [console_scripts]
+        ontoma=ontoma.cli:ontoma
+    ''',
     python_requires='>=3.2',
     cmdclass={
         'verify': VerifyVersionCommand,
