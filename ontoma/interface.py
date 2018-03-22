@@ -171,7 +171,7 @@ class OnToma(object):
     def __init__(self):
         self.logger = logging.getLogger(__name__)
         '''Initialize API clients'''
-        self._ols = OlsClient(ontology=['efo'],field_list=['short_form'])
+        self._ols = OlsClient(ontology=['efo'],field_list=['iri'])
         self._zooma = ZoomaClient()
         self._oxo = OxoClient()
         '''Load OT specific mappings from our github repos'''
@@ -265,7 +265,7 @@ class OnToma(object):
         '''
         s = self._ols.besthit(name)
         if s:
-            return s['short_form']
+            return s['iri']
         else:
             return None
 
@@ -325,17 +325,23 @@ class OnToma(object):
 
         if code:
             try:
-                return make_uri(self._find_efo_from_code(query, code=code))
+                uri = make_uri(self._find_efo_from_code(query, code=code))
+                logger.info('Found {} for {} in {} '
+                             'mappings'.format(uri,query,code))
+                return uri
             except KeyError as ke:
-                logger.debug('Could not find a match '
+                logger.info('Could not find a match '
                              'for {} in {} mappings. '.format(ke,code))             
                 return None
         else:
-            try:
-                return make_uri(self._find_efo_from_string(query))
-            except KeyError as ke:
-                logger.error(ke)
-                return None
+            found, source = self._find_efo_from_string(query)
+            if found:
+                logger.info('Found {} for {} '
+                             'from {}'.format(make_uri(found),query,source))
+                return make_uri(found)
+            else:
+                logger.error('Could not find *any* EFO for string: {}'.format(query))
+                return
 
     def _find_efo_from_code(self, query, code):
         '''Finds EFO code given another ontology code
@@ -346,6 +352,7 @@ class OnToma(object):
             return self.omim_lookup(query)
         if code == 'ICD9CM':
             return self.icd9_lookup(query)
+
         logger.error('Code {} is not currently supported.'.format(code))
         return None
     
@@ -365,33 +372,35 @@ class OnToma(object):
         '''
 
         try:
-            return self.efo_lookup(query)
+            return (self.efo_lookup(query),'EFO OBO')
         except KeyError as e:
             logger.debug('Failed EFO OBO lookup for {}'.format(e))
         
         try:
-            return self.otzooma_map_lookup(query)
+            return (self.otzooma_map_lookup(query), 'OT Zooma Mappings')
         except KeyError as e:
             logger.debug('Failed Zooma Mappings lookup for {}'.format(e))
         
         if self.zooma_lookup(query):
-            return self.zooma_lookup(query)
+            return (self.zooma_lookup(query), 'Zooma API lookup')
         else:
             logger.debug('Failed Zooma API lookup for {}'.format(query))
 
         if self.ols_lookup(query):
-            return self.ols_lookup(query)
+            return (self.ols_lookup(query), 'OLS API lookup')
         else:
             logger.debug('Failed OLS API lookup for {}'.format(query)) 
 
         try:
-            logger.error('Used an HP term. Please check if it is'
-                         'actually contained in the Open Targets ontology.')
-            return self.hp_lookup(query)
+            hpterm = self.hp_lookup(query)
+            logger.error('Using the HP term: {} Please check if it is '
+                         'actually contained in the Open '
+                         'Targets ontology.'.format(hpterm))
+            return (hpterm, 'HPO OBO lookup')
         except KeyError as e:
             logger.debug('Failed HP OBO lookup for {}'.format(e))
 
 
-        logger.warning('Could not find EFO for string: {}'.format(query))
-        return None
+        #if everything else fails:
+        return (None, None)
 

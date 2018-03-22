@@ -53,7 +53,7 @@ class ZoomaClient:
         try:
             return self.highconfhits(name)[0]['semanticTags'][0]
         except IndexError:
-            logger.info('Empty response from ZOoma API for {}'.format(name))
+            logger.debug('Empty response from ZOoma API for {}'.format(name))
             return
 
 

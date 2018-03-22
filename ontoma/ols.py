@@ -97,11 +97,11 @@ class OlsClient:
         self.ontology_search = self.base + api_search
 
     def besthit(self, name, **kwargs):
-        try:
-            return self.search(name, **kwargs)[0]
-        except TypeError:
-            #this is probably a None
-            return self.search(name, **kwargs)
+        searchresp = self.search(name, **kwargs)
+        if searchresp:
+            return searchresp[0]
+        else:
+            return
 
     def search(self, name, query_fields=None, ontology=None, field_list=None):
         """Searches the OLS with the given term
@@ -129,6 +129,7 @@ class OlsClient:
             params['fieldList'] = concat_str_or_list(self.field_list)
 
         r = requests.get(self.ontology_search, params=params)
+        logger.debug("Request to OLS search API: {} - {}".format(r.status_code,name))
         r.raise_for_status()
         if r.json()['response']['numFound']:
             return r.json()['response']['docs']

@@ -27,7 +27,7 @@ def get_omim_to_efo_mappings(url):
             if row['OMIM'] not in mappings:
                 mappings[row['OMIM']] = []
             mappings[row['OMIM']].append(row['efo_uri'])
-    logger.debug("Parsed {} rows".format(i))
+    logger.info("OMIM to EFO mappings - Parsed {} rows".format(i))
     return mappings
 
 
@@ -44,7 +44,7 @@ def get_ot_zooma_to_efo_mappings(url):
             #(study, bioentity, property_type, property_value, semantic_tag, annotator, annotation_date)
             # Note here should be 1:1 correspondence
             mappings[row['PROPERTY_VALUE'].lower()] = row['SEMANTIC_TAG']
-    logger.debug("Parsed {} rows".format(i))
+    logger.info("ZOOMA to EFO mappings - Parsed {} rows".format(i))
     return mappings
 
 
