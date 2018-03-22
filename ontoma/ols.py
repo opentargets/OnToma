@@ -32,7 +32,7 @@ def concat_str_or_list(inputstr):
     single string or an iterable
     '''
     if type(inputstr) is str:
-        return input
+        return inputstr
     else:
         return ','.join(inputstr)
 
@@ -44,7 +44,15 @@ class OlsClient:
     >>> ols.search('asthma')[0]['iri']
     'http://purl.obolibrary.org/obo/NCIT_C28397'
 
-    >>> ols.search('lung',ontology='uberon')
+    You can search in other ontologies and pass all other
+    parameters accepted by OLS
+
+    >>> ols.search('lung',ontology='uberon')[0]['iri']
+    'http://purl.obolibrary.org/obo/UBERON_0002048'
+
+    besthit() simply returns the first element:
+
+    >>> ols.besthit('lung',ontology='uberon')['iri']
     'http://purl.obolibrary.org/obo/UBERON_0002048'
 
     >>> r = ols.search('asthma',ontology=['efo'],query_fields=['synonym'],field_list=['iri','label'])
@@ -88,12 +96,12 @@ class OlsClient:
         self.ontology_select = self.base + api_select
         self.ontology_search = self.base + api_search
 
-    def besthit(self, name):
+    def besthit(self, name, **kwargs):
         try:
-            return self.search(name)[0]
+            return self.search(name, **kwargs)[0]
         except TypeError:
             #this is probably a None
-            return self.search(name)
+            return self.search(name, **kwargs)
 
     def search(self, name, query_fields=None, ontology=None, field_list=None):
         """Searches the OLS with the given term
