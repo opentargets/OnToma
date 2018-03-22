@@ -20,14 +20,26 @@ import obonet
 import logging
 logger = logging.getLogger(__name__)
 
-# if you want to use across classes
-# _cache = {"files":None}
+
+
+def lazy_property(fn):
+    '''Decorator that makes a property lazy-evaluated.
+    ... seealso: https://stevenloria.com/lazy-properties/
+    '''
+    attr_name = '_lazy_' + fn.__name__
+
+    @property
+    def _lazy_property(self):
+        if not hasattr(self, attr_name):
+            setattr(self, attr_name, fn(self))
+        return getattr(self, attr_name)
+    return _lazy_property
 
 
 def name_to_label_mapping(obonetwork):
     '''
     builds name <=> label lookup dictionaries starting
-    from an OBO file
+    from an OBO file, including synonyms
     '''
     id_to_name = {}
     name_to_id = {}
@@ -156,37 +168,61 @@ class OnToma(object):
 
     '''
 
-    def __init__(self, efourl = URLS.EFO, 
-                        hpurl = URLS.HP):
-
+    def __init__(self):
         self.logger = logging.getLogger(__name__)
-
-        '''Parse the ontology obo files for exact match lookup'''
-        #TODO delay download of the OBO files until the class instance is used
-        self._efo = obonet.read_obo(efourl)
-        self.logger.info('EFO parsed. Size: {} nodes'.format(len(self._efo)))
-        self._hp = obonet.read_obo(hpurl)
-        self.logger.info('HP parsed. Size: {} nodes'.format(len(self._hp)))
-
-        '''Create name <=> label mappings'''
-        self.efo_to_name, self.name_to_efo = name_to_label_mapping(self._efo)
-        
-        self.hp_to_name, self.name_to_hp = name_to_label_mapping(self._hp)
-        
-
         '''Initialize API clients'''
-
         self._ols = OlsClient(ontology=['efo'],field_list=['short_form'])
         self._zooma = ZoomaClient()
         self._oxo = OxoClient()
-
-        '''ICD9 <=> EFO mappings '''
-        self._icd9_to_efo = self._oxo.make_mappings(input_source = "ICD9CM",
-                                                   mapping_target= 'EFO')
-
-        '''OT specific mappings in our github repos'''
+        '''Load OT specific mappings from our github repos'''
         self._zooma_to_efo_map = get_ot_zooma_to_efo_mappings(URLS.ZOOMA_EFO_MAP)
         self._omim_to_efo = get_omim_to_efo_mappings(URLS.OMIM_EFO_MAP)
+        
+
+    @lazy_property
+    def _efo(self, efourl = URLS.EFO):
+        '''Parse the EFO obo file for exact match lookup'''
+        _efo = obonet.read_obo(efourl)
+        self.logger.info('EFO OBO parsed. Size: {} nodes'.format(len(_efo)))
+        return _efo
+
+    @lazy_property
+    def _hp(self, hpurl = URLS.HP):
+        '''Parse the HP obo file for exact match lookup'''
+        _hp = obonet.read_obo(hpurl)
+        self.logger.info('HP OBO parsed. Size: {} nodes'.format(len(_hp)))
+        return _hp
+   
+    @lazy_property
+    def _icd9_to_efo(self):
+        _icd9_to_efo = self._oxo.make_mappings(input_source = "ICD9CM",
+                                                   mapping_target= 'EFO')
+        return _icd9_to_efo
+
+    @lazy_property
+    def efo_to_name(self):
+        '''Create name <=> label mappings'''
+        efo_to_name, _ = name_to_label_mapping(self._efo)
+        return efo_to_name
+    
+    @lazy_property
+    def name_to_efo(self):
+        '''Create name <=> label mappings'''
+        _, name_to_efo = name_to_label_mapping(self._efo)
+        return name_to_efo
+    
+    @lazy_property
+    def hp_to_name(self):
+        '''Create name <=> label mappings'''
+        hp_to_name, _ = name_to_label_mapping(self._hp)
+        return hp_to_name
+    
+    @lazy_property
+    def name_to_hp(self):
+        '''Create name <=> label mappings'''
+        _, name_to_hp = name_to_label_mapping(self._hp)
+        return name_to_hp
+
 
 
     def get_efo_label(self, efocode):
