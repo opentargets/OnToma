@@ -55,6 +55,14 @@ class OlsClient:
     >>> ols.besthit('lung',ontology='uberon')['iri']
     'http://purl.obolibrary.org/obo/UBERON_0002048'
 
+    `exact=True` forces an exact match:
+    
+    >>> ols.besthit('hypogammaglobulinemia',ontology='efo')['label']
+    'Osteopetrosis - hypogammaglobulinemia'
+
+    >>> ols.besthit('hypogammaglobulinemia',ontology='efo',exact=True) is None
+    True
+
     >>> r = ols.search('asthma',ontology=['efo'],query_fields=['synonym'],field_list=['iri','label'])
     >>> r[0]['iri']
     'http://www.ebi.ac.uk/efo/EFO_0004591'
@@ -97,21 +105,32 @@ class OlsClient:
         self.ontology_search = self.base + api_search
 
     def besthit(self, name, **kwargs):
+        '''select first element of the /search API response
+        '''
         searchresp = self.search(name, **kwargs)
         if searchresp:
             return searchresp[0]
         else:
             return
 
-    def search(self, name, query_fields=None, ontology=None, field_list=None):
+    def search(self, name, query_fields=None, ontology=None, field_list=None, 
+                exact=None):
         """Searches the OLS with the given term
 
-        By default the search is performed over term labels, synonyms, 
-        descriptions, identifiers and annotation properties.
-        Specify the fields to query, the defaults are 
-        {label, synonym, description, short_form, obo_id, annotations, logical_description, iri}
+        Args:
+            query_fields:   By default the search is performed over term labels, 
+                            synonyms, descriptions, identifiers and annotation 
+                            properties.
+                            This option allows to specify the fields to query, 
+                            the defaults are 
+                            `{label, synonym, description, short_form, obo_id, 
+                            annotations, logical_description, iri}`
+            exact:          Forces exact match if not `None`
         """
         params = {'q': name}
+
+        if exact:
+            params['exact'] = 'on'
 
         if ontology:
             params['ontology'] = concat_str_or_list(ontology)
@@ -134,7 +153,12 @@ class OlsClient:
         if r.json()['response']['numFound']:
             return r.json()['response']['docs']
         else:
-            logger.debug('OLS search returned empty response for {}'.format(name))
+            if exact:
+                logger.debug('OLS exact search returned empty' 
+                             'response for {}'.format(name))
+            else:
+                logger.debug('OLS search returned empty' 
+                             'response for {}'.format(name))
             return None
 
 

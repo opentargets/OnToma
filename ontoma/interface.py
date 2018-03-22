@@ -126,17 +126,12 @@ class OnToma(object):
         'asthma'
 
 
-        Similarly, we can now lookup "Phenotypic abnormality" on HP: 
+        Similarly, we can now lookup "Phenotypic abnormality" on HP OBO: 
 
         >>> t.hp_lookup('Phenotypic abnormality')
         'HP:0000118'
         >>> t.hp_lookup('Narrow nasal tip')
         'HP:0011832'
-
-        Lookup in OLS
-
-        >>> t.ols_lookup('asthma')
-        'EFO_0000270'
 
         OMIM code lookup
 
@@ -171,7 +166,7 @@ class OnToma(object):
     def __init__(self):
         self.logger = logging.getLogger(__name__)
         '''Initialize API clients'''
-        self._ols = OlsClient(ontology=['efo'],field_list=['iri'])
+        self._ols = OlsClient()
         self._zooma = ZoomaClient()
         self._oxo = OxoClient()
         '''Load OT specific mappings from our github repos'''
@@ -260,14 +255,6 @@ class OnToma(object):
         '''
         return self._omim_to_efo[omimcode][0]
     
-    def ols_lookup(self, name):
-        '''Searches the EBI OLS API for a best match from the EFO
-        '''
-        s = self._ols.besthit(name)
-        if s:
-            return s['iri']
-        else:
-            return None
 
     def hp_lookup(self, name):
         '''Searches the HP OBO file for a direct match
@@ -363,11 +350,15 @@ class OnToma(object):
         operations roughly ordered from least expensive to most expensive
         and also from most authorative to least authorative
 
-        1. search exact match to name in EFO (or synonyms)
-        2. (search fuzzy match to name in EFO)
-        3. search within our open targets zooma mappings
-        3. search in OLS
-        4. search in Zooma High confidence set
+        1. EFO OBO lookup
+        2. Zooma mappings lookup
+        3. Zooma API high confidence lookup
+        4. OLS API EFO lookup - exact match
+        --- below this line we might not have a term in the platform ---
+        5. HP OBO lookup
+        6. OLS API HP lookup - exact match
+        7. OLS API EFO lookup - not exact
+        8. ?Zooma medium
 
         '''
 
@@ -386,10 +377,12 @@ class OnToma(object):
         else:
             logger.debug('Failed Zooma API lookup for {}'.format(query))
 
-        if self.ols_lookup(query):
-            return (self.ols_lookup(query), 'OLS API lookup')
+        exact_ols_efo = self._ols.besthit(query, ontology=['efo'], field_list=['iri'], exact=True)
+        if exact_ols_efo:
+            return (exact_ols_efo['iri'], 'OLS API EFO lookup')
         else:
-            logger.debug('Failed OLS API lookup for {}'.format(query)) 
+            logger.debug('Failed OLS API EFO (exact) lookup for {}'.format(query)) 
+
 
         try:
             hpterm = self.hp_lookup(query)
@@ -400,6 +393,18 @@ class OnToma(object):
         except KeyError as e:
             logger.debug('Failed HP OBO lookup for {}'.format(e))
 
+
+        exact_ols_hp = self._ols.besthit(query, ontology=['hp'], field_list=['iri'], exact=True)
+        if exact_ols_hp:
+            return (exact_ols_hp['iri'], 'OLS API EFO lookup')
+        else:
+            logger.debug('Failed OLS API HP (exact) lookup for {}'.format(query))
+
+        ols_efo = self._ols.besthit(query, ontology=['hp'], field_list=['iri'])
+        if ols_efo:
+            return (ols_efo['iri'], 'OLS API EFO lookup')
+        else:
+            logger.debug('Failed OLS API EFO lookup for {}'.format(query))
 
         #if everything else fails:
         return (None, None)
