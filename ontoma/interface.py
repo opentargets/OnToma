@@ -20,14 +20,26 @@ import obonet
 import logging
 logger = logging.getLogger(__name__)
 
-# if you want to use across classes
-# _cache = {"files":None}
+
+
+def lazy_property(fn):
+    '''Decorator that makes a property lazy-evaluated.
+    ... seealso: https://stevenloria.com/lazy-properties/
+    '''
+    attr_name = '_lazy_' + fn.__name__
+
+    @property
+    def _lazy_property(self):
+        if not hasattr(self, attr_name):
+            setattr(self, attr_name, fn(self))
+        return getattr(self, attr_name)
+    return _lazy_property
 
 
 def name_to_label_mapping(obonetwork):
     '''
     builds name <=> label lookup dictionaries starting
-    from an OBO file
+    from an OBO file, including synonyms
     '''
     id_to_name = {}
     name_to_id = {}
@@ -49,9 +61,11 @@ def make_uri(ontology_short_form):
 
     Args:
         ontology_short_form: An ontology code in the short format, like 'EFO:0000270'.
+                             The function won't break if a valid URI is passed.
 
     Returns:
-        A full URI.
+        A full URI. Raises a `ValueError` if the short form code was not 
+        one of the supported ones.
 
     Example:
         >>> make_uri('EFO:0000270')
@@ -62,7 +76,14 @@ def make_uri(ontology_short_form):
         
         >>> make_uri('http://purl.obolibrary.org/obo/HP_0000270')
         'http://purl.obolibrary.org/obo/HP_0000270'
+
+        >>> make_uri('TEST_0000270')
+        Traceback (most recent call last):
+            ...
+        ValueError: Could not build an URI. Short form: TEST_0000270 not recognized
     '''
+    if ontology_short_form is None: 
+        return 
     if ontology_short_form.startswith('http'): 
         return ontology_short_form
     ontology_code = ontology_short_form.replace(':',"_")
@@ -73,8 +94,8 @@ def make_uri(ontology_short_form):
     elif ontology_code.startswith('Orphanet') :
         return 'http://www.orpha.net/ORDO/' + ontology_code
     else:
-        logger.error("Could not build an URI. {} not recognized".format(ontology_code))
-        raise Exception
+        raise ValueError("Could not build an URI. "
+                         "Short form: {} not recognized".format(ontology_code))
 
 
 class OnToma(object):
@@ -138,39 +159,70 @@ class OnToma(object):
         'http://www.ebi.ac.uk/efo/EFO_0000270'
         >>> t.find_efo('615877',code='OMIM')
         'http://www.orpha.net/ORDO/Orphanet_202948'
+
+        It returns `None` if it cannot find an EFO id:
+        
+        >>> t.find_efo('notadisease') is None
+        True
+
+
     '''
 
-    def __init__(self, efourl = URLS.EFO, 
-                        hpurl = URLS.HP):
-
+    def __init__(self):
         self.logger = logging.getLogger(__name__)
-
-        '''Parse the ontology obo files for exact match lookup'''
-        #TODO delay download of the OBO files until the class instance is used
-        self._efo = obonet.read_obo(efourl)
-        self.logger.info('EFO parsed. Size: {} nodes'.format(len(self._efo)))
-        self._hp = obonet.read_obo(hpurl)
-        self.logger.info('HP parsed. Size: {} nodes'.format(len(self._hp)))
-
-        '''Create name <=> label mappings'''
-        self.efo_to_name, self.name_to_efo = name_to_label_mapping(self._efo)
-        
-        self.hp_to_name, self.name_to_hp = name_to_label_mapping(self._hp)
-        
-
         '''Initialize API clients'''
-
-        self._ols = OlsClient(ontology=['efo'],field_list=['short_form'])
+        self._ols = OlsClient(ontology=['efo'],field_list=['iri'])
         self._zooma = ZoomaClient()
         self._oxo = OxoClient()
-
-        '''ICD9 <=> EFO mappings '''
-        self._icd9_to_efo = self._oxo.make_mappings(input_source = "ICD9CM",
-                                                   mapping_target= 'EFO')
-
-        '''OT specific mappings in our github repos'''
+        '''Load OT specific mappings from our github repos'''
         self._zooma_to_efo_map = get_ot_zooma_to_efo_mappings(URLS.ZOOMA_EFO_MAP)
         self._omim_to_efo = get_omim_to_efo_mappings(URLS.OMIM_EFO_MAP)
+        
+
+    @lazy_property
+    def _efo(self, efourl = URLS.EFO):
+        '''Parse the EFO obo file for exact match lookup'''
+        _efo = obonet.read_obo(efourl)
+        self.logger.info('EFO OBO parsed. Size: {} nodes'.format(len(_efo)))
+        return _efo
+
+    @lazy_property
+    def _hp(self, hpurl = URLS.HP):
+        '''Parse the HP obo file for exact match lookup'''
+        _hp = obonet.read_obo(hpurl)
+        self.logger.info('HP OBO parsed. Size: {} nodes'.format(len(_hp)))
+        return _hp
+   
+    @lazy_property
+    def _icd9_to_efo(self):
+        _icd9_to_efo = self._oxo.make_mappings(input_source = "ICD9CM",
+                                                   mapping_target= 'EFO')
+        return _icd9_to_efo
+
+    @lazy_property
+    def efo_to_name(self):
+        '''Create name <=> label mappings'''
+        efo_to_name, _ = name_to_label_mapping(self._efo)
+        return efo_to_name
+    
+    @lazy_property
+    def name_to_efo(self):
+        '''Create name <=> label mappings'''
+        _, name_to_efo = name_to_label_mapping(self._efo)
+        return name_to_efo
+    
+    @lazy_property
+    def hp_to_name(self):
+        '''Create name <=> label mappings'''
+        hp_to_name, _ = name_to_label_mapping(self._hp)
+        return hp_to_name
+    
+    @lazy_property
+    def name_to_hp(self):
+        '''Create name <=> label mappings'''
+        _, name_to_hp = name_to_label_mapping(self._hp)
+        return name_to_hp
+
 
 
     def get_efo_label(self, efocode):
@@ -211,7 +263,11 @@ class OnToma(object):
     def ols_lookup(self, name):
         '''Searches the EBI OLS API for a best match from the EFO
         '''
-        return self._ols.besthit(name)['short_form']
+        s = self._ols.besthit(name)
+        if s:
+            return s['iri']
+        else:
+            return None
 
     def hp_lookup(self, name):
         '''Searches the HP OBO file for a direct match
@@ -260,27 +316,44 @@ class OnToma(object):
             query (str): the disease/phenotype to be matched to an EFO code
             code: accepts one of "ICD9CM", "OMIM"
                 **TODO** expand to more ontologies
-                If a code is passed, it will attempt to find the code in one of our
-                curated mapping datasources. Defaults to None.
+                If a code is passed, it will attempt to find the code in one of 
+                our curated mapping datasources. Defaults to None.
         
+        Returns:
+            A valid OT ontology URI. `None` if no EFO code was found        
         '''
+
         if code:
             try:
-                return make_uri(self._find_efo_from_code(query, code=code))
-            except Exception as e:
-                logger.error(e)
+                uri = make_uri(self._find_efo_from_code(query, code=code))
+                logger.info('Found {} for {} in {} '
+                             'mappings'.format(uri,query,code))
+                return uri
+            except KeyError as ke:
+                logger.info('Could not find a match '
+                             'for {} in {} mappings. '.format(ke,code))             
                 return None
         else:
-            return make_uri(self._find_efo_from_string(query))
-
+            found, source = self._find_efo_from_string(query)
+            if found:
+                logger.info('Found {} for {} '
+                             'from {}'.format(make_uri(found),query,source))
+                return make_uri(found)
+            else:
+                logger.error('Could not find *any* EFO for string: {}'.format(query))
+                return
 
     def _find_efo_from_code(self, query, code):
-        #FIXME need to properly deal with NotFound scenario
+        '''Finds EFO code given another ontology code
+
+        Returns: `None` if no EFO code was found by this method
+        '''
         if code == 'OMIM':
             return self.omim_lookup(query)
         if code == 'ICD9CM':
             return self.icd9_lookup(query)
-        logger.warning('Could not find EFO for ID: {} in {}'.format(query, code))
+
+        logger.error('Code {} is not currently supported.'.format(code))
         return None
     
 
@@ -297,14 +370,37 @@ class OnToma(object):
         4. search in Zooma High confidence set
 
         '''
-        if self.efo_lookup(query):
-            return self.efo_lookup(query)
-        if self.otzooma_map_lookup(query):
-            return self.otzooma_map_lookup(query)
-        if self.ols_lookup(query):
-            return self.ols_lookup(query)
+
+        try:
+            return (self.efo_lookup(query),'EFO OBO')
+        except KeyError as e:
+            logger.debug('Failed EFO OBO lookup for {}'.format(e))
+        
+        try:
+            return (self.otzooma_map_lookup(query), 'OT Zooma Mappings')
+        except KeyError as e:
+            logger.debug('Failed Zooma Mappings lookup for {}'.format(e))
+        
         if self.zooma_lookup(query):
-            return self.zooma_lookup(query)
-        logger.warning('Could not find EFO for string: {}'.format(query))
-        return None
+            return (self.zooma_lookup(query), 'Zooma API lookup')
+        else:
+            logger.debug('Failed Zooma API lookup for {}'.format(query))
+
+        if self.ols_lookup(query):
+            return (self.ols_lookup(query), 'OLS API lookup')
+        else:
+            logger.debug('Failed OLS API lookup for {}'.format(query)) 
+
+        try:
+            hpterm = self.hp_lookup(query)
+            logger.error('Using the HP term: {} Please check if it is '
+                         'actually contained in the Open '
+                         'Targets ontology.'.format(hpterm))
+            return (hpterm, 'HPO OBO lookup')
+        except KeyError as e:
+            logger.debug('Failed HP OBO lookup for {}'.format(e))
+
+
+        #if everything else fails:
+        return (None, None)
 

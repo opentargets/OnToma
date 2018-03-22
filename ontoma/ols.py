@@ -27,12 +27,33 @@ api_search = '/api/search'
 api_select = '/api/select'
 
 
+def concat_str_or_list(inputstr):
+    '''always returns a comma joined list, whether the input is a 
+    single string or an iterable
+    '''
+    if type(inputstr) is str:
+        return inputstr
+    else:
+        return ','.join(inputstr)
+
+
 class OlsClient:
     """Wraps the functions to query the Ontology Lookup Service.
     
     >>> ols = OlsClient()
     >>> ols.search('asthma')[0]['iri']
     'http://purl.obolibrary.org/obo/NCIT_C28397'
+
+    You can search in other ontologies and pass all other
+    parameters accepted by OLS
+
+    >>> ols.search('lung',ontology='uberon')[0]['iri']
+    'http://purl.obolibrary.org/obo/UBERON_0002048'
+
+    besthit() simply returns the first element:
+
+    >>> ols.besthit('lung',ontology='uberon')['iri']
+    'http://purl.obolibrary.org/obo/UBERON_0002048'
 
     >>> r = ols.search('asthma',ontology=['efo'],query_fields=['synonym'],field_list=['iri','label'])
     >>> r[0]['iri']
@@ -75,8 +96,12 @@ class OlsClient:
         self.ontology_select = self.base + api_select
         self.ontology_search = self.base + api_search
 
-    def besthit(self, name):
-        return self.search(name)[0]
+    def besthit(self, name, **kwargs):
+        searchresp = self.search(name, **kwargs)
+        if searchresp:
+            return searchresp[0]
+        else:
+            return
 
     def search(self, name, query_fields=None, ontology=None, field_list=None):
         """Searches the OLS with the given term
@@ -85,26 +110,26 @@ class OlsClient:
         descriptions, identifiers and annotation properties.
         Specify the fields to query, the defaults are 
         {label, synonym, description, short_form, obo_id, annotations, logical_description, iri}
-
         """
         params = {'q': name}
 
         if ontology:
-            params['ontology'] = ','.join(ontology)
+            params['ontology'] = concat_str_or_list(ontology)
         elif self.ontology:
-            params['ontology'] = ','.join(self.ontology)
+            params['ontology'] = concat_str_or_list(self.ontology)
 
         if query_fields:
-            params['queryFields'] = ','.join(query_fields)
+            params['queryFields'] = concat_str_or_list(query_fields)
         elif self.query_fields:
-            params['queryFields'] = ','.join(self.query_fields)
+            params['queryFields'] = concat_str_or_list(self.query_fields)
 
         if field_list:
-            params['fieldList'] = ','.join(field_list)
+            params['fieldList'] = concat_str_or_list(field_list)
         elif self.field_list:
-            params['fieldList'] = ','.join(self.field_list)
+            params['fieldList'] = concat_str_or_list(self.field_list)
 
         r = requests.get(self.ontology_search, params=params)
+        logger.debug("Request to OLS search API: {} - {}".format(r.status_code,name))
         r.raise_for_status()
         if r.json()['response']['numFound']:
             return r.json()['response']['docs']
