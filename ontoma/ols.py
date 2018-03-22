@@ -27,12 +27,25 @@ api_search = '/api/search'
 api_select = '/api/select'
 
 
+def concat_str_or_list(inputstr):
+    '''always returns a comma joined list, whether the input is a 
+    single string or an iterable
+    '''
+    if type(inputstr) is str:
+        return input
+    else:
+        return ','.join(inputstr)
+
+
 class OlsClient:
     """Wraps the functions to query the Ontology Lookup Service.
     
     >>> ols = OlsClient()
     >>> ols.search('asthma')[0]['iri']
     'http://purl.obolibrary.org/obo/NCIT_C28397'
+
+    >>> ols.search('lung',ontology='uberon')
+    'http://purl.obolibrary.org/obo/UBERON_0002048'
 
     >>> r = ols.search('asthma',ontology=['efo'],query_fields=['synonym'],field_list=['iri','label'])
     >>> r[0]['iri']
@@ -89,24 +102,23 @@ class OlsClient:
         descriptions, identifiers and annotation properties.
         Specify the fields to query, the defaults are 
         {label, synonym, description, short_form, obo_id, annotations, logical_description, iri}
-
         """
         params = {'q': name}
 
         if ontology:
-            params['ontology'] = ','.join(ontology)
+            params['ontology'] = concat_str_or_list(ontology)
         elif self.ontology:
-            params['ontology'] = ','.join(self.ontology)
+            params['ontology'] = concat_str_or_list(self.ontology)
 
         if query_fields:
-            params['queryFields'] = ','.join(query_fields)
+            params['queryFields'] = concat_str_or_list(query_fields)
         elif self.query_fields:
-            params['queryFields'] = ','.join(self.query_fields)
+            params['queryFields'] = concat_str_or_list(self.query_fields)
 
         if field_list:
-            params['fieldList'] = ','.join(field_list)
+            params['fieldList'] = concat_str_or_list(field_list)
         elif self.field_list:
-            params['fieldList'] = ','.join(self.field_list)
+            params['fieldList'] = concat_str_or_list(self.field_list)
 
         r = requests.get(self.ontology_search, params=params)
         r.raise_for_status()
