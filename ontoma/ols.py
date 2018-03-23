@@ -12,6 +12,7 @@ Original code borrowed from https://github.com/cthoyt/ols-client/blob/master/src
 import logging
 import time
 import requests
+import urllib.parse
 
 OLS = 'http://www.ebi.ac.uk/ols'
     
@@ -25,9 +26,11 @@ logger = logging.getLogger(__name__)
 api_suggest = '/api/suggest'
 api_search = '/api/search'
 api_select = '/api/select'
+api_term = '/api/ontologies/{ontology}/terms/{iri}'
+api_ancestors = '/api/ontologies/{ontology}/terms/{iri}/ancestors'
 
 
-def concat_str_or_list(inputstr):
+def _concat_str_or_list(inputstr):
     '''always returns a comma joined list, whether the input is a 
     single string or an iterable
     '''
@@ -35,6 +38,12 @@ def concat_str_or_list(inputstr):
         return inputstr
     else:
         return ','.join(inputstr)
+
+
+def _dparse(iri):
+    '''double url encode the IRI, which is required
+    '''
+    return urllib.parse.quote_plus(urllib.parse.quote_plus(iri))
 
 
 class OlsClient:
@@ -66,6 +75,13 @@ class OlsClient:
     >>> r = ols.search('asthma',ontology=['efo'],query_fields=['synonym'],field_list=['iri','label'])
     >>> r[0]['iri']
     'http://www.ebi.ac.uk/efo/EFO_0004591'
+
+    Find the label of its first ancestor:
+
+    >>> a = ols.get_ancestors('efo',r[0]['iri'])
+    >>> a['_embedded']['terms'][0]['label']
+    'asthma'
+
 
     >>> r = ols.suggest('asthma', ontology=['efo','ordo','hpo'])
     >>> r[0]['autosuggest']
@@ -103,6 +119,9 @@ class OlsClient:
         self.ontology_suggest = self.base + api_suggest
         self.ontology_select = self.base + api_select
         self.ontology_search = self.base + api_search
+        self.ontology_term = self.base + api_term
+        self.ontology_ancestors = self.base + api_ancestors
+
 
     def besthit(self, name, **kwargs):
         '''select first element of the /search API response
@@ -112,6 +131,36 @@ class OlsClient:
             return searchresp[0]
         else:
             return
+
+
+    def get_term(self, ontology, iri):
+        """Gets the data for a given term
+        
+        Args:
+            ontology:   The name of the ontology
+            iri:        The IRI of a term
+        """
+
+        url = self.ontology_term.format(ontology=ontology, 
+                                        iri=_dparse(iri))
+        response = requests.get(url)
+        return response.json()
+
+
+    def get_ancestors(self, ont, iri):
+        """Gets the data for a given term
+        
+        Args:
+            ontology:   The name of the ontology
+            iri:        The IRI of a term
+        """
+        url = self.ontology_ancestors.format(ontology=ont, 
+                                            iri=_dparse(iri))
+        response = requests.get(url)
+        return response.json()
+
+
+    def 
 
     def search(self, name, query_fields=None, ontology=None, field_list=None, 
                 exact=None):
@@ -133,19 +182,19 @@ class OlsClient:
             params['exact'] = 'on'
 
         if ontology:
-            params['ontology'] = concat_str_or_list(ontology)
+            params['ontology'] = _concat_str_or_list(ontology)
         elif self.ontology:
-            params['ontology'] = concat_str_or_list(self.ontology)
+            params['ontology'] = _concat_str_or_list(self.ontology)
 
         if query_fields:
-            params['queryFields'] = concat_str_or_list(query_fields)
+            params['queryFields'] = _concat_str_or_list(query_fields)
         elif self.query_fields:
-            params['queryFields'] = concat_str_or_list(self.query_fields)
+            params['queryFields'] = _concat_str_or_list(self.query_fields)
 
         if field_list:
-            params['fieldList'] = concat_str_or_list(field_list)
+            params['fieldList'] = _concat_str_or_list(field_list)
         elif self.field_list:
-            params['fieldList'] = concat_str_or_list(self.field_list)
+            params['fieldList'] = _concat_str_or_list(self.field_list)
 
         r = requests.get(self.ontology_search, params=params)
         logger.debug("Request to OLS search API: {} - {}".format(r.status_code,name))
