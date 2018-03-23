@@ -1,6 +1,19 @@
 OnToma is a python module that helps you map your disease/phenotype terms to the
 ontology we use in the Open Targets platform. 
 
+The ontology we use in the Open Targets platform is a subset (aka. _slim_) of 
+the EFO ontology _plus_ any HPO terms for which a valid EFO mapping could
+not be found.
+
+
+*features*
+
+- Wrap OLS, OXO, Zooma in a pythonic API
+- Tries to find mappings iteratively using the faster methods first
+- Checks if mapping is in the subset of EFO that gets included in the 
+Open Targets platform
+- *tries to* follow the procedure highlighted in https://github.com/opentargets/data_release/wiki/EFO-Ontology-Annotation-Process
+
 # Usage
 
 ## Installing
