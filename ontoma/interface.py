@@ -286,6 +286,15 @@ class OnToma(object):
                                 distance = 2)
 
 
+    def _is_included(iri):
+        '''checks if efo term with given iri has for ancestors one of the nodes
+        we select for open targets
+        
+        bash call:
+        http 'https://www.ebi.ac.uk/ols/api/ontologies/efo/terms/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FUBERON_0001516/ancestors' | jq '._embedded.terms[] | [.iri,.label]'
+        '''
+        return
+
     def find_efo(self, query, code=None):
         '''Finds the most likely EFO code for a given string or ontology code.
 
@@ -321,7 +330,7 @@ class OnToma(object):
                              'for {} in {} mappings. '.format(ke,code))             
                 return None
         else:
-            found, source = self._find_efo_from_string(query)
+            found, source, _ = self._find_efo_from_string(query)
             if found:
                 logger.info('Found {} for {} '
                              'from {}'.format(make_uri(found),query,source))
@@ -358,54 +367,62 @@ class OnToma(object):
         5. HP OBO lookup
         6. OLS API HP lookup - exact match
         7. OLS API EFO lookup - not exact
-        8. ?Zooma medium
+        (8. ?Zooma medium)
 
+        Returns:
+            (match, source, quality)
         '''
 
         try:
-            return (self.efo_lookup(query),'EFO OBO')
+            return (self.efo_lookup(query),'EFO OBO', 'match')
         except KeyError as e:
             logger.debug('Failed EFO OBO lookup for {}'.format(e))
         
         try:
-            return (self.otzooma_map_lookup(query), 'OT Zooma Mappings')
+            return (self.otzooma_map_lookup(query), 'OT Zooma Mappings', 'match')
         except KeyError as e:
             logger.debug('Failed Zooma Mappings lookup for {}'.format(e))
         
         if self.zooma_lookup(query):
-            return (self.zooma_lookup(query), 'Zooma API lookup')
+            return (self.zooma_lookup(query), 'Zooma API lookup', 'match')
         else:
             logger.debug('Failed Zooma API lookup for {}'.format(query))
 
         exact_ols_efo = self._ols.besthit(query, ontology=['efo'], field_list=['iri'], exact=True)
         if exact_ols_efo:
-            return (exact_ols_efo['iri'], 'OLS API EFO lookup')
+            return (exact_ols_efo['iri'], 'OLS API EFO lookup', 'match')
         else:
             logger.debug('Failed OLS API EFO (exact) lookup for {}'.format(query)) 
 
+
+        ''' --- below this line mappings should be checked --- '''
 
         try:
             hpterm = self.hp_lookup(query)
             logger.error('Using the HP term: {} Please check if it is '
                          'actually contained in the Open '
                          'Targets ontology.'.format(hpterm))
-            return (hpterm, 'HPO OBO lookup')
+            return (hpterm, 'HPO OBO lookup', 'exact - check if in OT')
         except KeyError as e:
             logger.debug('Failed HP OBO lookup for {}'.format(e))
 
 
         exact_ols_hp = self._ols.besthit(query, ontology=['hp'], field_list=['iri'], exact=True)
         if exact_ols_hp:
-            return (exact_ols_hp['iri'], 'OLS API EFO lookup')
+            logger.error('Using the HP term: {} Please check if it is '
+                         'actually contained in the Open '
+                         'Targets ontology.'.format(exact_ols_hp))
+            return (exact_ols_hp['iri'], 'OLS API HP lookup', 'exact - check if in OT')
         else:
             logger.debug('Failed OLS API HP (exact) lookup for {}'.format(query))
 
-        ols_efo = self._ols.besthit(query, ontology=['hp'], field_list=['iri'])
+        ols_efo = self._ols.besthit(query, ontology=['efo'], field_list=['iri'])
         if ols_efo:
-            return (ols_efo['iri'], 'OLS API EFO lookup')
+            logger.warning('Found a fuzzy match in OLS API EFO - check if valid')
+            return (ols_efo['iri'], 'OLS API EFO lookup', 'fuzzy - check if valid')
         else:
             logger.debug('Failed OLS API EFO lookup for {}'.format(query))
 
         #if everything else fails:
-        return (None, None)
+        return (None) * 3
 
