@@ -150,14 +150,14 @@ class OnToma(object):
         There is also a semi-intelligent wrapper, which tries to guess the 
         best matching strategy:
         
-        >>> t.find_efo('asthma')
+        >>> t.find_term('asthma')
         'http://www.ebi.ac.uk/efo/EFO_0000270'
-        >>> t.find_efo('615877',code='OMIM')
+        >>> t.find_term('615877',code='OMIM')
         'http://www.orpha.net/ORDO/Orphanet_202948'
 
         It returns `None` if it cannot find an EFO id:
         
-        >>> t.find_efo('notadisease') is None
+        >>> t.find_term('notadisease') is None
         True
 
 
@@ -295,7 +295,7 @@ class OnToma(object):
         '''
         return
 
-    def find_efo(self, query, code=None):
+    def find_term(self, query, code=None):
         '''Finds the most likely EFO code for a given string or ontology code.
 
         If the code argument is passed, it will attempt to perform an exact match
@@ -321,7 +321,7 @@ class OnToma(object):
 
         if code:
             try:
-                uri = make_uri(self._find_efo_from_code(query, code=code))
+                uri = make_uri(self._find_term_from_code(query, code=code))
                 logger.info('Found {} for {} in {} '
                              'mappings'.format(uri,query,code))
                 return uri
@@ -330,7 +330,7 @@ class OnToma(object):
                              'for {} in {} mappings. '.format(ke,code))             
                 return None
         else:
-            found, source, _ = self._find_efo_from_string(query)
+            found, source, _ = self._find_term_from_string(query)
             if found:
                 logger.info('Found {} for {} '
                              'from {}'.format(make_uri(found),query,source))
@@ -339,7 +339,7 @@ class OnToma(object):
                 logger.error('Could not find *any* EFO for string: {}'.format(query))
                 return
 
-    def _find_efo_from_code(self, query, code):
+    def _find_term_from_code(self, query, code):
         '''Finds EFO code given another ontology code
 
         Returns: `None` if no EFO code was found by this method
@@ -353,7 +353,7 @@ class OnToma(object):
         return None
     
 
-    def _find_efo_from_string(self, query):
+    def _find_term_from_string(self, query):
         '''Searches for a matching EFO code for a given phenotype/disease string
 
         operations roughly ordered from least expensive to most expensive

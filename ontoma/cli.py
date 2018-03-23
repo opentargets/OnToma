@@ -1,9 +1,12 @@
 import click
+import csv
 
-# @click.command()
-# def ontoma():
-#     """Example script."""
-#     click.echo("Hello World! Let's map some EFO codes")
+from ontoma.interface import OnToma
+
+@click.command()
+def echo():
+    """Example script."""
+    click.echo("Hello World! Let's map some EFO codes")
 
 @click.command()
 @click.argument('input', type=click.File('rb'), nargs=-1)
@@ -30,3 +33,24 @@ def ontoma(input, output):
                 break
             output.write(chunk)
             output.flush()
+
+
+@click.argument('inf', type=click.File('rb'), nargs=-1)
+@click.argument('outf', type=click.File('wb'))
+
+def ontoma_batch(inf,outf):
+    otmap = OnToma()
+    efowriter = csv.writer(outf, delimiter='\t')
+        
+    '''find EFO term'''
+
+    with open(inf) as f:
+        for i, item in enumerate(csv.reader(f)):
+            efoid = otmap.find_term(item)
+            efowriter.writerow(efoid)
+
+
+    click.echo("Completed. Parsed {} rows. "
+                       "Found {} EFOids. " 
+                       "Skipped {} ".format(i,i,i)
+                       )

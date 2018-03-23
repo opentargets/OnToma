@@ -28,7 +28,7 @@ Basic usage should be simple:
 from ontoma import OnToma
 
 otmap = OnToma()
-print(otmap.find_efo('asthma'))
+print(otmap.find_term('asthma'))
 
 #outputs:
 'EFO_000270'
