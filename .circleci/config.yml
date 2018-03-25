@@ -24,6 +24,11 @@ jobs:
       - run:
           command: |
             pipenv run "pytest"
+      - run:
+          command: pipenv run pylint --reports=y > /tmp/pylint.out
+      - store_artifacts:
+          path: /tmp/pylint.out
+          destination: pylint.out
 
 
   deploy:
