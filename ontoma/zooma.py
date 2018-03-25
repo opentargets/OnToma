@@ -5,7 +5,6 @@ ZOOMA api wrapper
 '''
 
 import logging
-import time
 import requests
 
 ZOOMA = 'https://www.ebi.ac.uk/spot/zooma/v2/api'
@@ -20,9 +19,9 @@ logger = logging.getLogger(__name__)
 class ZoomaClient:
     """Simple client to query zooma
 
-    By default (specifying nothing), Zooma will search its available databases 
-    containing curated mappings (and that do not include ontology sources), 
-    and if nothing is found it will look in the Ontology Lookup Service (OLS) 
+    By default (specifying nothing), Zooma will search its available databases
+    containing curated mappings (and that do not include ontology sources),
+    and if nothing is found it will look in the Ontology Lookup Service (OLS)
     to predict ontology annotations.
 
     Example:
@@ -48,7 +47,7 @@ class ZoomaClient:
 
     def highconfhits(self, name):
         return [m for m in self.annotate(name) if m['confidence'] == 'HIGH']
-    
+
     def besthit(self, name):
         try:
             return self.highconfhits(name)[0]['semanticTags'][0]
@@ -73,16 +72,16 @@ class ZoomaClient:
             filters.append('preferred:[{}]'.format(prefd))
         if ontos:
             filters.append('ontologies:[{}]'.format(ontos))
-        
+
         return ','.join(filters)
 
 
-    def annotate(self, name, property_type = None, 
+    def annotate(self, name, property_type = None,
                 required=None, preferred=None, ontologies='none'):
 
         params = {'propertyValue': name}
 
-        if property_type: params['propertyType'] = property_type 
+        if property_type: params['propertyType'] = property_type
 
         #The 'ontologies:[none]' parameter will restrain Zooma from looking in
         #the OLS if no annotation was found.

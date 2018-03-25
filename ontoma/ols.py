@@ -3,19 +3,19 @@
 """
 OLS API wrapper
 
-Original code borrowed from https://github.com/cthoyt/ols-client/blob/master/src/ols_client/client.py
+Original code borrowed from
+ https://github.com/cthoyt/ols-client/blob/master/src/ols_client/client.py
 
-- Removed ontology and term methods. 
+- Removed ontology and term methods.
 - Added details/parameters for all search methods
 """
 
 import logging
-import time
-import requests
 import urllib.parse
+import requests
 
 OLS = 'http://www.ebi.ac.uk/ols'
-    
+
 
 __all__ = [
     'OlsClient'
@@ -23,21 +23,21 @@ __all__ = [
 
 logger = logging.getLogger(__name__)
 
-api_suggest = '/api/suggest'
-api_search = '/api/search'
-api_select = '/api/select'
-api_term = '/api/ontologies/{ontology}/terms/{iri}'
-api_ancestors = '/api/ontologies/{ontology}/terms/{iri}/ancestors'
+API_SUGGEST = '/api/suggest'
+API_SEARCH = '/api/search'
+API_SELECT = '/api/select'
+API_TERM = '/api/ontologies/{ontology}/terms/{iri}'
+API_ANCESTORS = '/api/ontologies/{ontology}/terms/{iri}/ancestors'
 
 
 def _concat_str_or_list(inputstr):
-    '''always returns a comma joined list, whether the input is a 
+    '''always returns a comma joined list, whether the input is a
     single string or an iterable
     '''
     if type(inputstr) is str:
         return inputstr
-    else:
-        return ','.join(inputstr)
+
+    return ','.join(inputstr)
 
 
 def _dparse(iri):
@@ -48,7 +48,7 @@ def _dparse(iri):
 
 class OlsClient:
     """Wraps the functions to query the Ontology Lookup Service.
-    
+
     >>> ols = OlsClient()
     >>> ols.search('asthma')[0]['iri']
     'http://purl.obolibrary.org/obo/NCIT_C28397'
@@ -65,7 +65,7 @@ class OlsClient:
     'http://purl.obolibrary.org/obo/UBERON_0002048'
 
     `exact=True` forces an exact match:
-    
+
     >>> ols.besthit('hypogammaglobulinemia',ontology='efo')['label']
     'Osteopetrosis - hypogammaglobulinemia'
 
@@ -79,7 +79,7 @@ class OlsClient:
     Find the label of its first ancestor:
 
     >>> a = ols.get_ancestors('efo',r[0]['iri'])
-    >>> a['_embedded']['terms'][0]['label']
+    >>> a[0]['label']
     'asthma'
 
 
@@ -116,11 +116,11 @@ class OlsClient:
         self.field_list = field_list if field_list else None
         self.query_fields = query_fields if query_fields else None
 
-        self.ontology_suggest = self.base + api_suggest
-        self.ontology_select = self.base + api_select
-        self.ontology_search = self.base + api_search
-        self.ontology_term = self.base + api_term
-        self.ontology_ancestors = self.base + api_ancestors
+        self.ontology_suggest = self.base + API_SUGGEST
+        self.ontology_select = self.base + API_SELECT
+        self.ontology_search = self.base + API_SEARCH
+        self.ontology_term = self.base + API_TERM
+        self.ontology_ancestors = self.base + API_ANCESTORS
 
 
     def besthit(self, name, **kwargs):
@@ -129,19 +129,19 @@ class OlsClient:
         searchresp = self.search(name, **kwargs)
         if searchresp:
             return searchresp[0]
-        else:
-            return
+
+        return None
 
 
     def get_term(self, ontology, iri):
         """Gets the data for a given term
-        
+
         Args:
             ontology:   The name of the ontology
             iri:        The IRI of a term
         """
 
-        url = self.ontology_term.format(ontology=ontology, 
+        url = self.ontology_term.format(ontology=ontology,
                                         iri=_dparse(iri))
         response = requests.get(url)
         return response.json()
@@ -149,30 +149,33 @@ class OlsClient:
 
     def get_ancestors(self, ont, iri):
         """Gets the data for a given term
-        
+
         Args:
             ontology:   The name of the ontology
             iri:        The IRI of a term
         """
-        url = self.ontology_ancestors.format(ontology=ont, 
-                                            iri=_dparse(iri))
+        url = self.ontology_ancestors.format(ontology=ont,
+                                             iri=_dparse(iri))
         response = requests.get(url)
-        return response.json()
+        try:
+            return response.json()['_embedded']['terms']
+        except KeyError as e:
+            logger.error(response.json())
+            import sys
+            sys.exit(e)
 
 
-    def 
-
-    def search(self, name, query_fields=None, ontology=None, field_list=None, 
-                exact=None):
+    def search(self, name, query_fields=None, ontology=None, field_list=None,
+               exact=None):
         """Searches the OLS with the given term
 
         Args:
-            query_fields:   By default the search is performed over term labels, 
-                            synonyms, descriptions, identifiers and annotation 
+            query_fields:   By default the search is performed over term labels,
+                            synonyms, descriptions, identifiers and annotation
                             properties.
-                            This option allows to specify the fields to query, 
-                            the defaults are 
-                            `{label, synonym, description, short_form, obo_id, 
+                            This option allows to specify the fields to query,
+                            the defaults are
+                            `{label, synonym, description, short_form, obo_id,
                             annotations, logical_description, iri}`
             exact:          Forces exact match if not `None`
         """
@@ -196,18 +199,18 @@ class OlsClient:
         elif self.field_list:
             params['fieldList'] = _concat_str_or_list(self.field_list)
 
-        r = requests.get(self.ontology_search, params=params)
-        logger.debug("Request to OLS search API: {} - {}".format(r.status_code,name))
-        r.raise_for_status()
-        if r.json()['response']['numFound']:
-            return r.json()['response']['docs']
+        req = requests.get(self.ontology_search, params=params)
+        logger.debug("Request to OLS search API: %s - %s", req.status_code, name)
+        req.raise_for_status()
+        if req.json()['response']['numFound']:
+            return req.json()['response']['docs']
         else:
             if exact:
-                logger.debug('OLS exact search returned empty' 
-                             'response for {}'.format(name))
+                logger.debug('OLS exact search returned empty'
+                             'response for %s', name)
             else:
-                logger.debug('OLS search returned empty' 
-                             'response for {}'.format(name))
+                logger.debug('OLS search returned empty'
+                             'response for %s', name)
             return None
 
 
@@ -225,14 +228,14 @@ class OlsClient:
         if r.json()['response']['numFound']:
             return r.json()['response']['docs']
         else:
-            logger.debug('OLS suggest returned empty response for {}'.format(name))
+            logger.debug('OLS suggest returned empty response for %s', name)
             return None
 
 
-    def select(self, name, ontology=None, type=None, field_list=None):
+    def select(self, name, ontology=None, field_list=None):
         """Select terms,
         Tuned specifically to support applications such as autocomplete.
-        
+
         .. seealso:: https://www.ebi.ac.uk/ols/docs/api#_select
         """
         params = {'q': name}
@@ -246,7 +249,5 @@ class OlsClient:
         if r.json()['response']['numFound']:
             return r.json()['response']['docs']
         else:
-            logger.debug('OLS select returned empty response for {}'.format(name))
+            logger.debug('OLS select returned empty response for %s', name)
             return None
-
-    

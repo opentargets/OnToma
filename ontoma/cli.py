@@ -11,7 +11,7 @@ def echo():
 @click.command()
 @click.argument('input', type=click.File('rb'), nargs=-1)
 @click.argument('output', type=click.File('wb'))
-def ontoma(input, output):
+def ontoma(inputfile, outputfile):
     """This script works similar to the Unix `cat` command but it writes
     into a specific file (which could be the standard output as denoted by
     the ``-`` sign).
@@ -26,13 +26,13 @@ def ontoma(input, output):
         inout - foo.txt
     """
     click.echo(click.style("Hello World! Let's map some EFO codes",fg='red'))
-    for f in input:
+    for f in inputfile:
         while True:
             chunk = f.read(1024)
             if not chunk:
                 break
-            output.write(chunk)
-            output.flush()
+            outputfile.write(chunk)
+            outputfile.flush()
 
 
 @click.argument('inf', type=click.File('rb'), nargs=-1)
@@ -41,7 +41,7 @@ def ontoma(input, output):
 def ontoma_batch(inf,outf):
     otmap = OnToma()
     efowriter = csv.writer(outf, delimiter='\t')
-        
+
     '''find EFO term'''
 
     with open(inf) as f:
@@ -51,6 +51,6 @@ def ontoma_batch(inf,outf):
 
 
     click.echo("Completed. Parsed {} rows. "
-                       "Found {} EFOids. " 
+                       "Found {} EFOids. "
                        "Skipped {} ".format(i,i,i)
                        )
