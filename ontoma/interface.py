@@ -121,7 +121,7 @@ class OnToma(object):
         Search by synonyms coming from the OBO file is also supported
 
         >>> t.efo_lookup('Asthma unspecified')
-        'EFO:0000270'
+        'http://www.ebi.ac.uk/efo/EFO_0000270'
 
         Reverse lookups uses the get_efo_label() method
 
@@ -134,9 +134,9 @@ class OnToma(object):
         Similarly, we can now lookup "Phenotypic abnormality" on HP OBO:
 
         >>> t.hp_lookup('Phenotypic abnormality')
-        'HP:0000118'
+        'http://purl.obolibrary.org/obo/HP_0000118'
         >>> t.hp_lookup('Narrow nasal tip')
-        'HP:0011832'
+        'http://purl.obolibrary.org/obo/HP_0011832'
 
         OMIM code lookup
 
