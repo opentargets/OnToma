@@ -374,6 +374,7 @@ class OnToma(object):
         Returns:
             (match, source, quality)
         '''
+        query = query.lower()
 
         try:
             if self._is_included(self.efo_lookup(query)):

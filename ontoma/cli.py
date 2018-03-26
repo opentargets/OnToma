@@ -18,13 +18,14 @@ def ontoma(infile,outfile, skip_header):
 
     '''find EFO term'''
     mapped = 0
-    for i, row in enumerate(infile):
+    filtered = (line.rstrip() for line in infile)
+    for i, row in enumerate(filtered):
         if i == 0 and skip_header:
             continue
-        efoid, source, quality = otmap._find_term_from_string(row)
-        if efoid:
+        efoid = otmap._find_term_from_string(row)
+        if efoid[0]:
             mapped +=1
-            efowriter.writerow([efoid, source, quality])
+            efowriter.writerow(efoid)
         else:
             efowriter.writerow([''])
 
