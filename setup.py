@@ -32,6 +32,7 @@ setup(
     version=VERSION,
     description='Ontology mapping for Open Targets',
     long_description=readme,
+    long_description_content_type='text/markdown',
     author='Open Targets dev team',
     author_email='ops@opentargets.org',
     url='https://github.com/opentargets/OnToma',
