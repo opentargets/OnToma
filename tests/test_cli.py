@@ -20,7 +20,8 @@ def test_file_batch_input(rootdir):
 def test_batch_matching(rootdir):
 
     stdin = '\n'.join(['asthma',
-                       'Iron-metabolism disorder'
+                       'Iron-metabolism disorder',
+                       'Alzheimer'
                        ])
 
     runner = CliRunner()

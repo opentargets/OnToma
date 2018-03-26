@@ -13,6 +13,7 @@ logger = logging.getLogger(__name__)
 def ontoma(infile,outfile, skip_header):
     '''Map your input to the ontology used by the Open Targets Platform
     '''
+    logger.info('Initializing ontoma main interface...')
     otmap = OnToma()
     efowriter = csv.writer(outfile, delimiter='\t')
 
@@ -32,5 +33,5 @@ def ontoma(infile,outfile, skip_header):
 
     click.echo("Completed. Parsed {} rows. "
                        "Found {} EFOids. "
-                       "Skipped {} ".format(i,mapped,i-mapped)
+                       "Skipped {} ".format(i+1,mapped,i-mapped+1), err=True
                        )

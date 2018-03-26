@@ -9,6 +9,7 @@ not be found.
 *features*
 
 - Wrap OLS, OXO, Zooma in a pythonic API
+- Always tries to output full URI
 - Tries to find mappings iteratively using the faster methods first
 - Checks if mapping is in the subset of EFO that gets included in the
 Open Targets platform
@@ -22,7 +23,7 @@ Open Targets platform
 
 ## Quickstart
 
-Basic usage should be simple:
+Looking for a disease or phenotype string is simple:
 
 ```python
 from ontoma import OnToma
@@ -31,23 +32,28 @@ otmap = OnToma()
 print(otmap.find_term('asthma'))
 
 #outputs:
-'EFO_000270'
+'http://www.ebi.ac.uk/efo/EFO_0000270'
 ```
 
-or the command line version
+or the command line version:
 
 ```sh
-ontoma -i <input_file> -o <output_dir>
+ontoma -i <input_file> -o <output_file>
+```
+where input file can be replaced with `-` to read from stdin and write to stdout.
+
+For eg.
+```sh
+echo 'asthma' | ontoma - test.txt
 ```
 
-where input file is a file of diseases/traits in either codes or text
+will output a file `test.txt` containing the result, where it came from and the
+degree of confidence of the match (one of {match, fuzzy, check}):
 
 ```
-ICD9:720
-asthma
-alzheimer's
-DO:124125
+http://www.ebi.ac.uk/efo/EFO_0000270    EFO OBO     match
 ```
+
 
 More detailed documentation is at [![Documentation Status](https://readthedocs.org/projects/ontoma/badge/?version=latest)](http://ontoma.readthedocs.io/en/latest/?badge=latest)
 http://ontoma.readthedocs.io/en/stable/
