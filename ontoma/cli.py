@@ -1,56 +1,35 @@
 import click
 import csv
+import logging
 
 from ontoma.interface import OnToma
 
-@click.command()
-def echo():
-    """Example script."""
-    click.echo("Hello World! Let's map some EFO codes")
+logger = logging.getLogger(__name__)
 
 @click.command()
-@click.argument('input', type=click.File('rb'), nargs=-1)
-@click.argument('output', type=click.File('wb'))
-def ontoma(inputfile, outputfile):
-    """This script works similar to the Unix `cat` command but it writes
-    into a specific file (which could be the standard output as denoted by
-    the ``-`` sign).
-    \b
-    Copy stdin to stdout:
-        inout - -
-    \b
-    Copy foo.txt and bar.txt to stdout:
-        inout foo.txt bar.txt -
-    \b
-    Write stdin into the file foo.txt
-        inout - foo.txt
-    """
-    click.echo(click.style("Hello World! Let's map some EFO codes",fg='red'))
-    for f in inputfile:
-        while True:
-            chunk = f.read(1024)
-            if not chunk:
-                break
-            outputfile.write(chunk)
-            outputfile.flush()
-
-
-@click.argument('inf', type=click.File('rb'), nargs=-1)
-@click.argument('outf', type=click.File('wb'))
-
-def ontoma_batch(inf,outf):
+@click.argument('infile', type=click.File('r'))
+@click.argument('outfile', type=click.File('w'))
+@click.option('--skip-header', '-s', is_flag=True, default=False)
+def ontoma(infile,outfile, skip_header):
+    '''Map your input to the ontology used by the Open Targets Platform
+    '''
     otmap = OnToma()
-    efowriter = csv.writer(outf, delimiter='\t')
+    efowriter = csv.writer(outfile, delimiter='\t')
 
     '''find EFO term'''
-
-    with open(inf) as f:
-        for i, item in enumerate(csv.reader(f)):
-            efoid = otmap.find_term(item)
-            efowriter.writerow(efoid)
+    mapped = 0
+    for i, row in enumerate(infile):
+        if i == 0 and skip_header:
+            continue
+        efoid, source, quality = otmap._find_term_from_string(row)
+        if efoid:
+            mapped +=1
+            efowriter.writerow([efoid, source, quality])
+        else:
+            efowriter.writerow([''])
 
 
     click.echo("Completed. Parsed {} rows. "
                        "Found {} EFOids. "
-                       "Skipped {} ".format(i,i,i)
+                       "Skipped {} ".format(i,mapped,i-mapped)
                        )

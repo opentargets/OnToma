@@ -8,6 +8,8 @@ Original code borrowed from
 
 - Removed ontology and term methods.
 - Added details/parameters for all search methods
+
+TODO: check input parameters are valid
 """
 
 import logging
@@ -166,7 +168,7 @@ class OlsClient:
 
 
     def search(self, name, query_fields=None, ontology=None, field_list=None,
-               exact=None):
+               exact=None, bytype='class'):
         """Searches the OLS with the given term
 
         Args:
@@ -178,11 +180,16 @@ class OlsClient:
                             `{label, synonym, description, short_form, obo_id,
                             annotations, logical_description, iri}`
             exact:          Forces exact match if not `None`
+            bytype:         restrict to terms one of
+                            {class,property,individual,ontology}
         """
         params = {'q': name}
 
         if exact:
             params['exact'] = 'on'
+
+        if bytype:
+            params['type'] = _concat_str_or_list(bytype)
 
         if ontology:
             params['ontology'] = _concat_str_or_list(ontology)

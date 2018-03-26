@@ -16,3 +16,7 @@ from ontoma import OnToma
 def ontclient():
     '''the ontoma client, reusable between all tests'''
     return OnToma()
+
+@pytest.fixture
+def rootdir():
+    return os.path.dirname(os.path.abspath(__file__))

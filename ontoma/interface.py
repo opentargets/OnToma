@@ -419,7 +419,10 @@ class OnToma(object):
         else:
             logger.debug('Failed OLS API HP (exact) lookup for %s', query)
 
-        ols_efo = self._ols.besthit(query, ontology=['efo'], field_list=['iri'])
+        ols_efo = self._ols.besthit(query,
+                                    ontology=['efo'],
+                                    field_list=['iri'],
+                                    bytype='class')
         if ols_efo and self._is_included(ols_efo['iri']):
             logger.warning('Found a fuzzy match in OLS API EFO - check if valid')
             return (ols_efo['iri'], 'OLS API EFO lookup', 'fuzzy - check if valid')

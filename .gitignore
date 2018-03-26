@@ -104,3 +104,5 @@ ENV/
 
 #editors
 .vscode
+
+outputs/

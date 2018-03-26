@@ -10,4 +10,5 @@ def test_find_term_excludes(ontclient):
     assert not ontclient.find_term('breast')
 
 def test_suggest_hp_term_not_excluded(ontclient):
-    print(ontclient.find_term('hypogammaglobulinemia'))
+    assert ontclient.find_term('hypogammaglobulinemia') == 'http://purl.obolibrary.org/obo/HP_0004313'
+
