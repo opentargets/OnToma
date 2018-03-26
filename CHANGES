@@ -1,3 +1,6 @@
+Version 0.0.5:
+ - fix pylint
+
 Version 0.0.4:
  - updated docs
  - polishing CLI
