@@ -1,3 +1,17 @@
+Version 0.0.4:
+ - updated docs
+ - polishing CLI
+ - batch command line interface
+ - fix tests
+ - save pylint artifact (big otherwise)
+ - checking whether node is in the included branch of efo (and LOTS of linting)
+ - get ancestors
+ - find_efo becomes find_term given that we don't use efo alone
+ - return quality in the tuple
+ - explain the ot ontology difference
+ - exact match logic
+ - fix bumpv error msg
+
 Version 0.0.3:
 
 
