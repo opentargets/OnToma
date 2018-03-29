@@ -35,16 +35,16 @@ print(otmap.find_term('asthma'))
 'http://www.ebi.ac.uk/efo/EFO_0000270'
 ```
 
-or the command line version:
+or the command line version (type `ontoma --help` to find out about the usage):
 
 ```sh
-ontoma -i <input_file> -o <output_file>
+ontoma <input_file> <output_file>
 ```
 where input file can be replaced with `-` to read from stdin and write to stdout.
 
-For eg.
+Which means that to read from a previous command, using pipes:
 ```sh
-echo 'asthma' | ontoma - test.txt
+echo 'asthma' | ontoma - <output_file>
 ```
 
 will output a file `test.txt` containing the result, where it came from and the
@@ -55,7 +55,16 @@ http://www.ebi.ac.uk/efo/EFO_0000270    EFO OBO     match
 ```
 
 
-More detailed documentation is at [![Documentation Status](https://readthedocs.org/projects/ontoma/badge/?version=latest)](http://ontoma.readthedocs.io/en/latest/?badge=latest)
+
+Piping also works for the output. If you want to find the string "mymatch" from
+the results, you can:
+```sh
+ontoma <input_file> - | grep "mymatch"
+```
+
+
+
+More detailed documentation is at [![Documentation Status](https://readthedocs.org/projects/ontoma/badge/?version=stable)](http://ontoma.readthedocs.io/en/stable/?badge=stable)
 http://ontoma.readthedocs.io/en/stable/
 
 # Developing
