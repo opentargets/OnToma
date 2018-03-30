@@ -15,8 +15,9 @@ def ontoma(infile,outfile, skip_header):
     '''
     logger.info('Initializing ontoma main interface...')
     otmap = OnToma()
-    fieldnames=['query','term','source','quality','action']
+    fieldnames=['query','term','label','source','quality','action']
     efowriter = csv.DictWriter(outfile, fieldnames, delimiter='\t')
+    efowriter.writeheader()
 
     '''find EFO term'''
     mapped = 0

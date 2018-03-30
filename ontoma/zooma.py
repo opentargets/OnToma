@@ -33,7 +33,7 @@ class ZoomaClient:
         >>> r[0]['confidence']
         'HIGH'
 
-        >>> z.besthit("mus musculus")
+        >>> z.besthit("mus musculus")['iri']
         'http://purl.obolibrary.org/obo/NCBITaxon_10090'
     """
 
@@ -50,10 +50,13 @@ class ZoomaClient:
 
     def besthit(self, name):
         try:
-            return self.highconfhits(name)[0]['semanticTags'][0]
+            zoomabest = self.highconfhits(name)[0]
+            return {'iri': zoomabest['semanticTags'][0],
+                    'label': zoomabest['annotatedProperty']['propertyValue']
+            }
         except IndexError:
             logger.debug('Empty response from ZOoma API for {}'.format(name))
-            return
+            return None
 
 
     @staticmethod

@@ -19,7 +19,7 @@ def get_omim_to_efo_mappings(url):
     '''returns a dictionary that maps OMIM codes to EFO_uri
     >>> d = get_omim_to_efo_mappings(URLS['OMIM_EFO_MAP'])
     >>> d['609909']
-    ['http://www.orpha.net/ORDO/Orphanet_154', 'http://www.orpha.net/ORDO/Orphanet_217607']
+    [{'iri': 'http://www.orpha.net/ORDO/Orphanet_154', 'label': 'Familial isolated dilated cardiomyopathy'}, {'iri': 'http://www.orpha.net/ORDO/Orphanet_217607', 'label': 'Familial dilated cardiomyopathy'}]
     '''
     mappings = {}
     logger.debug("OMIM to EFO mappings - requesting from URL %s", url)
@@ -27,7 +27,7 @@ def get_omim_to_efo_mappings(url):
         for i, row in enumerate(csv.DictReader(req.iter_lines(decode_unicode=True), delimiter='\t')):
             if row['OMIM'] not in mappings:
                 mappings[row['OMIM']] = []
-            mappings[row['OMIM']].append(row['efo_uri'])
+            mappings[row['OMIM']].append({'iri':row['efo_uri'],'label':row['efo_label']})
         logger.info("OMIM to EFO mappings - Parsed %s rows", i)
     return mappings
 

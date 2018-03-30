@@ -241,7 +241,7 @@ class OnToma(object):
     def zooma_lookup(self, name):
         '''Searches against the EBI Zooma service for an high confidence mapping
         '''
-        return self._zooma.besthit(name)
+        return self._zooma.besthit(name)['iri']
 
     def otzooma_map_lookup(self, name):
         '''Searches against the curated OpenTargets mapping we submitted to zooma.
@@ -260,7 +260,7 @@ class OnToma(object):
         '''Searches our own curated OMIM <=> EFO mappings
         #FIXME assumes the first is the best hit. is this ok?
         '''
-        return self._omim_to_efo[omimcode][0]
+        return self._omim_to_efo[omimcode][0]['iri']
 
 
     def hp_lookup(self, name):
@@ -396,23 +396,30 @@ class OnToma(object):
 
         try:
             return {'term': self.otzooma_map_lookup(query),
+                    'label': query, #method above only works as an exact match
                     'source': 'OT Zooma Mappings',
                     'quality': 'match',
                     'action' : None}
         except KeyError as e:
             logger.debug('Failed Zooma Mappings lookup for %s', e)
 
-        if self.zooma_lookup(query) and self._is_included(self.zooma_lookup(query)):
-            return {'term': self.zooma_lookup(query),
+        zoomabest = self._zooma.besthit(query)
+        if zoomabest and self._is_included(zoomabest['iri']):
+            return {'term': zoomabest['iri'],
+                    'label': zoomabest['label'],
                     'source': 'Zooma API lookup',
                     'quality': 'match',
                     'action' : None}
         else:
             logger.debug('Failed Zooma API lookup for %s', query)
 
-        exact_ols_efo = self._ols.besthit(query, ontology=['efo'], field_list=['iri'], exact=True)
+        exact_ols_efo = self._ols.besthit(query,
+                                          ontology=['efo'],
+                                          field_list=['iri','label'],
+                                          exact=True)
         if exact_ols_efo and self._is_included(exact_ols_efo['iri']):
             return {'term': exact_ols_efo['iri'],
+                    'label': exact_ols_efo['label'],
                     'source': 'OLS API EFO lookup',
                     'quality': 'match',
                     'action' : None}
@@ -428,6 +435,7 @@ class OnToma(object):
                          'actually contained in the Open '
                          'Targets ontology.', hpterm, query)
             return {'term': hpterm,
+                    'label': query, #this lookup only works if label is an exact match, so this is ok.
                     'source': 'HP OBO lookup',
                     'quality': 'match',
                     'action' : 'check if in OT'}
@@ -435,12 +443,15 @@ class OnToma(object):
             logger.debug('Failed HP OBO lookup for %s', e)
 
 
-        exact_ols_hp = self._ols.besthit(query, ontology=['hp'], field_list=['iri'], exact=True)
+        exact_ols_hp = self._ols.besthit(query, ontology=['hp'],
+                                         field_list=['iri','label'],
+                                         exact=True)
         if exact_ols_hp and self._is_included(exact_ols_hp['iri'], ontology='hp'):
             logger.warning('Using the HP term: %s Please check if it is '
                          'actually contained in the Open '
                          'Targets ontology.', exact_ols_hp)
             return {'term': exact_ols_hp['iri'],
+                    'label': exact_ols_hp['label'],
                     'source': 'OLS API HP exact lookup',
                     'quality': 'match',
                     'action' : 'check if in OT'}
@@ -449,11 +460,12 @@ class OnToma(object):
 
         ols_efo = self._ols.besthit(query,
                                     ontology=['efo'],
-                                    field_list=['iri'],
+                                    field_list=['iri','label'],
                                     bytype='class')
         if ols_efo and self._is_included(ols_efo['iri']):
             logger.warning('Found a fuzzy match in OLS API EFO - check if valid')
             return {'term': ols_efo['iri'],
+                    'label': ols_efo['label'],
                     'source': 'OLS API EFO lookup',
                     'quality': 'fuzzy',
                     'action' : 'check if valid'}
