@@ -1,3 +1,10 @@
+Version 0.0.6:
+ - output label of match when used in batch mode
+ - handle iri to label lookups
+ - use dict to return quality, source, action
+ - works
+ - markdown readme
+
 Version 0.0.5:
  - fix pylint
 
