@@ -15,7 +15,8 @@ def ontoma(infile,outfile, skip_header):
     '''
     logger.info('Initializing ontoma main interface...')
     otmap = OnToma()
-    efowriter = csv.writer(outfile, delimiter='\t')
+    fieldnames=['query','term','source','quality','action']
+    efowriter = csv.DictWriter(outfile, fieldnames, delimiter='\t')
 
     '''find EFO term'''
     mapped = 0
@@ -24,11 +25,12 @@ def ontoma(infile,outfile, skip_header):
         if i == 0 and skip_header:
             continue
         efoid = otmap._find_term_from_string(row)
-        if efoid[0]:
+        if efoid:
             mapped +=1
+            efoid['query'] = row
             efowriter.writerow(efoid)
         else:
-            efowriter.writerow([''])
+            efowriter.writerow({'query':row})
 
 
     click.echo("Completed. Parsed {} rows. "
