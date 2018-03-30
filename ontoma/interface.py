@@ -129,6 +129,8 @@ class OnToma(object):
         'asthma'
         >>> t.get_efo_label('EFO:0000270')
         'asthma'
+        >>> t.get_efo_label('http://www.ebi.ac.uk/efo/EFO_0000270')
+        'asthma'
 
 
         Similarly, we can now lookup "Phenotypic abnormality" on HP OBO:
@@ -227,6 +229,9 @@ class OnToma(object):
     def get_efo_label(self, efocode):
         '''Given an EFO short form code, returns the label as taken from the OBO
         '''
+        if '/' in efocode:
+            #extract short form from IRI
+            efocode = efocode.split('/')[-1]
         try:
             return self.efo_to_name[efocode.replace('_', ':')]
         except KeyError:
@@ -379,8 +384,10 @@ class OnToma(object):
         query = query.lower()
 
         try:
-            if self._is_included(self.efo_lookup(query)):
-                return {'term':self.efo_lookup(query),
+            efolup = self.efo_lookup(query)
+            if self._is_included(efolup):
+                return {'term': efolup,
+                        'label': self.get_efo_label(efolup),
                         'source': 'EFO OBO',
                         'quality': 'match',
                         'action' : None}
