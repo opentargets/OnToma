@@ -210,6 +210,7 @@ class OnToma(object):
     def name_to_efo(self):
         '''Create name <=> label mappings'''
         _, name_to_efo = name_to_label_mapping(self._efo)
+        logger.info("Parsed %s Name to EFO mapping " % len(name_to_efo))
         return name_to_efo
 
     @lazy_property
@@ -222,6 +223,7 @@ class OnToma(object):
     def name_to_hp(self):
         '''Create name <=> label mappings'''
         _, name_to_hp = name_to_label_mapping(self._hp)
+        logger.info("Parsed %s Name to HP mapping " % len(name_to_hp))
         return name_to_hp
 
 
