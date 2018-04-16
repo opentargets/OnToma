@@ -310,10 +310,21 @@ class OnToma(object):
 
         If only a string is passed, it will attempt to match it against mappings,
         but will try using the EBI SPOT APIs if no match is found, until a likely
-        code is identified
+        code is identified.
 
-        **TODO** suggestions and fuzzy search should be returned. A specific
-        exception should be crafted and handled.
+        Operations roughly ordered from least expensive to most expensive
+        and also from most authorative to least authorative
+
+        1. EFO OBO lookup
+        2. Zooma mappings lookup
+        3. Zooma API high confidence lookup
+        4. OLS API EFO lookup - exact match
+        --- below this line we might not have a term in the platform ---
+        5. HP OBO lookup
+        6. OLS API HP lookup - exact match
+        7. OLS API EFO lookup - not exact
+        (8. ?Zooma medium)
+
 
         Args:
             query (str): the disease/phenotype to be matched to an EFO code
@@ -365,21 +376,8 @@ class OnToma(object):
     def _find_term_from_string(self, query):
         '''Searches for a matching EFO code for a given phenotype/disease string
 
-        operations roughly ordered from least expensive to most expensive
-        and also from most authorative to least authorative
-
-        1. EFO OBO lookup
-        2. Zooma mappings lookup
-        3. Zooma API high confidence lookup
-        4. OLS API EFO lookup - exact match
-        --- below this line we might not have a term in the platform ---
-        5. HP OBO lookup
-        6. OLS API HP lookup - exact match
-        7. OLS API EFO lookup - not exact
-        (8. ?Zooma medium)
-
         Returns:
-            (match, source, quality, action)
+            {term, label, source,quality, action}
         '''
         query = query.lower()
 
