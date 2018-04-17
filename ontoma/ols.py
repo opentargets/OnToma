@@ -163,7 +163,7 @@ class OlsClient:
         try:
             return response.json()['_embedded']['terms']
         except KeyError as e:
-            logger.warning('Term was found but ancestor lookup'
+            logger.warning('Term was found but ancestor lookup '
                            'returned an empty response: %s', response.json())
             raise e
 

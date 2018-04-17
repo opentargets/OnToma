@@ -12,3 +12,6 @@ def test_find_term_excludes(ontclient):
 def test_suggest_hp_term_not_excluded(ontclient):
     assert ontclient.find_term('hypogammaglobulinemia') == 'http://purl.obolibrary.org/obo/HP_0004313'
 
+def test_catch_ordo(ontclient):
+    assert ontclient.find_term('Camptodactyly-arthropathy-coxa-vara-pericarditis syndrome') == 'http://www.orpha.net/ORDO/Orphanet_2848'
+    assert ontclient.find_term('208250') == 'http://www.orpha.net/ORDO/Orphanet_2848'

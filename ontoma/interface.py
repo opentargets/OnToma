@@ -334,8 +334,9 @@ class OnToma(object):
         --- below this line we might not have a term in the platform ---
         5. HP OBO lookup
         6. OLS API HP lookup - exact match
-        7. OLS API EFO lookup - not exact
-        (8. ?Zooma medium)
+        7. OLS API ORDO lookup - exact match
+        8. OLS API EFO lookup - not exact
+        (9. ?Zooma medium)
 
 
         Args:
@@ -362,7 +363,7 @@ class OnToma(object):
         else:
             found = self._find_term_from_string(query)
             if found:
-                logger.info('Found %s for %s from %s - %s %s',
+                logger.info('Found %s for %s from %s - %s - %s',
                             make_uri(found['term']),
                             query,
                             found['source'],
@@ -469,6 +470,23 @@ class OnToma(object):
                     'action' : 'check if in OT'}
         else:
             logger.debug('Failed OLS API HP (exact) lookup for %s', query)
+
+
+        exact_ols_ordo = self._ols.besthit(query, ontology=['ordo'],
+                                           field_list=['iri','label'],
+                                           exact=True)
+        if exact_ols_ordo:
+            logger.warning('Using the ORDO term: %s Please check if it is '
+                         'actually contained in the Open '
+                         'Targets ontology.', exact_ols_ordo)
+            return {'term': exact_ols_ordo['iri'],
+                    'label': exact_ols_ordo['label'],
+                    'source': 'OLS API ORDO exact lookup',
+                    'quality': 'match',
+                    'action' : 'check if in OT'}
+        else:
+            logger.debug('Failed OLS API ORDO (exact) lookup for %s', query)
+
 
         ols_efo = self._ols.besthit(query,
                                     ontology=['efo'],
