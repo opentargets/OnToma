@@ -296,7 +296,11 @@ class OnToma(object):
 
 
     def _is_included(self, iri, ontology=None):
-        '''checks if efo term with given iri has for ancestors one of the nodes
+        '''
+        FIXME: this function should check against an actual index/ontology,
+        not be guessing the right root nodes.
+
+        checks if efo term with given iri has for ancestors one of the nodes
         we select for open targets
         '''
         if not ontology:
@@ -314,7 +318,7 @@ class OnToma(object):
 
         return False
 
-    def find_term(self, query, code=None):
+    def find_term(self, query, code=None, suggest=False):
         '''Finds the most likely EFO code for a given string or ontology code.
 
         If the code argument is passed, it will attempt to perform an exact match
@@ -336,7 +340,7 @@ class OnToma(object):
         6. OLS API HP lookup - exact match
         7. OLS API ORDO lookup - exact match
         8. OLS API EFO lookup - not exact
-        (9. ?Zooma medium)
+        9. OLS API HP+ORDO lookup - not exact
 
 
         Args:
@@ -361,7 +365,7 @@ class OnToma(object):
                             'for %s in %s mappings. ', e, code)
                 return None
         else:
-            found = self._find_term_from_string(query)
+            found = self._find_term_from_string(query, suggest)
             if found:
                 logger.info('Found %s for %s from %s - %s - %s',
                             make_uri(found['term']),
@@ -388,7 +392,7 @@ class OnToma(object):
         return None
 
 
-    def _find_term_from_string(self, query):
+    def _find_term_from_string(self, query, suggest=False):
         '''Searches for a matching EFO code for a given phenotype/disease string
 
         Returns:
@@ -459,6 +463,10 @@ class OnToma(object):
         exact_ols_hp = self._ols.besthit(query, ontology=['hp'],
                                          field_list=['iri','label'],
                                          exact=True)
+
+        #here I can check if it is the child of the 'disease' HP node we
+        # include, though it's probably meaningless to do so.
+        # One would still need to include the subtree/nodes in the OT ontology.
         if exact_ols_hp and self._is_included(exact_ols_hp['iri'], ontology='hp'):
             logger.warning('Using the HP term: %s Please check if it is '
                          'actually contained in the Open '
@@ -501,6 +509,21 @@ class OnToma(object):
                     'action' : 'check if valid'}
         else:
             logger.debug('Failed OLS API EFO lookup for %s', query)
+
+        if suggest:
+            ols_suggestion = self._ols.besthit(query,
+                                        ontology=['efo','hp','ordo'],
+                                        field_list=['iri','label'],
+                                        bytype='class')
+            if ols_suggestion:
+                logger.warning('Found a fuzzy match in OLS API [EFO,HP,ORDO] - check if valid')
+                return {'term': ols_suggestion['iri'],
+                        'label': ols_suggestion['label'],
+                        'source': 'OLS API [ORDO] lookup',
+                        'quality': 'fuzzy',
+                        'action' : 'check if valid'}
+            else:
+                logger.debug('Failed OLS API [EFO,HP,ORDO] lookup for %s', query)
 
         #if everything else fails:
         return None

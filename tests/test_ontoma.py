@@ -14,4 +14,5 @@ def test_suggest_hp_term_not_excluded(ontclient):
 
 def test_catch_ordo(ontclient):
     assert ontclient.find_term('Camptodactyly-arthropathy-coxa-vara-pericarditis syndrome') == 'http://www.orpha.net/ORDO/Orphanet_2848'
-    assert ontclient.find_term('208250') == 'http://www.orpha.net/ORDO/Orphanet_2848'
+    assert not ontclient.find_term('208250')
+    assert ontclient.find_term('208250',suggest=True) == 'http://www.orpha.net/ORDO/Orphanet_2848'
