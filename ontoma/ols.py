@@ -162,10 +162,9 @@ class OlsClient:
         response = requests.get(url)
         try:
             return response.json()['_embedded']['terms']
-        except KeyError as e:
-            logger.error(response.json())
-            import sys
-            sys.exit(e)
+        except KeyError:
+            logger.warning('Empty response: %s', response.json())
+            return None
 
 
     def search(self, name, query_fields=None, ontology=None, field_list=None,
