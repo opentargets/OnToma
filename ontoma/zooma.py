@@ -46,7 +46,8 @@ class ZoomaClient:
         self._annotate = self.base + '/services/annotate'
 
     def highconfhits(self, name):
-        return [m for m in self.annotate(name) if m['confidence'] == 'HIGH']
+        return [m for m in self.annotate(name,ontologies='efo,hp')
+                if m['confidence'] == 'HIGH']
 
     def besthit(self, name):
         try:
@@ -62,6 +63,8 @@ class ZoomaClient:
     @staticmethod
     def _make_filter_string(reqd, prefd, ontos):
         '''
+        TODO: expand to deal with list input
+
         >>> z = ZoomaClient()
         >>> z._make_filter_string("atlas,gwas","gwas","efo")
         'required:[atlas,gwas],preferred:[gwas],ontologies:[efo]'
