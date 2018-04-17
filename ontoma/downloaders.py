@@ -27,7 +27,7 @@ def get_omim_to_efo_mappings(url):
         for i, row in enumerate(csv.DictReader(req.iter_lines(decode_unicode=True), delimiter='\t')):
             if row['OMIM'] not in mappings:
                 mappings[row['OMIM']] = []
-            mappings[row['OMIM']].append({'iri':row['efo_uri'],'label':row['efo_label']})
+            mappings[row['OMIM']].append({'iri':row['efo_uri'].strip(),'label':row['efo_label']})
         logger.info("OMIM to EFO mappings - Parsed %s rows", i)
     return mappings
 
@@ -45,6 +45,6 @@ def get_ot_zooma_to_efo_mappings(url):
             #(study, bioentity, property_type, property_value,
             # semantic_tag, annotator, annotation_date)
             # Note here should be 1:1 correspondence
-            mappings[row['PROPERTY_VALUE'].lower()] = row['SEMANTIC_TAG']
+            mappings[row['PROPERTY_VALUE'].lower()] = row['SEMANTIC_TAG'].strip()
         logger.info("ZOOMA to EFO mappings - Parsed %s rows", i)
     return mappings
