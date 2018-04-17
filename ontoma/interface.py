@@ -305,9 +305,13 @@ class OnToma(object):
             else:
                 # default to checking ancestry in EFO
                 ontology = 'efo'
-        for ancestor in self._ols.get_ancestors(ontology, iri):
-            if ancestor['iri'] in OT_TOP_NODES:
-                return True
+        try:
+            for ancestor in self._ols.get_ancestors(ontology, iri):
+                if ancestor['iri'] in OT_TOP_NODES:
+                    return True
+        except KeyError:
+            pass
+
         return False
 
     def find_term(self, query, code=None):
