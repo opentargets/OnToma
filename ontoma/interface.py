@@ -295,10 +295,16 @@ class OnToma(object):
                                 distance=2)
 
 
-    def _is_included(self, iri, ontology='efo'):
+    def _is_included(self, iri, ontology=None):
         '''checks if efo term with given iri has for ancestors one of the nodes
         we select for open targets
         '''
+        if not ontology:
+            if 'HP_' in iri:
+                ontology = 'hp'
+            else:
+                # default to checking ancestry in EFO
+                ontology = 'efo'
         for ancestor in self._ols.get_ancestors(ontology, iri):
             if ancestor['iri'] in OT_TOP_NODES:
                 return True
@@ -352,10 +358,12 @@ class OnToma(object):
         else:
             found = self._find_term_from_string(query)
             if found:
-                logger.info('Found %s for %s from %s',
+                logger.info('Found %s for %s from %s - %s %s',
                             make_uri(found['term']),
                             query,
-                            found['source'])
+                            found['source'],
+                            found['quality'],
+                            found['action'])
                 return make_uri(found['term'])
 
             logger.error('Could not find *any* EFO for string: %s', query)
