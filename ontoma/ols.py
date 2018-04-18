@@ -76,8 +76,8 @@ class OlsClient:
     True
 
     >>> r = ols.search('asthma',ontology=['efo'],query_fields=['synonym'],field_list=['iri','label'])
-    >>> r[0]['iri']
-    'http://www.ebi.ac.uk/efo/EFO_0004591'
+    >>> 'http://www.ebi.ac.uk/efo/EFO_0004591' in [syn['iri'] for syn in r]
+    True
 
     Find the label of its first ancestor:
 
