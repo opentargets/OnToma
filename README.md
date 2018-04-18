@@ -8,12 +8,13 @@ not be found.
 
 *features*
 
-- Wrap OLS, OXO, Zooma in a pythonic API
-- Always tries to output full URI
-- Tries to find mappings iteratively using the faster methods first
-- Checks if mapping is in the subset of EFO that gets included in the
+* Wrap OLS, OXO, Zooma in a pythonic API
+* Always tries to output full URI
+* Tries to find mappings iteratively using the faster methods first
+* Checks if mapping is in the subset of EFO that gets included in the
 Open Targets platform
-- *tries to* follow the procedure highlighted in https://github.com/opentargets/data_release/wiki/EFO-Ontology-Annotation-Process
+* *tries to* follow the procedure highlighted in [our wiki](https://github.com/opentargets/data_release/wiki/EFO-Ontology-Annotation-Process)
+
 
 # Usage
 
@@ -35,7 +36,19 @@ print(otmap.find_term('asthma'))
 'http://www.ebi.ac.uk/efo/EFO_0000270'
 ```
 
-or the command line version (type `ontoma --help` to find out about the usage):
+you can obtain more details using the `verbose` flag:
+
+```python
+print(otmap.find_term('asthma',verbose=True))
+
+#outputs something similar to:
+{'term':'http://www.ebi.ac.uk/efo/EFO_0000270','label':'asthma',
+'source':'EFO OBO','quality':'match' ...}
+```
+**From the command line**
+
+The command line version can be invoked with `ontoma`
+(type `ontoma --help` to find out about the usage):
 
 ```sh
 ontoma <input_file> <output_file>
@@ -51,7 +64,7 @@ will output a file `test.txt` containing the result, where it came from and the
 degree of confidence of the match (one of {match, fuzzy, check}):
 
 ```
-http://www.ebi.ac.uk/efo/EFO_0000270    EFO OBO     match
+http://www.ebi.ac.uk/efo/EFO_0000270    asthma  EFO OBO     match
 ```
 
 
@@ -66,6 +79,7 @@ ontoma <input_file> - | grep "mymatch"
 
 More detailed documentation is at [![Documentation Status](https://readthedocs.org/projects/ontoma/badge/?version=stable)](http://ontoma.readthedocs.io/en/stable/?badge=stable)
 http://ontoma.readthedocs.io/en/stable/
+
 
 # Developing
 
