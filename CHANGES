@@ -1,3 +1,19 @@
+Version 0.0.7:
+ - add details on verbose to readme
+ - added a verbose output to find_term
+ - ols doctest more robust to changes in underlying ontology
+ - document suggest
+ - add a suggest mode to find_term
+ - add ORDO exact lookup
+ - get_ancestors raises a keyerror for an empty response
+ - phewascat tests were not being picked up
+ - _is_included guesses ontology when not directly specified
+ - get_ancestors handles empty responses
+ - clean whitespace in mappings file
+ - restrict to efo and hp in zooma
+ - logging name_to_node parsing
+ - improve find_term docs
+
 Version 0.0.6:
  - output label of match when used in batch mode
  - handle iri to label lookups
