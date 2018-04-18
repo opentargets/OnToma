@@ -349,6 +349,10 @@ class OnToma(object):
                 **TODO** expand to more ontologies
                 If a code is passed, it will attempt to find the code in one of
                 our curated mapping datasources. Defaults to None.
+            suggest (boolean): if True the OLS API will be queried for any match
+                in HP, ORDO and EFO, whether or not these terms are already
+                included in the Open Targets platform ontology.
+
 
         Returns:
             A valid OT ontology URI. `None` if no EFO code was found
