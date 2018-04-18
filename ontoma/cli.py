@@ -25,7 +25,7 @@ def ontoma(infile,outfile, skip_header):
     for i, row in enumerate(filtered):
         if i == 0 and skip_header:
             continue
-        efoid = otmap._find_term_from_string(row)
+        efoid = otmap.find_term(row, verbose=True)
         if efoid:
             mapped +=1
             efoid['query'] = row

@@ -318,7 +318,7 @@ class OnToma(object):
 
         return False
 
-    def find_term(self, query, code=None, suggest=False):
+    def find_term(self, query, code=None, suggest=False, verbose=False):
         '''Finds the most likely EFO code for a given string or ontology code.
 
         If the code argument is passed, it will attempt to perform an exact match
@@ -350,8 +350,11 @@ class OnToma(object):
                 If a code is passed, it will attempt to find the code in one of
                 our curated mapping datasources. Defaults to None.
             suggest (boolean): if True the OLS API will be queried for any match
-                in HP, ORDO and EFO, whether or not these terms are already
-                included in the Open Targets platform ontology.
+                               in HP, ORDO and EFO, whether or not these terms
+                               are already included in the Open Targets platform
+                               ontology.
+            verbose (bool): if True returns a dictionary containing
+                            {term, label, source, quality, action}
 
 
         Returns:
@@ -363,7 +366,12 @@ class OnToma(object):
                 uri = make_uri(self._find_term_from_code(query, code=code))
                 logger.info('Found %s for %s in %s '
                             'mappings', uri, query, code)
-                return uri
+                if verbose:
+                    return {'term':uri,
+                            'label':self.get_efo_label(uri),
+                            'source':code, 'quality':'match', 'action':''}
+                else:
+                    return uri
             except KeyError as e:
                 logger.info('Could not find a match '
                             'for %s in %s mappings. ', e, code)
@@ -377,7 +385,10 @@ class OnToma(object):
                             found['source'],
                             found['quality'],
                             found['action'])
-                return make_uri(found['term'])
+                if verbose:
+                    return found
+                else:
+                    return make_uri(found['term'])
 
             logger.error('Could not find *any* EFO for string: %s', query)
             return None
