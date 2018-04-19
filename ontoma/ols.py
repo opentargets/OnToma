@@ -215,10 +215,10 @@ class OlsClient:
             return req.json()['response']['docs']
         else:
             if exact:
-                logger.debug('OLS exact search returned empty'
+                logger.debug('OLS exact search returned empty '
                              'response for %s', name)
             else:
-                logger.debug('OLS search returned empty'
+                logger.debug('OLS search returned empty '
                              'response for %s', name)
             return None
 

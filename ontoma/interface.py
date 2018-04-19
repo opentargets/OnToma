@@ -9,6 +9,7 @@ __all__ = [
     ]
 
 import logging
+import re
 from functools import lru_cache
 
 import obonet
@@ -100,6 +101,10 @@ def make_uri(ontology_short_form):
     else:
         raise ValueError("Could not build an URI. "
                          "Short form: {} not recognized".format(ontology_code))
+
+
+def largest_fragment(sentence):
+    return max(re.split("[,;]+",sentence),key=len).strip()
 
 
 class OnToma(object):
@@ -381,14 +386,19 @@ class OnToma(object):
                             'for %s in %s mappings. ', e, code)
                 return None
         else:
-            found = self._find_term_from_string(query, suggest)
+            found = self._find_term_from_string(largest_fragment(query), suggest)
             if found:
-                logger.info('Found %s for %s from %s - %s - %s',
+                msg = 'Found {} for {} from {} - {} - {}'.format(
                             make_uri(found['term']),
                             query,
                             found['source'],
                             found['quality'],
                             found['action'])
+                if found['quality'] == 'match':
+                    logger.info(msg)
+                else:
+                    logger.warning(msg)
+
                 if verbose:
                     return found
                 else:
@@ -522,7 +532,6 @@ class OnToma(object):
                                     field_list=['iri','label'],
                                     bytype='class')
         if ols_efo and self._is_included(ols_efo['iri']):
-            logger.warning('Found a fuzzy match in OLS API EFO - check if valid')
             return {'term': ols_efo['iri'],
                     'label': ols_efo['label'],
                     'source': 'OLS API EFO lookup',
