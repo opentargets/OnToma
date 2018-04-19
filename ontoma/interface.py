@@ -9,6 +9,7 @@ __all__ = [
     ]
 
 import logging
+from functools import lru_cache
 
 import obonet
 
@@ -298,7 +299,6 @@ class OnToma(object):
                                 mapping_target='EFO',
                                 distance=2)
 
-
     def _is_included(self, iri, ontology=None):
         '''
         FIXME: this function should check against an actual index/ontology,
@@ -410,7 +410,7 @@ class OnToma(object):
         logger.error('Code %s is not currently supported.', code)
         return None
 
-
+    @lru_cache(maxsize=None)
     def _find_term_from_string(self, query, suggest=False):
         '''Searches for a matching EFO code for a given phenotype/disease string
 
