@@ -43,6 +43,7 @@ class ZoomaClient:
         :param zooma_base: An optional, custom URL for the Zooma RESTful API.
         """
         self.base = (zooma_base if zooma_base else ZOOMA).rstrip('/')
+        self.session = requests.Session()
         self._annotate = self.base + '/services/annotate'
 
     def highconfhits(self, name):
@@ -93,7 +94,7 @@ class ZoomaClient:
         #the OLS if no annotation was found.
         params['filters'] = self._make_filter_string(required,preferred,ontologies)
 
-        r = requests.get(self._annotate, params=params)
+        r = self.session.get(self._annotate, params=params)
         logger.debug("Request to Zooma annotate API: {} - {}".format(r.status_code,name))
         r.raise_for_status()
         return r.json()

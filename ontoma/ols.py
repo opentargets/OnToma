@@ -114,6 +114,7 @@ class OlsClient:
         :param ols_base: An optional, custom URL for the OLS RESTful API.
         """
         self.base = (ols_base if ols_base else OLS).rstrip('/')
+        self.session = requests.Session()
 
         self.ontology = ontology if ontology else None
         self.field_list = field_list if field_list else None
@@ -146,7 +147,7 @@ class OlsClient:
 
         url = self.ontology_term.format(ontology=ontology,
                                         iri=_dparse(iri))
-        response = requests.get(url)
+        response = self.session.get(url)
         return response.json()
 
 
@@ -159,7 +160,7 @@ class OlsClient:
         """
         url = self.ontology_ancestors.format(ontology=ont,
                                              iri=_dparse(iri))
-        response = requests.get(url)
+        response = self.session.get(url)
         try:
             return response.json()['_embedded']['terms']
         except KeyError as e:
@@ -207,7 +208,7 @@ class OlsClient:
         elif self.field_list:
             params['fieldList'] = _concat_str_or_list(self.field_list)
 
-        req = requests.get(self.ontology_search, params=params)
+        req = self.session.get(self.ontology_search, params=params)
         logger.debug("Request to OLS search API: %s - %s", req.status_code, name)
         req.raise_for_status()
         if req.json()['response']['numFound']:
@@ -230,7 +231,7 @@ class OlsClient:
         params = {'q': name}
         if ontology:
             params['ontology'] = ','.join(ontology)
-        r = requests.get(self.ontology_suggest, params=params)
+        r = self.session.get(self.ontology_suggest, params=params)
         r.raise_for_status()
 
         if r.json()['response']['numFound']:
@@ -251,7 +252,7 @@ class OlsClient:
             params['ontology'] = ','.join(ontology)
         if field_list:
             params['fieldList'] = ','.join(field_list)
-        r = requests.get(self.ontology_select, params=params)
+        r = self.session.get(self.ontology_select, params=params)
         r.raise_for_status()
 
         if r.json()['response']['numFound']:
