@@ -104,7 +104,10 @@ def make_uri(ontology_short_form):
 class OnToma(object):
     '''Open Targets ontology mapping wrapper
 
-    The output should always be a EFO/OpenTargets ontology URI.
+    Args:
+        exclude (str or [str]):  Excludes 'zooma','ols_hp' or 'ols_ordo' API
+                                 calls from the search, to speed things up.
+
 
     Example:
         Initialize the class (which will download EFO,OBO and others):
@@ -169,8 +172,9 @@ class OnToma(object):
 
     '''
 
-    def __init__(self):
+    def __init__(self, exclude=[]):
         self.logger = logging.getLogger(__name__)
+        self.exclude = exclude
         '''Initialize API clients'''
         self._ols = OlsClient()
         self._zooma = ZoomaClient()
@@ -390,7 +394,7 @@ class OnToma(object):
                 else:
                     return make_uri(found['term'])
 
-            logger.error('Could not find *any* EFO for string: %s', query)
+            logger.error('Could not find *any* term for string: %s', query)
             return None
 
     def _find_term_from_code(self, query, code):
@@ -435,20 +439,22 @@ class OnToma(object):
         except KeyError as e:
             logger.debug('Failed Zooma Mappings lookup for %s', e)
 
-        zoomabest = self._zooma.besthit(query)
-        if zoomabest and self._is_included(zoomabest['iri']):
-            return {'term': zoomabest['iri'],
-                    'label': zoomabest['label'],
-                    'source': 'Zooma API lookup',
-                    'quality': 'match',
-                    'action' : None}
-        else:
-            logger.debug('Failed Zooma API lookup for %s', query)
+        if 'zooma' not in self.exclude:
+            zoomabest = self._zooma.besthit(query)
+            if zoomabest and self._is_included(zoomabest['iri']):
+                return {'term': zoomabest['iri'],
+                        'label': zoomabest['label'],
+                        'source': 'Zooma API lookup',
+                        'quality': 'match',
+                        'action' : None}
+            else:
+                logger.debug('Failed Zooma API lookup for %s', query)
+
 
         exact_ols_efo = self._ols.besthit(query,
-                                          ontology=['efo'],
-                                          field_list=['iri','label'],
-                                          exact=True)
+                                        ontology=['efo'],
+                                        field_list=['iri','label'],
+                                        exact=True)
         if exact_ols_efo and self._is_included(exact_ols_efo['iri']):
             return {'term': exact_ols_efo['iri'],
                     'label': exact_ols_efo['label'],
@@ -474,41 +480,41 @@ class OnToma(object):
         except KeyError as e:
             logger.debug('Failed HP OBO lookup for %s', e)
 
+        if 'ols_hp' not in self.exclude:
+            exact_ols_hp = self._ols.besthit(query, ontology=['hp'],
+                                            field_list=['iri','label'],
+                                            exact=True)
 
-        exact_ols_hp = self._ols.besthit(query, ontology=['hp'],
-                                         field_list=['iri','label'],
-                                         exact=True)
+            #here I can check if it is the child of the 'disease' HP node we
+            # include, though it's probably meaningless to do so.
+            # One would still need to include the subtree/nodes in the OT ontology.
+            if exact_ols_hp and self._is_included(exact_ols_hp['iri'], ontology='hp'):
+                logger.warning('Using the HP term: %s Please check if it is '
+                            'actually contained in the Open '
+                            'Targets ontology.', exact_ols_hp)
+                return {'term': exact_ols_hp['iri'],
+                        'label': exact_ols_hp['label'],
+                        'source': 'OLS API HP exact lookup',
+                        'quality': 'match',
+                        'action' : 'check if in OT'}
+            else:
+                logger.debug('Failed OLS API HP (exact) lookup for %s', query)
 
-        #here I can check if it is the child of the 'disease' HP node we
-        # include, though it's probably meaningless to do so.
-        # One would still need to include the subtree/nodes in the OT ontology.
-        if exact_ols_hp and self._is_included(exact_ols_hp['iri'], ontology='hp'):
-            logger.warning('Using the HP term: %s Please check if it is '
-                         'actually contained in the Open '
-                         'Targets ontology.', exact_ols_hp)
-            return {'term': exact_ols_hp['iri'],
-                    'label': exact_ols_hp['label'],
-                    'source': 'OLS API HP exact lookup',
-                    'quality': 'match',
-                    'action' : 'check if in OT'}
-        else:
-            logger.debug('Failed OLS API HP (exact) lookup for %s', query)
-
-
-        exact_ols_ordo = self._ols.besthit(query, ontology=['ordo'],
-                                           field_list=['iri','label'],
-                                           exact=True)
-        if exact_ols_ordo:
-            logger.warning('Using the ORDO term: %s Please check if it is '
-                         'actually contained in the Open '
-                         'Targets ontology.', exact_ols_ordo)
-            return {'term': exact_ols_ordo['iri'],
-                    'label': exact_ols_ordo['label'],
-                    'source': 'OLS API ORDO exact lookup',
-                    'quality': 'match',
-                    'action' : 'check if in OT'}
-        else:
-            logger.debug('Failed OLS API ORDO (exact) lookup for %s', query)
+        if 'ols_ordo' not in self.exclude:
+            exact_ols_ordo = self._ols.besthit(query, ontology=['ordo'],
+                                            field_list=['iri','label'],
+                                            exact=True)
+            if exact_ols_ordo:
+                logger.warning('Using the ORDO term: %s Please check if it is '
+                            'actually contained in the Open '
+                            'Targets ontology.', exact_ols_ordo)
+                return {'term': exact_ols_ordo['iri'],
+                        'label': exact_ols_ordo['label'],
+                        'source': 'OLS API ORDO exact lookup',
+                        'quality': 'match',
+                        'action' : 'check if in OT'}
+            else:
+                logger.debug('Failed OLS API ORDO (exact) lookup for %s', query)
 
 
         ols_efo = self._ols.besthit(query,
