@@ -3,6 +3,7 @@ import csv
 import logging
 
 from ontoma.interface import OnToma
+from ontoma.constants import FIELDS
 
 logger = logging.getLogger(__name__)
 
@@ -15,8 +16,7 @@ def ontoma(infile,outfile, skip_header):
     '''
     logger.info('Initializing ontoma main interface...')
     otmap = OnToma()
-    fieldnames=['query','term','label','source','quality','action']
-    efowriter = csv.DictWriter(outfile, fieldnames, delimiter='\t')
+    efowriter = csv.DictWriter(outfile, FIELDS, delimiter='\t')
     efowriter.writeheader()
 
     '''find EFO term'''

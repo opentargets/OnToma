@@ -17,3 +17,5 @@ OT_TOP_NODES = {
     'http://www.ebi.ac.uk/efo/EFO_0003935',
     'http://purl.obolibrary.org/obo/HP_0000118'
 }
+
+FIELDS = ['query','term','label','source','quality','action']
