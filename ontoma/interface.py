@@ -94,6 +94,7 @@ def make_uri(ontology_short_form):
         return 'http://www.ebi.ac.uk/efo/'+ontology_code
     elif (ontology_code.startswith('HP') or
           ontology_code.startswith('MP') or
+          ontology_code.startswith('MONDO') or
           ontology_code.startswith('UBERON')):
         return 'http://purl.obolibrary.org/obo/' + ontology_code
     elif ontology_code.startswith('Orphanet'):
@@ -198,6 +199,13 @@ class OnToma(object):
         return _efo
 
     @lazy_property
+    def _mondo(self, mondourl=URLS['MONDO']):
+        '''Parse the EFO obo file for exact match lookup'''
+        _mondo = obonet.read_obo(mondourl)
+        self.logger.info('MONDO OBO parsed. Size: %s nodes', len(_mondo))
+        return _mondo
+
+    @lazy_property
     def _hp(self, hpurl=URLS['HP']):
         '''Parse the HP obo file for exact match lookup'''
         _hp = obonet.read_obo(hpurl)
@@ -222,6 +230,19 @@ class OnToma(object):
         _, name_to_efo = name_to_label_mapping(self._efo)
         logger.info("Parsed %s Name to EFO mapping " % len(name_to_efo))
         return name_to_efo
+
+    @lazy_property
+    def mondo_to_name(self):
+        '''Create name <=> label mappings'''
+        mondo_to_name, _ = name_to_label_mapping(self._mondo)
+        return mondo_to_name
+
+    @lazy_property
+    def name_to_mondo(self):
+        '''Create name <=> label mappings'''
+        _, name_to_mondo = name_to_label_mapping(self._mondo)
+        logger.info("Parsed %s Name to mondo mapping " % len(name_to_mondo))
+        return name_to_mondo
 
     @lazy_property
     def hp_to_name(self):
@@ -284,6 +305,11 @@ class OnToma(object):
         '''Searches the EFO OBO file for a direct match
         '''
         return make_uri(self.name_to_efo[name])
+
+    def mondo_lookup(self, name):
+        '''Searches the mondo OBO file for a direct match
+        '''
+        return make_uri(self.name_to_mondo[name])
 
     def oxo_lookup(self, other_ontology_id, input_source="ICD9CM"):
         '''Searches in the mappings returned from the EBI OXO API.
