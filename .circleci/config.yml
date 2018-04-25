@@ -38,17 +38,16 @@ jobs:
           PIPENV_VENV_IN_PROJECT: true
     steps:
       - checkout
-      - restore_cache:
-          key: deps9-{{ .Branch }}-{{ checksum "Pipfile.lock" }}
-      - run:
-          command: |
-            sudo pip install pipenv
-            pipenv install --dev
-
+      # - restore_cache:
+      #     key: deps9-{{ .Branch }}-{{ checksum "Pipfile.lock" }}
+      # - run:
+      #     command: |
+      #       sudo pip install pipenv
+      #       pipenv install --dev
       - run:
           name: verify git tag vs. version
           command: |
-            pipenv run "python setup.py verify"
+            pipenv run python setup.py verify
       - run:
           name: init .pypirc
           command: |
@@ -59,13 +58,13 @@ jobs:
           name: create packages
           command: |
             # create a source distribution
-            pipenv run "python setup.py sdist"
+            pipenv run python setup.py sdist
             # create a wheel
-            pipenv run "python setup.py bdist_wheel"
+            pipenv run python setup.py bdist_wheel
       - run:
           name: upload to pypi
           command: |
-            pipenv run "twine upload dist/*"
+            pipenv run twine upload dist/*
 
 workflows:
   version: 2
