@@ -1,3 +1,13 @@
+Version 0.0.8:
+ - add doctest for mondo
+ - implement MONDO lookups
+ - move fieldnames to constants
+ - change messaging and only use longest fragment if long query
+ - adding lru cache, though our calls are rarely repeated :(
+ - use sessions to take advantage of any connection pooling we can get
+ - nicely aligned logging
+ - add ability to exclude some API calls
+
 Version 0.0.7:
  - add details on verbose to readme
  - added a verbose output to find_term
