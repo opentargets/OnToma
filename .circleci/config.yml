@@ -23,7 +23,7 @@ jobs:
             - "/usr/local/lib/python3.6/site-packages"
       - run:
           command: |
-            pipenv run "pytest"
+            pipenv run pytest
       - run:
           command: pipenv run pylint --reports=y . > /tmp/pylint.out
       - store_artifacts:
@@ -64,6 +64,7 @@ jobs:
       - run:
           name: upload to pypi
           command: |
+            pipenv install --dev twine
             pipenv run twine upload dist/*
 
 workflows:
