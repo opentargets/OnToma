@@ -1,3 +1,6 @@
+Version 0.0.9:
+ - pipenv lock to try fixing pypi deploy issues
+
 Version 0.0.8:
  - add doctest for mondo
  - implement MONDO lookups
