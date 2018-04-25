@@ -47,8 +47,14 @@ def name_to_label_mapping(obonetwork):
     id_to_name = {}
     name_to_id = {}
     for nodeid, data in obonetwork.nodes(data=True):
-        id_to_name[nodeid] = data['name']
-        name_to_id[data['name']] = nodeid
+        try:
+            id_to_name[nodeid] = data['name']
+            name_to_id[data['name']] = nodeid
+        except KeyError:
+            # skip the nodes that don't have data
+            # (eg. https://rarediseases.info.nih.gov/diseases/4781/seckel-like-syndrome-majoor-krakauer-type in MONDO)
+            pass
+
         if 'synonym' in data:
             for synonim in data['synonym']:
                 #some str.split voodoo is necessary to unpact the synonyms
@@ -158,6 +164,9 @@ class OnToma(object):
         >>> t.zooma_lookup('asthma')
         'http://www.ebi.ac.uk/efo/EFO_0000270'
 
+        MONDO lookup
+        >>> t.mondo_lookup('asthma')
+        'http://purl.obolibrary.org/obo/MONDO_0004979'
 
         Searching the ICD9 code for 'other dermatoses' returns EFO's skin disease:
 
