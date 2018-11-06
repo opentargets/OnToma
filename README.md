@@ -13,7 +13,7 @@ not be found.
 * Tries to find mappings iteratively using the faster methods first
 * Checks if mapping is in the subset of EFO that gets included in the
 Open Targets platform
-* *tries to* follow the procedure highlighted in [our wiki](https://github.com/opentargets/data_release/wiki/EFO-Ontology-Annotation-Process)
+* *tries to* follow the procedure highlighted in https://github.com/opentargets/data_release/blob/master/diagram.jpg
 
 
 # Usage
