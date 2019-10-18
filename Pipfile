@@ -14,7 +14,7 @@ recommonmark = "*"
 sphinx-rtd-theme = "*"
 
 [packages]
-requests = "==2.19.1"
+requests = "==2.20.0"
 obonet = "*"
 click = "*"
 
