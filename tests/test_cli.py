@@ -15,7 +15,7 @@ def test_file_batch_input(rootdir):
     result = runner.invoke(ontoma, [test_file,'-'])
     assert result.exit_code == 0
     assert 'http://www.ebi.ac.uk/efo/EFO_0000270' in result.output
-    assert 'http://www.orpha.net/ORDO/Orphanet_309842' in result.output
+    assert 'http://purl.obolibrary.org/obo/MONDO_0002279' in result.output
 
 def test_batch_matching(rootdir):
 

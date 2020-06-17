@@ -27,19 +27,19 @@ class OxoClient:
     ''' OXO wrapper class
 
     >>> oxo = OxoClient()
-    >>> len(oxo._sources)
-    940
+    >>> len(oxo._sources) > 0
+    True
 
     >>> first_result = list(oxo.search(input_source="ICD9CM"))[:1][0]
     >>> first_result['curie']
-    'ICD9CM:730.92'
+    'ICD9CM:252.9'
 
     >>> for r in oxo.search(ids=['ICD9CM:171.6'],input_source="ICD9CM"):
     ...     print(r['label'])
     Malignant neoplasm of connective and other soft tissue of pelvis
 
     >>> icd9s = oxo.make_mappings(input_source="ICD9CM", distance=2)
-    >>> icd9s['733.0']
+    >>> icd9s['733.09']
     'EFO:0003882'
     '''
 

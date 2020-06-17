@@ -159,7 +159,7 @@ class OnToma(object):
         OMIM code lookup
 
         >>> t.omim_lookup('230650')
-        'http://www.orpha.net/ORDO/Orphanet_354'
+        'http://www.orpha.net/ORDO/Orphanet_79257'
 
         >>> t.zooma_lookup('asthma')
         'http://www.ebi.ac.uk/efo/EFO_0000270'
