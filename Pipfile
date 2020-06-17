@@ -14,9 +14,9 @@ recommonmark = "*"
 sphinx-rtd-theme = "*"
 
 [packages]
-requests = "==2.19.1"
+requests = "*"
 obonet = "*"
 click = "*"
 
 [requires]
-python_version = "3.6"
+python_version = "3.7"
