@@ -16,3 +16,6 @@ def test_catch_ordo(ontclient):
     assert ontclient.find_term('Camptodactyly-arthropathy-coxa-vara-pericarditis syndrome') == 'http://www.ebi.ac.uk/efo/EFO_0009028'
     assert ontclient.find_term('208250') == 'http://www.ebi.ac.uk/efo/EFO_0009028'
     assert ontclient.find_term('208250',suggest=True) == 'http://www.ebi.ac.uk/efo/EFO_0009028'
+
+def test_query_comma(ontclient):
+    assert ontclient.find_term('3-methylglutaconic aciduria, type III') == 'http://www.orpha.net/ORDO/Orphanet_67047'

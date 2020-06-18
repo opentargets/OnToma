@@ -110,10 +110,6 @@ def make_uri(ontology_short_form):
                          "Short form: {} not recognized".format(ontology_code))
 
 
-def largest_fragment(sentence):
-    return max(re.split("[,;]+",sentence),key=len).strip()
-
-
 class OnToma(object):
     '''Open Targets ontology mapping wrapper
 
@@ -414,7 +410,7 @@ class OnToma(object):
                             'for %s in %s mappings. ', e, code)
                 return None
         else:
-            found = self._find_term_from_string(largest_fragment(query), suggest)
+            found = self._find_term_from_string(query, suggest)
             if found:
                 msg = 'Found {} for {} from {} - {} - {}'.format(
                             make_uri(found['term']),
