@@ -344,11 +344,8 @@ class OnToma(object):
         we select for open targets
         '''
         if not ontology:
-            if 'HP_' in iri:
-                ontology = 'hp'
-            else:
-                # default to checking ancestry in EFO
-                ontology = 'efo'
+            # default to checking ancestry in EFO
+            ontology = 'efo'
         try:
             for ancestor in self._ols.get_ancestors(ontology, iri):
                 if ancestor['iri'] in OT_TOP_NODES:
