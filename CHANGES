@@ -1,5 +1,6 @@
 Version 0.0.14:
  - Use latest EFO OBO file instead of hard-coded v2018-01-15
+ - Updated OT top nodes with current therapeutic areas for checking if mapped term is in OT
 
 Version 0.0.13:
  - even more weird and wonderful packaging problems
