@@ -168,11 +168,6 @@ class OnToma(object):
         >>> t.mondo_lookup('asthma')
         'http://purl.obolibrary.org/obo/MONDO_0004979'
 
-        Searching the ICD9 code for 'other dermatoses' returns EFO's skin disease:
-
-        >>> t.icd9_lookup('696')
-        'EFO:0000676'
-
         There is also a semi-intelligent wrapper, which tries to guess the
         best matching strategy:
 
@@ -295,6 +290,7 @@ class OnToma(object):
 
     def icd9_lookup(self, icd9code):
         '''Searches the ICD9CM <=> EFO mappings returned from the OXO API
+        #FIXME Results don't seem to be deterministic, some mappings appear and disappear between calls, e.g. t.icd9_lookup('696')
         '''
         return self._icd9_to_efo[icd9code]
 

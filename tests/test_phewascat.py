@@ -9,7 +9,6 @@ def test_otzooma_mappings_whitespace(ontclient):
 
 def test_efo_match_with_apostrophe(ontclient):
     assert ontclient.find_term('Alzheimer\'s disease') == 'http://www.ebi.ac.uk/efo/EFO_0000249'
-    assert ontclient.find_term('290.1', code="ICD9CM") == 'http://www.ebi.ac.uk/efo/EFO_0000249'
 
 def test_match_with_hpo(ontclient):
     assert ontclient.find_term('Jaundice') == 'http://purl.obolibrary.org/obo/HP_0000952'
