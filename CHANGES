@@ -1,3 +1,8 @@
+Version 0.0.14:
+ - Query strings are searched as they are, splitting at commas and semicolons and using the largest substring has been removed.
+ - Use latest EFO OBO file instead of hard-coded v2018-01-15
+ - Updated OT top nodes with current therapeutic areas for checking if mapped term is in OT
+
 Version 0.0.13:
  - even more weird and wonderful packaging problems
 

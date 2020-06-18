@@ -19,7 +19,7 @@ def get_omim_to_efo_mappings(url):
     '''returns a dictionary that maps OMIM codes to EFO_uri
     >>> d = get_omim_to_efo_mappings(URLS['OMIM_EFO_MAP'])
     >>> d['609909']
-    [{'iri': 'http://www.orpha.net/ORDO/Orphanet_154', 'label': 'Familial isolated dilated cardiomyopathy'}, {'iri': 'http://www.orpha.net/ORDO/Orphanet_217607', 'label': 'Familial dilated cardiomyopathy'}]
+    [{'iri': 'http://www.orpha.net/ORDO/Orphanet_217607', 'label': 'Familial dilated cardiomyopathy'}, {'iri': 'http://www.orpha.net/ORDO/Orphanet_154', 'label': 'Familial isolated dilated cardiomyopathy'}]
     '''
     mappings = {}
     logger.debug("OMIM to EFO mappings - requesting from URL %s", url)

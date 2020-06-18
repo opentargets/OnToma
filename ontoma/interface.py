@@ -110,10 +110,6 @@ def make_uri(ontology_short_form):
                          "Short form: {} not recognized".format(ontology_code))
 
 
-def largest_fragment(sentence):
-    return max(re.split("[,;]+",sentence),key=len).strip()
-
-
 class OnToma(object):
     '''Open Targets ontology mapping wrapper
 
@@ -159,7 +155,7 @@ class OnToma(object):
         OMIM code lookup
 
         >>> t.omim_lookup('230650')
-        'http://www.orpha.net/ORDO/Orphanet_354'
+        'http://www.orpha.net/ORDO/Orphanet_79257'
 
         >>> t.zooma_lookup('asthma')
         'http://www.ebi.ac.uk/efo/EFO_0000270'
@@ -167,11 +163,6 @@ class OnToma(object):
         MONDO lookup
         >>> t.mondo_lookup('asthma')
         'http://purl.obolibrary.org/obo/MONDO_0004979'
-
-        Searching the ICD9 code for 'other dermatoses' returns EFO's skin disease:
-
-        >>> t.icd9_lookup('696')
-        'EFO:0000676'
 
         There is also a semi-intelligent wrapper, which tries to guess the
         best matching strategy:
@@ -295,6 +286,7 @@ class OnToma(object):
 
     def icd9_lookup(self, icd9code):
         '''Searches the ICD9CM <=> EFO mappings returned from the OXO API
+        #FIXME Results don't seem to be deterministic, some mappings appear and disappear between calls, e.g. t.icd9_lookup('696')
         '''
         return self._icd9_to_efo[icd9code]
 
@@ -348,11 +340,8 @@ class OnToma(object):
         we select for open targets
         '''
         if not ontology:
-            if 'HP_' in iri:
-                ontology = 'hp'
-            else:
-                # default to checking ancestry in EFO
-                ontology = 'efo'
+            # default to checking ancestry in EFO
+            ontology = 'efo'
         try:
             for ancestor in self._ols.get_ancestors(ontology, iri):
                 if ancestor['iri'] in OT_TOP_NODES:
@@ -421,7 +410,7 @@ class OnToma(object):
                             'for %s in %s mappings. ', e, code)
                 return None
         else:
-            found = self._find_term_from_string(largest_fragment(query), suggest)
+            found = self._find_term_from_string(query, suggest)
             if found:
                 msg = 'Found {} for {} from {} - {} - {}'.format(
                             make_uri(found['term']),

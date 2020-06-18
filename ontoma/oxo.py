@@ -25,22 +25,7 @@ logger = logging.getLogger(__name__)
 
 class OxoClient:
     ''' OXO wrapper class
-
-    >>> oxo = OxoClient()
-    >>> len(oxo._sources)
-    940
-
-    >>> first_result = list(oxo.search(input_source="ICD9CM"))[:1][0]
-    >>> first_result['curie']
-    'ICD9CM:730.92'
-
-    >>> for r in oxo.search(ids=['ICD9CM:171.6'],input_source="ICD9CM"):
-    ...     print(r['label'])
-    Malignant neoplasm of connective and other soft tissue of pelvis
-
-    >>> icd9s = oxo.make_mappings(input_source="ICD9CM", distance=2)
-    >>> icd9s['733.0']
-    'EFO:0003882'
+    FIXME Results don't seem to be deterministic, some mappings appear and disappear between calls, e.g. icd9s = oxo.make_mappings(input_source="ICD9CM", distance=2); icd9s['733.09']
     '''
 
     def __init__(self, base_url=OXO.rstrip('/')):

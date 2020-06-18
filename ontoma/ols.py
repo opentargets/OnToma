@@ -72,8 +72,8 @@ class OlsClient:
     >>> ols.besthit('hypogammaglobulinemia',ontology='efo')['label']
     'Osteopetrosis - hypogammaglobulinemia'
 
-    >>> ols.besthit('hypogammaglobulinemia',ontology='efo',exact=True) is None
-    True
+    >>> ols.besthit('hypogammaglobulinemia',ontology='efo',exact=True)['label']
+    'Agammaglobulinemia'
 
     >>> r = ols.search('asthma',ontology=['efo'],query_fields=['synonym'],field_list=['iri','label'])
     >>> 'http://www.ebi.ac.uk/efo/EFO_0004591' in [syn['iri'] for syn in r]
@@ -98,7 +98,7 @@ class OlsClient:
     'EFO_1001054'
 
     >>> [x['short_form'] for x in ols.select('alzheimer')[:2]]
-    ['NCIT_C2866', 'NCIT_C38778']
+    ['PW_0000015', 'DOID_0080348']
 
     You can also pass your favourite parameters at class instantiation:
 
