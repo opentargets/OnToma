@@ -10,9 +10,6 @@ with open('VERSION') as version_file:
 with open('README.md') as f:
     readme = f.read()
 
-with open('LICENSE') as f:
-    license = f.read()
-
 
 class VerifyVersionCommand(install):
     """Custom command to verify that the git tag matches our version"""
@@ -36,7 +33,7 @@ setup(
     author='Open Targets dev team',
     author_email='ops@opentargets.org',
     url='https://github.com/opentargets/OnToma',
-    license=license,
+    license='Apache License, Version 2.0',
     packages=find_packages(exclude=('tests', 'docs')),
     classifiers=[
         "Intended Audience :: Developers",
