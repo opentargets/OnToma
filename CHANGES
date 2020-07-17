@@ -1,3 +1,5 @@
+Version 0.0.15:
+ - New function get_efo_from_xref() to map disease ids from other ontologies to EFO using xrefs
 Version 0.0.14:
  - Query strings are searched as they are, splitting at commas and semicolons and using the largest substring has been removed.
  - Use latest EFO OBO file instead of hard-coded v2018-01-15

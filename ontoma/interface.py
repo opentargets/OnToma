@@ -62,6 +62,20 @@ def name_to_label_mapping(obonetwork):
                 name_to_id[synonim.split('\"')[1]] = nodeid
     return id_to_name, name_to_id
 
+def xref_to_name_and_label_mapping(obonetwork):
+    '''
+    builds xref to list of name and label lookup dictionary starting from an OBO file
+    '''
+    xref_to_name_and_label = {}
+    for nodeid, data in obonetwork.nodes(data=True):
+        if 'xref' in data:
+            for xref in data['xref']:
+                name_and_label = {'id': nodeid, 'name': data['name']}
+                if xref in xref_to_name_and_label:
+                    xref_to_name_and_label[xref].append(name_and_label)
+                else:
+                    xref_to_name_and_label[xref] = [name_and_label]
+    return xref_to_name_and_label
 
 def make_uri(ontology_short_form):
     '''
@@ -232,6 +246,13 @@ class OnToma(object):
         return name_to_efo
 
     @lazy_property
+    def xref_to_efo(self):
+        '''Create xref => EFO id and label mappings'''
+        xref_to_efo = xref_to_name_and_label_mapping(self._efo)
+        return xref_to_efo
+
+
+    @lazy_property
     def mondo_to_name(self):
         '''Create name <=> label mappings'''
         mondo_to_name, _ = name_to_label_mapping(self._mondo)
@@ -269,6 +290,18 @@ class OnToma(object):
             return self.efo_to_name[efocode.replace('_', ':')]
         except KeyError:
             logger.error('EFO ID %s not found', efocode)
+            return None
+
+    def get_efo_from_xref(self, efocode):
+        '''Given an short disease id, returns the id and label of equivalent term(s) in EFO as defined by xrefs
+        '''
+        if '/' in efocode:
+            #extract short form from IRI
+            efocode = efocode.split('/')[-1]
+        try:
+            return self.xref_to_efo[efocode.replace('_', ':')]
+        except KeyError:
+            logger.error('There are no EFO ID that have xrefs to %s', efocode)
             return None
 
     def zooma_lookup(self, name):
