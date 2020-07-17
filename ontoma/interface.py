@@ -62,6 +62,20 @@ def name_to_label_mapping(obonetwork):
                 name_to_id[synonim.split('\"')[1]] = nodeid
     return id_to_name, name_to_id
 
+def xref_to_name_and_label_mapping(obonetwork):
+    '''
+    builds xref to list of name and label lookup dictionary starting from an OBO file
+    '''
+    xref_to_name_and_label = {}
+    for nodeid, data in obonetwork.nodes(data=True):
+        if 'xref' in data:
+            for xref in data['xref']:
+                name_and_label = {'id': nodeid, 'name': data['name']}
+                if xref in xref_to_name_and_label:
+                    xref_to_name_and_label[xref].append(name_and_label)
+                else:
+                    xref_to_name_and_label[xref] = [name_and_label]
+    return xref_to_name_and_label
 
 def make_uri(ontology_short_form):
     '''
