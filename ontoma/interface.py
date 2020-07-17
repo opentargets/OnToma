@@ -246,6 +246,13 @@ class OnToma(object):
         return name_to_efo
 
     @lazy_property
+    def xref_to_efo(self):
+        '''Create xref => EFO id and label mappings'''
+        xref_to_efo = xref_to_name_and_label_mapping(self._efo)
+        return xref_to_efo
+
+
+    @lazy_property
     def mondo_to_name(self):
         '''Create name <=> label mappings'''
         mondo_to_name, _ = name_to_label_mapping(self._mondo)
@@ -283,6 +290,18 @@ class OnToma(object):
             return self.efo_to_name[efocode.replace('_', ':')]
         except KeyError:
             logger.error('EFO ID %s not found', efocode)
+            return None
+
+    def get_efo_from_xref(self, efocode):
+        '''Given an short disease id, returns the id and label of equivalent term(s) in EFO as defined by xrefs
+        '''
+        if '/' in efocode:
+            #extract short form from IRI
+            efocode = efocode.split('/')[-1]
+        try:
+            return self.xref_to_efo[efocode.replace('_', ':')]
+        except KeyError:
+            logger.error('There are no EFO ID that have xrefs to %s', efocode)
             return None
 
     def zooma_lookup(self, name):
