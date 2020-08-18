@@ -564,7 +564,7 @@ class OnToma(object):
                          'actually contained in the Open '
                          'Targets ontology.', hpterm, query)
             return {'term': hpterm,
-                    'label': query, #this lookup only works if label is an exact match, so this is ok.
+                    'label': self.get_hp_label(hpterm),
                     'source': 'HP OBO lookup',
                     'quality': 'match',
                     'action' : 'check if in OT'}
