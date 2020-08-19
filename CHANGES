@@ -1,3 +1,6 @@
+Version 0.0.16:
+ - New functions get_mondo_label() and get_hp_label() to retrieve MONDO and HP disease labels using the disease id
+ - When the match is found in the HP OBO file the function _find_term_from_string() now returns the actual disease label instead of the one that was queried
 Version 0.0.15:
  - New function get_efo_from_xref() to map disease ids from other ontologies to EFO using xrefs
 Version 0.0.14:
