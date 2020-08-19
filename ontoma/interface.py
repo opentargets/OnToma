@@ -292,6 +292,30 @@ class OnToma(object):
             logger.error('EFO ID %s not found', efocode)
             return None
 
+    def get_mondo_label(self, mondocode):
+        '''Given an MONDO short form code, returns the label as taken from the OBO
+        '''
+        if '/' in mondocode:
+            #extract short form from IRI
+            mondocode = mondocode.split('/')[-1]
+        try:
+            return self.mondo_to_name[mondocode.replace('_', ':')]
+        except KeyError:
+            logger.error('MONDO ID %s not found', mondocode)
+            return None
+
+    def get_hp_label(self, hpcode):
+        '''Given an HP short form code, returns the label as taken from the OBO
+        '''
+        if '/' in hpcode:
+            #extract short form from IRI
+            hpcode = hpcode.split('/')[-1]
+        try:
+            return self.hp_to_name[hpcode.replace('_', ':')]
+        except KeyError:
+            logger.error('HP ID %s not found', hpcode)
+            return None
+
     def get_efo_from_xref(self, efocode):
         '''Given an short disease id, returns the id and label of equivalent term(s) in EFO as defined by xrefs
         '''
@@ -540,7 +564,7 @@ class OnToma(object):
                          'actually contained in the Open '
                          'Targets ontology.', hpterm, query)
             return {'term': hpterm,
-                    'label': query, #this lookup only works if label is an exact match, so this is ok.
+                    'label': self.get_hp_label(hpterm),
                     'source': 'HP OBO lookup',
                     'quality': 'match',
                     'action' : 'check if in OT'}
