@@ -638,4 +638,3 @@ class OnToma(object):
 
         #if everything else fails:
         return None
-
