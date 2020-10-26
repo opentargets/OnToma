@@ -19,3 +19,6 @@ def test_catch_ordo(ontclient):
 
 def test_query_comma(ontclient):
     assert ontclient.find_term('3-methylglutaconic aciduria, type III') == 'http://www.orpha.net/ORDO/Orphanet_67047'
+
+def test_find_term_alzheimer(ontclient):
+    assert ontclient.find_term('alzheimer disease') == 'http://www.ebi.ac.uk/efo/EFO_0000249'

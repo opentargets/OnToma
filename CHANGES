@@ -1,3 +1,7 @@
+Version 0.0.17:
+ - Bug fixes in the Zooma API querying module: Removed HP as a ontology to search; and correction of a typo from "filters" to "filter"
+ - New test: test_find_term_alzheimer()
+
 Version 0.0.16:
  - New functions get_mondo_label() and get_hp_label() to retrieve MONDO and HP disease labels using the disease id
  - When the match is found in the HP OBO file the function _find_term_from_string() now returns the actual disease label instead of the one that was queried

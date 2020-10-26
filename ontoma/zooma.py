@@ -47,7 +47,7 @@ class ZoomaClient:
         self._annotate = self.base + '/services/annotate'
 
     def highconfhits(self, name):
-        return [m for m in self.annotate(name,ontologies='efo,hp')
+        return [m for m in self.annotate(name,ontologies='efo')
                 if m['confidence'] == 'HIGH']
 
     def besthit(self, name):
@@ -92,7 +92,7 @@ class ZoomaClient:
 
         #The 'ontologies:[none]' parameter will restrain Zooma from looking in
         #the OLS if no annotation was found.
-        params['filters'] = self._make_filter_string(required,preferred,ontologies)
+        params['filter'] = self._make_filter_string(required,preferred,ontologies)
 
         r = self.session.get(self._annotate, params=params)
         logger.debug("Request to Zooma annotate API: {} - {}".format(r.status_code,name))
