@@ -47,7 +47,7 @@ class ZoomaClient:
         self._annotate = self.base + '/services/annotate'
 
     def highconfhits(self, name):
-        return [m for m in self.annotate(name,ontologies='efo,hp')
+        return [m for m in self.annotate(name,ontologies='efo')
                 if m['confidence'] == 'HIGH']
 
     def besthit(self, name):
