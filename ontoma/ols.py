@@ -155,7 +155,7 @@ class OlsClient:
         """Gets the data for a given term
 
         Args:
-            ontology:   The name of the ontology
+            ont:        The name of the ontology
             iri:        The IRI of a term
         """
         url = self.ontology_ancestors.format(ontology=ont,
