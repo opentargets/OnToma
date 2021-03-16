@@ -151,14 +151,14 @@ class OlsClient:
         return response.json()
 
 
-    def get_ancestors(self, ont, iri):
+    def get_ancestors(self, ontology, iri):
         """Gets the data for a given term
 
         Args:
-            ont:        The name of the ontology
+            ontology:   The name of the ontology
             iri:        The IRI of a term
         """
-        url = self.ontology_ancestors.format(ontology=ont,
+        url = self.ontology_ancestors.format(ontology=ontology,
                                              iri=_dparse(iri))
         response = self.session.get(url)
         try:
