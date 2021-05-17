@@ -115,7 +115,10 @@ def make_uri(ontology_short_form):
     elif (ontology_code.startswith('HP') or
           ontology_code.startswith('MP') or
           ontology_code.startswith('MONDO') or
-          ontology_code.startswith('UBERON')):
+          ontology_code.startswith('UBERON') or
+          ontology_code.startswith('GO') or
+          ontology_code.startswith('NCIT') or
+          ontology_code.startswith('DOID')):
         return 'http://purl.obolibrary.org/obo/' + ontology_code
     elif ontology_code.startswith('Orphanet'):
         return 'http://www.orpha.net/ORDO/' + ontology_code
