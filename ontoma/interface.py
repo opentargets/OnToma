@@ -80,7 +80,8 @@ def xref_to_name_and_label_mapping(obonetwork):
 def make_uri(ontology_short_form):
     '''
     Transform a short form ontology code in a full URI.
-    Currently works for EFO, HPO, ORDO and MP.
+    Currently works for EFO, HPO, MONDO, UBERON, ORDO
+    GO, NCIT, DOID, and MP.
 
     Args:
         ontology_short_form: An ontology code in the short format, like 'EFO:0000270'.
