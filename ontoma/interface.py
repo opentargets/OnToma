@@ -80,7 +80,8 @@ def xref_to_name_and_label_mapping(obonetwork):
 def make_uri(ontology_short_form):
     '''
     Transform a short form ontology code in a full URI.
-    Currently works for EFO, HPO, ORDO and MP.
+    Currently works for EFO, HPO, MONDO, UBERON, ORDO
+    GO, NCIT, DOID, and MP.
 
     Args:
         ontology_short_form: An ontology code in the short format, like 'EFO:0000270'.
@@ -115,7 +116,10 @@ def make_uri(ontology_short_form):
     elif (ontology_code.startswith('HP') or
           ontology_code.startswith('MP') or
           ontology_code.startswith('MONDO') or
-          ontology_code.startswith('UBERON')):
+          ontology_code.startswith('UBERON') or
+          ontology_code.startswith('GO') or
+          ontology_code.startswith('NCIT') or
+          ontology_code.startswith('DOID')):
         return 'http://purl.obolibrary.org/obo/' + ontology_code
     elif ontology_code.startswith('Orphanet'):
         return 'http://www.orpha.net/ORDO/' + ontology_code
