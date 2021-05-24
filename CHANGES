@@ -1,3 +1,7 @@
+Version 0.0.18:
+- Added support for GO, DOID, and NCIT ontologies.
+- Minor bug fixes.
+
 Version 0.0.17:
  - Bug fixes in the Zooma API querying module: Removed HP as a ontology to search; and correction of a typo from "filters" to "filter"
  - New test: test_find_term_alzheimer()
