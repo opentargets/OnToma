@@ -1,3 +1,5 @@
+![Documentation Status](https://readthedocs.org/projects/ontoma/badge/?version=stable) ![Build Status](https://img.shields.io/circleci/build/gh/opentargets/OnToma)
+
 OnToma is a python module that helps you map your disease/phenotype terms to the
 ontology we use in the Open Targets platform.
 
@@ -67,19 +69,13 @@ degree of confidence of the match (one of {match, fuzzy, check}):
 http://www.ebi.ac.uk/efo/EFO_0000270    asthma  EFO OBO     match
 ```
 
-
-
 Piping also works for the output. If you want to find the string "mymatch" from
 the results, you can:
 ```sh
 ontoma <input_file> - | grep "mymatch"
 ```
 
-
-
-More detailed documentation is at [![Documentation Status](https://readthedocs.org/projects/ontoma/badge/?version=stable)](http://ontoma.readthedocs.io/en/stable/?badge=stable)
-http://ontoma.readthedocs.io/en/stable/
-
+More detailed documentation is at http://ontoma.readthedocs.io/en/stable/.
 
 # Developing
 
