@@ -1,22 +1,22 @@
 [[source]]
-url = "https://pypi.python.org/simple"
+url = "https://pypi.org/simple"
 verify_ssl = true
 name = "pypi"
 
+[packages]
+requests = "*"
+obonet = "*"
+click = "*"
+
 [dev-packages]
-pytest = "*"
 pylint = "*"
+pytest = "*"
 ipython = "*"
 twine = "*"
 sphinx = "*"
 sphinx-autobuild = "*"
 recommonmark = "*"
 sphinx-rtd-theme = "*"
-
-[packages]
-requests = "*"
-obonet = "*"
-click = "*"
 
 [requires]
 python_version = "3.7"
