@@ -20,7 +20,7 @@ Install development packages (optional)
 
 .. code-block:: bash
 
-    python3 -m pip install --upgrade pytest sphinx
+    python3 -m pip install --upgrade pytest sphinx sphinx-rtd-theme
 
 
 
