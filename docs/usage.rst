@@ -34,7 +34,6 @@ You can obtain more details using the `verbose` flag:
 
 Querying from the command line
 ------------------------------
-
 The command line version can be invoked with :code:`ontoma` (type :code:`ontoma --help` to find out about the usage):
 .. code-block:: bash
     ontoma <input_file> <output_file>
