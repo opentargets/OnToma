@@ -6,7 +6,6 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 
 collect_ignore = [
     "setup.py",
-    "docs/conf.py"
     ]
 
 import pytest
