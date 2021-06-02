@@ -1,4 +1,4 @@
-Zooma wrapper
+ZOOMA wrapper
 ================
 
 .. automodule:: ontoma.zooma
