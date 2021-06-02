@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import os
 import sys
 from setuptools import setup, find_packages
@@ -12,17 +11,13 @@ with open('README.md') as f:
 
 
 class VerifyVersionCommand(install):
-    """Custom command to verify that the git tag matches our version"""
-    description = 'verify that the git tag matches our version'
+    description = 'Verify that the git tag matches the VERSION file.'
 
     def run(self):
         tag = os.getenv('CIRCLE_TAG')
-
         if tag != VERSION:
-            info = "Git tag: {0} does not match the version of this app: {1}".format(
-                tag, VERSION
-            )
-            sys.exit(info)
+            sys.exit(f'Git tag {tag} does not match the version of this app {VERSION}')
+
 
 setup(
     name='ontoma',
@@ -30,8 +25,8 @@ setup(
     description='Ontology mapping for Open Targets',
     long_description=readme,
     long_description_content_type='text/markdown',
-    author='Open Targets dev team',
-    author_email='ops@opentargets.org',
+    author='Open Targets data team',
+    author_email='data@opentargets.org',
     url='https://github.com/opentargets/OnToma',
     license='Apache License, Version 2.0',
     packages=find_packages(exclude=('tests', 'docs')),
@@ -53,9 +48,8 @@ setup(
         [console_scripts]
         ontoma=ontoma.cli:ontoma
     ''',
-    python_requires='>=3.2',
+    python_requires='>=3.6',
     cmdclass={
         'verify': VerifyVersionCommand,
     }
 )
-
