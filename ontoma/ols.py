@@ -1,7 +1,4 @@
-# -*- coding: utf-8 -*-
-
-"""
-OLS API wrapper
+"""OLS API wrapper.
 
 Original code borrowed from
  https://github.com/cthoyt/ols-client/blob/master/src/ols_client/client.py
@@ -10,8 +7,7 @@ Original code borrowed from
 - Added details/parameters for all search methods
 
 TODO: check input parameters are valid
-TODO: handle requests.exceptions.ConnectionError when traffic is too high and API goes down
-"""
+TODO: handle requests.exceptions.ConnectionError when traffic is too high and API goes down."""
 
 import logging
 import urllib.parse

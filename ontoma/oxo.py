@@ -1,9 +1,4 @@
-# -*- coding: utf-8 -*-
-
-"""
-wrapper for the OXO api 
-(reverse engineered! argh!)
-"""
+"""Wrapper for the OXO API."""
 
 import logging
 import time
@@ -66,7 +61,7 @@ class OxoClient:
         return
 
 
-    
+
     def search(self, ids = None, input_source = None, mapping_target = 'EFO', distance = 1, size = MAXSIZE):
         '''iterates over the mappings, each being a dict with the following keys:
         [
@@ -100,7 +95,7 @@ class OxoClient:
             return
 
 
-    
+
     def make_mappings(self, input_source = "ICD9CM",**kwargs):
         src = self.search(input_source=input_source,**kwargs )
         mappings = {}

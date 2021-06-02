@@ -1,8 +1,4 @@
-# -*- coding: utf-8 -*-
-
-'''
-ZOOMA api wrapper
-'''
+"""ZOOMA API wrapper."""
 
 import logging
 import requests

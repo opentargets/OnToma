@@ -7,6 +7,7 @@ from ontoma.constants import FIELDS
 
 logger = logging.getLogger(__name__)
 
+
 @click.command()
 @click.argument('infile', type=click.File('r'))
 @click.argument('outfile', type=click.File('w'))

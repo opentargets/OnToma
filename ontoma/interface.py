@@ -1,7 +1,4 @@
-# -*- coding: utf-8 -*-
-
-'''main interface class
-'''
+"""Main interface class."""
 
 __all__ = [
     "OnToma",
@@ -9,7 +6,6 @@ __all__ = [
     ]
 
 import logging
-import re
 from functools import lru_cache
 
 import obonet
