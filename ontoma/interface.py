@@ -210,6 +210,7 @@ class OnToma(object):
 
         # Import EFO OWL datasets.
         self.efo_terms = pd.read_csv(os.path.join(cache_dir, owl.TERMS_FILENAME), sep='\t')
+        self.logger.info(f'Loaded {len(self.efo_terms)} terms from EFO OWL.')
 
     @lazy_property
     def _efo(self, efourl=URLS['EFO']):
@@ -415,17 +416,17 @@ class OnToma(object):
         return False
 
     def _step1_owl_identifier_match(self, normalised_identifier):
-        return None
+        return []
 
     def _step2_owl_db_xref(self, normalised_identifier):
-        return None
+        return []
 
     def _step3_manual_xref(self, normalised_identifier):
-        return None
+        return []
         return self.omim_lookup(normalised_identifier)
 
     def _step4_oxo_query(self, normalised_identifier):
-        return None
+        return []
         return self.icd9_lookup(normalised_identifier)
 
     def _step5_owl_name_match(self, query):
@@ -491,20 +492,20 @@ class OnToma(object):
         # Attempt mapping using various strategies for identifier/string inputs.
         if code:
             normalised_identifier = ontology.normalise_ontology_identifier(query)
-            result = any([
-                self._step1_owl_identifier_match(normalised_identifier),
-                self._step2_owl_db_xref(normalised_identifier),
-                self._step3_manual_xref(normalised_identifier),
-                self._step4_oxo_query(normalised_identifier),
-            ])
+            result = (
+                self._step1_owl_identifier_match(normalised_identifier)
+                or self._step2_owl_db_xref(normalised_identifier)
+                or self._step3_manual_xref(normalised_identifier)
+                or self._step4_oxo_query(normalised_identifier)
+            )
         else:
             # found = self._find_term_from_string(query, suggest)
-            result = any([
-                self._step5_owl_name_match(query),
-                self._step6_owl_exact_synonym(query),
-                self._step7_manual_mapping(query),
-                self._step8_zooma_high_confidence(query),
-            ])
+            result = (
+                self._step5_owl_name_match(query)
+                or self._step6_owl_exact_synonym(query)
+                or self._step7_manual_mapping(query)
+                or self._step8_zooma_high_confidence(query)
+            )
             if not result and suggest:
                 result = (
                     self._step9_owl_related_synonym(query) +
