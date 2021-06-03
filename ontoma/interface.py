@@ -416,7 +416,13 @@ class OnToma(object):
         return False
 
     def _step1_owl_identifier_match(self, normalised_identifier):
-        return []
+        return list(
+            self.efo_terms[
+                (self.efo_terms.normalised_id == normalised_identifier)
+                & (~ self.efo_terms.is_obsolete)
+            ]
+            .normalised_id
+        )
 
     def _step2_owl_db_xref(self, normalised_identifier):
         return []
@@ -489,6 +495,9 @@ class OnToma(object):
             A list of values dependent on the `verbose` flag (either strings with ontology identifiers, or a dictionary
             of additional information). The list will be empty if no hits were identified."""
 
+        if verbose:
+            raise NotImplementedError
+
         # Attempt mapping using various strategies for identifier/string inputs.
         if code:
             normalised_identifier = ontology.normalise_ontology_identifier(query)
@@ -513,20 +522,22 @@ class OnToma(object):
                 )
 
         # Convert the term representation into the format supported by the Open Targets schema.
-        result = [
-            {
-                k: ontology.convert_to_ot_schema(v) if k == 'term' else v
-                for k, v in mapping.items()
-            }
-            for mapping in result
-        ]
+        result = [ontology.convert_to_ot_schema(r) for r in result]
+        # result = [
+        #     {
+        #         k: ontology.convert_to_ot_schema(v) if k == 'term' else v
+        #         for k, v in mapping.items()
+        #     }
+        #     for mapping in result
+        # ]
 
         # Return either the list of dictionaries, or just the mappings, depending on parameters.
         logger.info(f'Found: {query} → {result}')
-        if verbose:  # term, label, source, quality, action
-            return result
-        else:
-            return [mapping['term'] for mapping in result]
+        return result
+        # if verbose:  # term, label, source, quality, action
+        #     return result
+        # else:
+        #     return [mapping['term'] for mapping in result]
 
     @lru_cache(maxsize=None)
     def _find_term_from_string(self, query, suggest=False):
