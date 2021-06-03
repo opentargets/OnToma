@@ -10,14 +10,15 @@ logger = logging.getLogger(__name__)
 
 
 @click.command()
+@click.argument('cache_dir', type=str)
 @click.argument('infile', type=click.File('r'))
 @click.argument('outfile', type=click.File('w'))
 @click.option('--skip-header', '-s', is_flag=True, default=False)
-def ontoma(infile, outfile, skip_header):
+def ontoma(cache_dir, infile, outfile, skip_header):
     """Map your input to the ontology used by the Open Targets Platform
     """
     logger.info('Initializing ontoma main interface...')
-    otmap = OnToma()
+    otmap = OnToma(cache_dir)
     efowriter = csv.DictWriter(outfile, FIELDS, delimiter='\t')
     efowriter.writeheader()
 

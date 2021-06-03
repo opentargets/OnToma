@@ -21,8 +21,8 @@ def preprocess_owl(outdir):
     """Downloads and preprocesses the EFO OT slim CWL file. Outputs several tables in TSV format to the specified
     directory."""
 
-    logging.info('Create the output directory.')
     if not os.path.isdir(outdir):
+        logging.info('Create the output directory.')
         os.mkdir(outdir)
 
     if not os.path.isfile(os.path.join(outdir, OWL_FILENAME)):
@@ -51,4 +51,4 @@ def preprocess_owl(outdir):
     )
 
 
-preprocess_owl('owl_cache')
+# preprocess_owl('owl_cache')

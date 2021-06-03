@@ -7,8 +7,10 @@ __all__ = [
 
 from functools import lru_cache
 import logging
+import os
 
 import obonet
+import pandas as pd
 
 from ontoma.downloaders import get_omim_to_efo_mappings, get_ot_zooma_to_efo_mappings
 from ontoma.ols import OlsClient
@@ -16,6 +18,7 @@ from ontoma.zooma import ZoomaClient
 from ontoma.oxo import OxoClient
 from ontoma.constants import URLS, OT_TOP_NODES
 from ontoma import ontology
+from ontoma import owl
 
 
 logger = logging.getLogger(__name__)
@@ -126,7 +129,7 @@ def make_uri(ontology_short_form):
 
 
 class OnToma(object):
-    '''Open Targets ontology mapping wrapper
+    """Open Targets ontology mapping wrapper
 
     Args:
         exclude (str or [str]):  Excludes 'zooma','ols_hp' or 'ols_ordo' API
@@ -192,19 +195,21 @@ class OnToma(object):
         >>> t.find_term('notadisease') is None
         True
 
-    '''
+    """
 
-    def __init__(self, exclude=[]):
+    def __init__(self, cache_dir, exclude=[]):
         self.logger = logging.getLogger(__name__)
         self.exclude = exclude
-        '''Initialize API clients'''
+        # Initialize API clients.
         self._ols = OlsClient()
         self._zooma = ZoomaClient()
         self._oxo = OxoClient()
-        '''Load OT specific mappings from our github repos'''
+        # Load OT specific mappings from our github repos.
         self._zooma_to_efo_map = get_ot_zooma_to_efo_mappings(URLS['ZOOMA_EFO_MAP'])
         self._omim_to_efo = get_omim_to_efo_mappings(URLS['OMIM_EFO_MAP'])
 
+        # Import EFO OWL datasets.
+        self.efo_terms = pd.read_csv(os.path.join(cache_dir, owl.TERMS_FILENAME), sep='\t')
 
     @lazy_property
     def _efo(self, efourl=URLS['EFO']):
@@ -416,6 +421,7 @@ class OnToma(object):
         return None
 
     def _step3_manual_xref(self, normalised_identifier):
+        return None
         return self.omim_lookup(normalised_identifier)
 
     def _step4_oxo_query(self, normalised_identifier):
