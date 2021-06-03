@@ -15,6 +15,7 @@ from ontoma.ols import OlsClient
 from ontoma.zooma import ZoomaClient
 from ontoma.oxo import OxoClient
 from ontoma.constants import URLS, OT_TOP_NODES
+from ontoma import ontology
 
 
 logger = logging.getLogger(__name__)
@@ -408,47 +409,44 @@ class OnToma(object):
 
         return False
 
-    def find_term(self, query, code=None, suggest=False, verbose=False):
-        """Finds the most likely EFO code for a given string or ontology code.
+    def find_term(
+            self,
+            query: str,
+            code: bool = False,
+            suggest: bool = False,
+            verbose: bool = False
+    ) -> list:
+        """For a given query (a string or ontology identifier), find matches in EFO Open Targets slim.
 
-        If the code argument is passed, it will attempt to perform an exact match
-        amongst the mappings available.
+        The algorithm operates in a series of steps. If a given step is successful, the result is returned immediately,
+        and the remaining steps are not executed. If all steps fail to provide a match, None is returned. Note that in
+        general more than one mapping can be returned. This can happen for complex traits which require more than one
+        ontology term to represent them.
 
-        If only a string is passed, it will attempt to match it against mappings,
-        but will try using the EBI SPOT APIs if no match is found, until a likely
-        code is identified.
+        If the query is an ontology identifier, specified by the `code` flag, the following steps are attempted:
+        1. Cross-reference from EFO OBO file.
+        2. Mapping from the manual cross-reference database.
+        3. Request through OxO with a distance of 2.
 
-        Operations roughly ordered from least expensive to most expensive
-        and also from most authorative to least authorative
+        If the query is a string, or if it is an ontology identifier where steps 1–3 failed to provide a result, the
+        following steps are attempted:
+        4. Name or synonym from EFO OBO file.
+        5. Mapping from the manual string-to-ontology database.
+        6. High confidence mapping from ZOOMA with default parameters.
 
-        1. EFO OBO lookup
-        2. Zooma mappings lookup
-        3. Zooma API high confidence lookup
-        4. OLS API EFO lookup - exact match
-        --- below this line we might not have a term in the platform ---
-        5. HP OBO lookup
-        6. OLS API HP lookup - exact match
-        7. OLS API ORDO lookup - exact match
-        8. OLS API EFO lookup - not exact
-        9. OLS API HP+ORDO lookup - not exact
+        If the `suggest` flag is specified, the final additional step is attempted:
+        7. Any confidence mapping from ZOOMA with default parameters.
 
         Args:
-            query (str): the disease/phenotype to be matched to an EFO code
-            code: accepts one of "ICD9CM", "OMIM"
-                **TODO** expand to more ontologies
-                If a code is passed, it will attempt to find the code in one of
-                our curated mapping datasources. Defaults to None.
-            suggest (boolean): if True the OLS API will be queried for any match
-                               in HP, ORDO and EFO, whether or not these terms
-                               are already included in the Open Targets platform
-                               ontology.
-            verbose (bool): if True returns a dictionary containing
-                            {term, label, source, quality, action}
+            query: Either the disease/phenotype to be matched to an EFO code, or an ontology identifier.
+            code: Whether the query is an ontology identifier.
+            suggest: Whether to report low quality mappings which are not guaranteed to be contained in EFO OT slim.
+            verbose: If specified, return a dictionary containing {term, label, source, quality, action} instead of only
+                the term.
 
         Returns:
-            A valid OT ontology URI. `None` if no EFO code was found
-        """
-
+            A list of values dependent on the `verbose` flag (either strings with ontology identifiers, or a dictionary
+            of additional information). The list will be empty if no hits were identified."""
         if code:
             try:
                 uri = make_uri(self._find_term_from_code(query, code=code))
