@@ -409,25 +409,29 @@ class OnToma(object):
 
         return False
 
-    def _step1_obo_cross_reference(self, normalised_identifier):
+    def _step1_found_in_efo(self, normalised_identifier):
         return None
 
-    def _step2_manual_cross_reference(self, normalised_identifier):
+    def _step2_obo_cross_reference(self, normalised_identifier):
         return None
 
-    def _step3_oxo_lookup(self, normalised_identifier):
+    def _step3_manual_cross_reference(self, normalised_identifier):
+        return self.omim_lookup(normalised_identifier)
+
+    def _step4_oxo_lookup(self, normalised_identifier):
         return None
+        return self.icd9_lookup(normalised_identifier)
 
-    def _step4_obo_lookup(self, query):
+    def _step5_obo_lookup(self, query):
         raise NotImplementedError
 
-    def _step5_manual_mapping(self, query):
+    def _step6_manual_mapping(self, query):
         raise NotImplementedError
 
-    def _step6_zooma_high_confidence(self, query):
+    def _step7_zooma_high_confidence(self, query):
         raise NotImplementedError
 
-    def _step7_zooma_any(self, query):
+    def _step8_zooma_any(self, query):
         raise NotImplementedError
 
     def find_term(
@@ -445,18 +449,19 @@ class OnToma(object):
         ontology term to represent them.
 
         If the query is an ontology identifier, specified by the `code` flag, the following steps are attempted:
-        1. Cross-reference from EFO OBO file.
-        2. Mapping from the manual cross-reference database.
-        3. Request through OxO with a distance of 2.
+        1. See if the term is already in EFO OT slim OBO file.
+        2. Match terms by cross-references from the OBO file.
+        3. Mapping from the manual cross-reference database.
+        4. Request through OxO with a distance of 2.
 
-        If the query is a string, or if it is an ontology identifier where steps 1–3 failed to provide a result, the
+        If the query is a string, or if it is an ontology identifier where steps 1–4 failed to provide a result, the
         following steps are attempted:
-        4. Name or synonym from EFO OBO file.
-        5. Mapping from the manual string-to-ontology database.
-        6. High confidence mapping from ZOOMA with default parameters.
+        5. Name or synonym from EFO OBO file.
+        6. Mapping from the manual string-to-ontology database.
+        7. High confidence mapping from ZOOMA with default parameters.
 
         If the `suggest` flag is specified, the final additional step is attempted:
-        7. Any confidence mapping from ZOOMA with default parameters.
+        8. Any confidence mapping from ZOOMA with default parameters.
 
         Args:
             query: Either the disease/phenotype to be matched to an EFO code, or an ontology identifier.
@@ -471,22 +476,22 @@ class OnToma(object):
 
         # Attempt mapping using various strategies for identifier/string inputs.
         if code:
-            # make_uri(self._find_term_from_code(query, code=code))
             normalised_identifier = ontology.normalise_ontology_identifier(query)
             result = any([
-                self._step1_obo_cross_reference(normalised_identifier),
-                self._step2_manual_cross_reference(normalised_identifier),
-                self._step3_oxo_lookup(normalised_identifier)
+                self._step1_found_in_efo(normalised_identifier),
+                self._step2_obo_cross_reference(normalised_identifier),
+                self._step3_manual_cross_reference(normalised_identifier),
+                self._step4_oxo_lookup(normalised_identifier)
             ])
         else:
             # found = self._find_term_from_string(query, suggest)
             result = any([
-                self._step4_obo_lookup(query),
-                self._step5_manual_mapping(query),
-                self._step6_zooma_high_confidence(query),
+                self._step5_obo_lookup(query),
+                self._step6_manual_mapping(query),
+                self._step7_zooma_high_confidence(query),
             ])
             if not result and suggest:
-                result = self._step7_zooma_any(query)
+                result = self._step8_zooma_any(query)
 
         # Convert the term representation into the format supported by the Open Targets schema.
         result = [
@@ -503,20 +508,6 @@ class OnToma(object):
             return result
         else:
             return [mapping['term'] for mapping in result]
-
-
-    def _find_term_from_code(self, query, code):
-        '''Finds EFO code given another ontology code
-
-        Returns: `None` if no EFO code was found by this method
-        '''
-        if code == 'OMIM':
-            return self.omim_lookup(query)
-        if code == 'ICD9CM':
-            return self.icd9_lookup(query)
-
-        logger.error('Code %s is not currently supported.', code)
-        return None
 
     @lru_cache(maxsize=None)
     def _find_term_from_string(self, query, suggest=False):
