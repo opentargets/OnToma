@@ -409,12 +409,33 @@ class OnToma(object):
 
         return False
 
+    def _step1_obo_cross_reference(self, normalised_identifier):
+        return None
+
+    def _step2_manual_cross_reference(self, normalised_identifier):
+        return None
+
+    def _step3_oxo_lookup(self, normalised_identifier):
+        return None
+
+    def _step4_obo_lookup(self, query):
+        raise NotImplementedError
+
+    def _step5_manual_mapping(self, query):
+        raise NotImplementedError
+
+    def _step6_zooma_high_confidence(self, query):
+        raise NotImplementedError
+
+    def _step7_zooma_any(self, query):
+        raise NotImplementedError
+
     def find_term(
             self,
             query: str,
             code: bool = False,
             suggest: bool = False,
-            verbose: bool = False
+            verbose: bool = False,
     ) -> list:
         """For a given query (a string or ontology identifier), find matches in EFO Open Targets slim.
 
@@ -447,42 +468,42 @@ class OnToma(object):
         Returns:
             A list of values dependent on the `verbose` flag (either strings with ontology identifiers, or a dictionary
             of additional information). The list will be empty if no hits were identified."""
+
+        # Attempt mapping using various strategies for identifier/string inputs.
         if code:
-            try:
-                uri = make_uri(self._find_term_from_code(query, code=code))
-                logger.info('Found %s for %s in %s '
-                            'mappings', uri, query, code)
-                if verbose:
-                    return {'term':uri,
-                            'label':self.get_efo_label(uri),
-                            'source':code, 'quality':'match', 'action':''}
-                else:
-                    return uri
-            except KeyError as e:
-                logger.info('Could not find a match '
-                            'for %s in %s mappings. ', e, code)
-                return None
+            # make_uri(self._find_term_from_code(query, code=code))
+            normalised_identifier = ontology.normalise_ontology_identifier(query)
+            result = any([
+                self._step1_obo_cross_reference(normalised_identifier),
+                self._step2_manual_cross_reference(normalised_identifier),
+                self._step3_oxo_lookup(normalised_identifier)
+            ])
         else:
-            found = self._find_term_from_string(query, suggest)
-            if found:
-                msg = 'Found {} for {} from {} - {} - {}'.format(
-                            make_uri(found['term']),
-                            query,
-                            found['source'],
-                            found['quality'],
-                            found['action'])
-                if found['quality'] == 'match':
-                    logger.info(msg)
-                else:
-                    logger.warning(msg)
+            # found = self._find_term_from_string(query, suggest)
+            result = any([
+                self._step4_obo_lookup(query),
+                self._step5_manual_mapping(query),
+                self._step6_zooma_high_confidence(query),
+            ])
+            if not result and suggest:
+                result = self._step7_zooma_any(query)
 
-                if verbose:
-                    return found
-                else:
-                    return make_uri(found['term'])
+        # Convert the term representation into the format supported by the Open Targets schema.
+        result = [
+            {
+                k: ontology.convert_to_ot_schema(v) if k == 'term' else v
+                for k, v in mapping.items()
+            }
+            for mapping in result
+        ]
 
-            logger.error('Could not find *any* term for string: %s', query)
-            return None
+        # Return either the list of dictionaries, or just the mappings, depending on parameters.
+        logger.info(f'Found: {query} → {result}')
+        if verbose:  # term, label, source, quality, action
+            return result
+        else:
+            return [mapping['term'] for mapping in result]
+
 
     def _find_term_from_code(self, query, code):
         '''Finds EFO code given another ontology code
