@@ -4,6 +4,7 @@ import logging
 
 from ontoma.interface import OnToma
 from ontoma.constants import FIELDS
+from ontoma import owl
 
 logger = logging.getLogger(__name__)
 
@@ -13,14 +14,14 @@ logger = logging.getLogger(__name__)
 @click.argument('outfile', type=click.File('w'))
 @click.option('--skip-header', '-s', is_flag=True, default=False)
 def ontoma(infile, outfile, skip_header):
-    '''Map your input to the ontology used by the Open Targets Platform
-    '''
+    """Map your input to the ontology used by the Open Targets Platform
+    """
     logger.info('Initializing ontoma main interface...')
     otmap = OnToma()
     efowriter = csv.DictWriter(outfile, FIELDS, delimiter='\t')
     efowriter.writeheader()
 
-    '''find EFO term'''
+    # Find EFO term.
     mapped = 0
     filtered = (line.rstrip() for line in infile)
     for i, row in enumerate(filtered):
@@ -39,3 +40,9 @@ def ontoma(infile, outfile, skip_header):
                        "Found {} EFOids. "
                        "Skipped {} ".format(i+1,mapped,i-mapped+1), err=True
                        )
+
+
+@click.command()
+@click.argument('outdir', type=str)
+def ontoma_process_owl(outdir):
+    owl.preprocess_owl(outdir)
