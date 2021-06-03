@@ -3,10 +3,10 @@
 __all__ = [
     "OnToma",
     "make_uri"
-    ]
+]
 
-import logging
 from functools import lru_cache
+import logging
 
 import obonet
 
@@ -20,11 +20,9 @@ from ontoma.constants import URLS, OT_TOP_NODES
 logger = logging.getLogger(__name__)
 
 
-
 def lazy_property(fn):
-    '''Decorator that makes a property lazy-evaluated.
-    ... seealso: https://stevenloria.com/lazy-properties/
-    '''
+    """Decorator that makes a property lazy-evaluated.
+    ... seealso: https://stevenloria.com/lazy-properties/"""
     attr_name = '_lazy_' + fn.__name__
 
     @property
@@ -36,10 +34,10 @@ def lazy_property(fn):
 
 
 def name_to_label_mapping(obonetwork):
-    '''
+    """
     builds name <=> label lookup dictionaries starting
     from an OBO file, including synonyms
-    '''
+    """
     id_to_name = {}
     name_to_id = {}
     for nodeid, data in obonetwork.nodes(data=True):
@@ -58,6 +56,7 @@ def name_to_label_mapping(obonetwork):
                 name_to_id[synonim.split('\"')[1]] = nodeid
     return id_to_name, name_to_id
 
+
 def xref_to_name_and_label_mapping(obonetwork):
     '''
     builds xref to list of name and label lookup dictionary starting from an OBO file
@@ -72,6 +71,7 @@ def xref_to_name_and_label_mapping(obonetwork):
                 else:
                     xref_to_name_and_label[xref] = [name_and_label]
     return xref_to_name_and_label
+
 
 def make_uri(ontology_short_form):
     '''
@@ -409,7 +409,7 @@ class OnToma(object):
         return False
 
     def find_term(self, query, code=None, suggest=False, verbose=False):
-        '''Finds the most likely EFO code for a given string or ontology code.
+        """Finds the most likely EFO code for a given string or ontology code.
 
         If the code argument is passed, it will attempt to perform an exact match
         amongst the mappings available.
@@ -432,7 +432,6 @@ class OnToma(object):
         8. OLS API EFO lookup - not exact
         9. OLS API HP+ORDO lookup - not exact
 
-
         Args:
             query (str): the disease/phenotype to be matched to an EFO code
             code: accepts one of "ICD9CM", "OMIM"
@@ -446,10 +445,9 @@ class OnToma(object):
             verbose (bool): if True returns a dictionary containing
                             {term, label, source, quality, action}
 
-
         Returns:
             A valid OT ontology URI. `None` if no EFO code was found
-        '''
+        """
 
         if code:
             try:

@@ -8,7 +8,7 @@ __all__ = [
 import csv
 import logging
 import requests
-from ontoma.constants import URLS #pylint: disable=unused-import
+from ontoma.constants import URLS
 
 logger = logging.getLogger(__name__)
 

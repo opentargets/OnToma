@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 @click.argument('infile', type=click.File('r'))
 @click.argument('outfile', type=click.File('w'))
 @click.option('--skip-header', '-s', is_flag=True, default=False)
-def ontoma(infile,outfile, skip_header):
+def ontoma(infile, outfile, skip_header):
     '''Map your input to the ontology used by the Open Targets Platform
     '''
     logger.info('Initializing ontoma main interface...')

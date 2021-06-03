@@ -94,16 +94,9 @@ class OxoClient:
             logger.error(e.response.json()['message'])
             return
 
-
-
     def make_mappings(self, input_source = "ICD9CM",**kwargs):
         src = self.search(input_source=input_source,**kwargs )
         mappings = {}
         for row in src:
             mappings[ row['curie'].split(':')[1] ] = row['mappingResponseList'][0]['curie']
         return mappings
-
-
-
-
-
