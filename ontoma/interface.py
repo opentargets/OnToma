@@ -206,11 +206,14 @@ class OnToma(object):
         self._oxo = OxoClient()
         # Load OT specific mappings from our github repos.
         self._zooma_to_efo_map = get_ot_zooma_to_efo_mappings(URLS['ZOOMA_EFO_MAP'])
-        self._omim_to_efo = get_omim_to_efo_mappings(URLS['OMIM_EFO_MAP'])
 
         # Import EFO OWL datasets.
         self.efo_terms = pd.read_csv(os.path.join(cache_dir, owl.TERMS_FILENAME), sep='\t')
         self.logger.info(f'Loaded {len(self.efo_terms)} terms from EFO OWL.')
+
+        # Import OMIM to EFO mappings
+        # TODO: They are possibly not manual and can be fetched directly from EFO OWL. Investigate.
+        self.omim_efo_mappings = get_omim_to_efo_mappings(URLS['OMIM_EFO_MAP'])
 
     @lazy_property
     def _efo(self, efourl=URLS['EFO']):
@@ -354,13 +357,6 @@ class OnToma(object):
         '''
         return self._icd9_to_efo[icd9code]
 
-    def omim_lookup(self, omimcode):
-        '''Searches our own curated OMIM <=> EFO mappings
-        #FIXME assumes the first is the best hit. is this ok?
-        '''
-        return self._omim_to_efo[omimcode][0]['iri']
-
-
     def hp_lookup(self, name):
         '''Searches the HP OBO file for a direct match
         '''
@@ -415,42 +411,53 @@ class OnToma(object):
 
         return False
 
-    def _step1_owl_identifier_match(self, normalised_identifier):
+    def step1_owl_identifier_match(self, normalised_identifier):
         return list(
             self.efo_terms[
-                (self.efo_terms.normalised_id == normalised_identifier)
-                & (~ self.efo_terms.is_obsolete)
+                (self.efo_terms.normalised_id == normalised_identifier) &
+                (~ self.efo_terms.is_obsolete)
             ]
             .normalised_id
         )
 
-    def _step2_owl_db_xref(self, normalised_identifier):
+    def step2_owl_db_xref(self, normalised_identifier):
         return []
 
-    def _step3_manual_xref(self, normalised_identifier):
-        return []
-        return self.omim_lookup(normalised_identifier)
+    def step3_manual_xref(self, normalised_identifier):
+        ontology_name, ontology_id = normalised_identifier.split(':')
+        if ontology_name == 'OMIM':
+            mapped_ids = [ontology.normalise_ontology_identifier(match['iri'])
+                          for match in self.omim_efo_mappings.get(ontology_id, [])]
+            return list(
+                self.efo_terms[
+                    (self.efo_terms.normalised_id.isin(mapped_ids) &
+                    (~ self.efo_terms.is_obsolete))
+                ]
+                .normalised_id
+            )
+        else:
+            return []
 
-    def _step4_oxo_query(self, normalised_identifier):
+    def step4_oxo_query(self, normalised_identifier):
         return []
         return self.icd9_lookup(normalised_identifier)
 
-    def _step5_owl_name_match(self, query):
+    def step5_owl_name_match(self, query):
         raise NotImplementedError
 
-    def _step6_owl_exact_synonym(self, query):
+    def step6_owl_exact_synonym(self, query):
         raise NotImplementedError
 
-    def _step7_manual_mapping(self, query):
+    def step7_manual_mapping(self, query):
         raise NotImplementedError
 
-    def _step8_zooma_high_confidence(self, query):
+    def step8_zooma_high_confidence(self, query):
         raise NotImplementedError
 
-    def _step9_owl_related_synonym(self, query):
+    def step9_owl_related_synonym(self, query):
         raise NotImplementedError
 
-    def _step10_zooma_any(self, query):
+    def step10_zooma_any(self, query):
         raise NotImplementedError
 
     def find_term(
@@ -502,23 +509,23 @@ class OnToma(object):
         if code:
             normalised_identifier = ontology.normalise_ontology_identifier(query)
             result = (
-                self._step1_owl_identifier_match(normalised_identifier)
-                or self._step2_owl_db_xref(normalised_identifier)
-                or self._step3_manual_xref(normalised_identifier)
-                or self._step4_oxo_query(normalised_identifier)
+                self.step1_owl_identifier_match(normalised_identifier)
+                or self.step2_owl_db_xref(normalised_identifier)
+                or self.step3_manual_xref(normalised_identifier)
+                or self.step4_oxo_query(normalised_identifier)
             )
         else:
             # found = self._find_term_from_string(query, suggest)
             result = (
-                self._step5_owl_name_match(query)
-                or self._step6_owl_exact_synonym(query)
-                or self._step7_manual_mapping(query)
-                or self._step8_zooma_high_confidence(query)
+                self.step5_owl_name_match(query)
+                or self.step6_owl_exact_synonym(query)
+                or self.step7_manual_mapping(query)
+                or self.step8_zooma_high_confidence(query)
             )
             if not result and suggest:
                 result = (
-                    self._step9_owl_related_synonym(query) +
-                    self._step10_zooma_any(query)
+                        self.step9_owl_related_synonym(query) +
+                        self.step10_zooma_any(query)
                 )
 
         # Convert the term representation into the format supported by the Open Targets schema.

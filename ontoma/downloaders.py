@@ -12,6 +12,7 @@ from ontoma.constants import URLS
 
 logger = logging.getLogger(__name__)
 
+
 def get_omim_to_efo_mappings(url):
     '''returns a dictionary that maps OMIM codes to EFO_uri
     >>> d = get_omim_to_efo_mappings(URLS['OMIM_EFO_MAP'])
