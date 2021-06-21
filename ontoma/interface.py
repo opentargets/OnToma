@@ -412,6 +412,7 @@ class OnToma(object):
         return False
 
     def step1_owl_identifier_match(self, normalised_identifier):
+        """Direct lookup: if the term is already present in EFO, return it as is."""
         return list(
             self.efo_terms[
                 (self.efo_terms.normalised_id == normalised_identifier) &
@@ -467,33 +468,34 @@ class OnToma(object):
             suggest: bool = False,
             verbose: bool = False,
     ) -> list:
-        """For a given query (a string or ontology identifier), find matches in EFO Open Targets slim.
+        """For a given query (an ontology identifier or a string), find matches in EFO Open Targets slim.
 
         The algorithm operates in a series of steps. If a given step is successful, the result is returned immediately,
         and the remaining steps are not executed. If all steps fail to provide a match, None is returned. Note that in
         general more than one mapping can be returned. This can happen for complex traits which require more than one
         ontology term to represent them.
 
-        If the query is an ontology identifier, specified by the `code` flag, the following steps are attempted:
+        If the `code` flag is specified, it is assumed that the query is an ontology identifier, such as 'OMIM:615632',
+        and the following steps are attempted:
         1. See if the term is already in EFO OT slim OWL file.
         2. Match terms by cross-references (hasDbXref) from the OWL file.
         3. Mapping from the manual cross-reference database.
         4. Request through OxO with a distance of 2.
 
-        If the query is a string, or if it is an ontology identifier where steps 1–4 failed to provide a result, the
-        following steps are attempted:
+        If the query is a string, the following steps are attempted:
         5. Exact name match from EFO OT slim OWL file.
         6. Exact synonym (hasExactSynonym) from the OWL file.
         7. Mapping from the manual string-to-ontology database.
         8. High confidence mapping from ZOOMA with default parameters.
 
-        If the `suggest` flag is specified, additional steps are attempted:
+        The following functionality is planned, but not yet implemented. — If the query is a string, and additionally
+        the `suggest` flag is specified, additional steps are attempted:
         9. Inexact synonyms (hasRelatedSynonym) from the OWL file.
         10. Any confidence mapping from ZOOMA with default parameters.
 
         Args:
-            query: Either the disease/phenotype to be matched to an EFO code, or an ontology identifier.
-            code: Whether the query is an ontology identifier.
+            query: Either an ontology identifier, or the disease/phenotype string to be matched to an EFO code.
+            code: Whether to treat the query as an ontology identifier.
             suggest: Whether to report low quality mappings which are not guaranteed to be contained in EFO OT slim.
             verbose: If specified, return a dictionary containing {term, label, source, quality, action} instead of only
                 the term.
@@ -515,7 +517,6 @@ class OnToma(object):
                 or self.step4_oxo_query(normalised_identifier)
             )
         else:
-            # found = self._find_term_from_string(query, suggest)
             result = (
                 self.step5_owl_name_match(query)
                 or self.step6_owl_exact_synonym(query)
@@ -523,6 +524,7 @@ class OnToma(object):
                 or self.step8_zooma_high_confidence(query)
             )
             if not result and suggest:
+                raise NotImplementedError
                 result = (
                         self.step9_owl_related_synonym(query) +
                         self.step10_zooma_any(query)
@@ -530,21 +532,10 @@ class OnToma(object):
 
         # Convert the term representation into the format supported by the Open Targets schema.
         result = [ontology.convert_to_ot_schema(r) for r in result]
-        # result = [
-        #     {
-        #         k: ontology.convert_to_ot_schema(v) if k == 'term' else v
-        #         for k, v in mapping.items()
-        #     }
-        #     for mapping in result
-        # ]
 
         # Return either the list of dictionaries, or just the mappings, depending on parameters.
         logger.info(f'Found: {query} → {result}')
         return result
-        # if verbose:  # term, label, source, quality, action
-        #     return result
-        # else:
-        #     return [mapping['term'] for mapping in result]
 
     @lru_cache(maxsize=None)
     def _find_term_from_string(self, query, suggest=False):
