@@ -12,7 +12,7 @@ import os
 import obonet
 import pandas as pd
 
-from ontoma.downloaders import get_omim_to_efo_mappings, get_ot_zooma_to_efo_mappings
+from ontoma.downloaders import get_manual_xrefs, get_ot_zooma_to_efo_mappings
 from ontoma.ols import OlsClient
 from ontoma.zooma import ZoomaClient
 from ontoma.oxo import OxoClient
@@ -214,9 +214,8 @@ class OnToma(object):
         self.logger.info(f'Loaded {len(self.efo_terms)} terms, {len(self.efo_xrefs)} xrefs, '
                          f'and {len(self.efo_synonyms)} synonyms from EFO OWL.')
 
-        # Import OMIM to EFO mappings
-        # TODO: They are possibly not manual and can be fetched directly from EFO OWL. Investigate.
-        self.omim_efo_mappings = get_omim_to_efo_mappings(URLS['OMIM_EFO_MAP'])
+        # Import manually curated datasets.
+        self.manual_xrefs = get_manual_xrefs(URLS['MANUAL_XREF'])
 
     @lazy_property
     def _efo(self, efourl=URLS['EFO']):
@@ -424,10 +423,10 @@ class OnToma(object):
             .normalised_id
         )
 
-    def step2_owl_db_xref(self, normalised_identifier):
-        """If there are terms in EFO referenced by the `hasDbXref` field to the query, return them."""
-        cross_referenced_ids = self.efo_xrefs[
-            self.efo_xrefs.normalised_xref_id == normalised_identifier
+    def find_xrefs_from_df(self, normalised_identifier, df):
+        """Find xrefs using a given xref dataframe and a query."""
+        cross_referenced_ids = df[
+            df.normalised_xref_id == normalised_identifier
         ].normalised_id
         return list(
             self.efo_terms[
@@ -437,21 +436,13 @@ class OnToma(object):
             .normalised_id
         )
 
+    def step2_owl_db_xref(self, normalised_identifier):
+        """If there are terms in EFO referenced by the `hasDbXref` field to the query, return them."""
+        return self.find_xrefs_from_df(normalised_identifier, self.efo_xrefs)
+
     def step3_manual_xref(self, normalised_identifier):
-        return []
-        ontology_name, ontology_id = normalised_identifier.split(':')
-        if ontology_name == 'OMIM':
-            mapped_ids = [ontology.normalise_ontology_identifier(match['iri'])
-                          for match in self.omim_efo_mappings.get(ontology_id, [])]
-            return list(
-                self.efo_terms[
-                    (self.efo_terms.normalised_id.isin(mapped_ids) &
-                    (~ self.efo_terms.is_obsolete))
-                ]
-                .normalised_id
-            )
-        else:
-            return []
+        """Look for the queried term in the manual ontology-to-ontology mapping list."""
+        return self.find_xrefs_from_df(normalised_identifier, self.manual_xrefs)
 
     def step4_oxo_query(self, normalised_identifier):
         return []

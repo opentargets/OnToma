@@ -50,14 +50,14 @@ def preprocess_owl(outdir):
             normalised_xref_id = ontology.normalise_ontology_identifier(xref.id)
             if normalised_xref_id:
                 xrefs_dataset.append([
-                    normalised_term_id,
                     normalised_xref_id,
+                    normalised_term_id,
                 ])
         for synonym in term.synonyms:
             if synonym.description and synonym.scope == 'EXACT':
                 synonyms_dataset.append([
+                    synonym.description.lower(),
                     normalised_term_id,
-                    synonym.description.lower()
                 ])
 
     logging.info('Output the datasets.')
@@ -65,8 +65,8 @@ def preprocess_owl(outdir):
         terms_dataset, columns=('normalised_id', 'normalised_label', 'is_obsolete')
     ).to_csv(os.path.join(outdir, TERMS_FILENAME), sep='\t', index=False)
     pd.DataFrame(
-        xrefs_dataset, columns=('normalised_id', 'normalised_xref_id')
+        xrefs_dataset, columns=('normalised_xref_id', 'normalised_id',)
     ).to_csv(os.path.join(outdir, XREFS_FILENAME), sep='\t', index=False)
     pd.DataFrame(
-        synonyms_dataset, columns=('normalised_id', 'normalised_synonym')
+        synonyms_dataset, columns=('normalised_synonym', 'normalised_id')
     ).to_csv(os.path.join(outdir, SYNONYMS_FILENAME), sep='\t', index=False)

@@ -1,11 +1,9 @@
 """Constants for urls for ontology files, mapping and API."""
 
 URLS = {
-
-
     'EFO': 'https://www.ebi.ac.uk/efo/efo.obo',
     'HP': 'http://purl.obolibrary.org/obo/hp.obo',
-    'OMIM_EFO_MAP': 'https://raw.githubusercontent.com/opentargets/platform_semantic/master/resources/xref_mappings/omim_to_efo.txt',
+    'MANUAL_XREF': 'https://raw.githubusercontent.com/opentargets/mappings/master/manual_xref.tsv',
     'ZOOMA_EFO_MAP': 'https://raw.githubusercontent.com/opentargets/platform_semantic/master/resources/zooma/cttv_indications_3.txt',
     'MONDO': 'http://purl.obolibrary.org/obo/mondo.obo'
 }
