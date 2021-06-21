@@ -200,12 +200,11 @@ class OnToma(object):
     def __init__(self, cache_dir, exclude=[]):
         self.logger = logging.getLogger(__name__)
         self.exclude = exclude
+
         # Initialize API clients.
         self._ols = OlsClient()
         self._zooma = ZoomaClient()
         self._oxo = OxoClient()
-        # Load OT specific mappings from our github repos.
-        self._zooma_to_efo_map = get_ot_zooma_to_efo_mappings(URLS['ZOOMA_EFO_MAP'])
 
         # Import EFO OWL datasets.
         self.efo_terms = pd.read_csv(os.path.join(cache_dir, owl.TERMS_FILENAME), sep='\t')
@@ -216,6 +215,8 @@ class OnToma(object):
 
         # Import manually curated datasets.
         self.manual_xrefs = get_manual_xrefs(URLS['MANUAL_XREF'])
+        # Load OT specific mappings from our github repos.
+        self._zooma_to_efo_map = get_ot_zooma_to_efo_mappings(URLS['ZOOMA_EFO_MAP'])
 
     @lazy_property
     def _efo(self, efourl=URLS['EFO']):
@@ -237,12 +238,6 @@ class OnToma(object):
         _hp = obonet.read_obo(hpurl)
         self.logger.info('HP OBO parsed. Size: %s nodes', len(_hp))
         return _hp
-
-    @lazy_property
-    def _icd9_to_efo(self):
-        _icd9_to_efo = self._oxo.make_mappings(input_source="ICD9CM",
-                                               mapping_target='EFO')
-        return _icd9_to_efo
 
     @lazy_property
     def efo_to_name(self):
@@ -289,8 +284,6 @@ class OnToma(object):
         _, name_to_hp = name_to_label_mapping(self._hp)
         logger.info("Parsed %s Name to HP mapping " % len(name_to_hp))
         return name_to_hp
-
-
 
     def get_efo_label(self, efocode):
         '''Given an EFO short form code, returns the label as taken from the OBO
@@ -353,12 +346,6 @@ class OnToma(object):
         '''
         return self._zooma_to_efo_map[name]
 
-    def icd9_lookup(self, icd9code):
-        '''Searches the ICD9CM <=> EFO mappings returned from the OXO API
-        #FIXME Results don't seem to be deterministic, some mappings appear and disappear between calls, e.g. t.icd9_lookup('696')
-        '''
-        return self._icd9_to_efo[icd9code]
-
     def hp_lookup(self, name):
         '''Searches the HP OBO file for a direct match
         '''
@@ -373,25 +360,6 @@ class OnToma(object):
         '''Searches the mondo OBO file for a direct match
         '''
         return make_uri(self.name_to_mondo[name])
-
-    def oxo_lookup(self, other_ontology_id, input_source="ICD9CM"):
-        '''Searches in the mappings returned from the EBI OXO API.
-
-        The function should return an EFO code for any given xref, if one
-        exists.
-
-        Args:
-            other_ontology_id: the code that should be mapped to EFO
-            input_source: an ontology code. Defaults to 'ICD9CM'.
-                          Available ontologies are listed at https://www.ebi.ac.uk/spot/oxo/api/datasources?fields=preferredPrefix
-
-        Returns:
-            str: the EFO code
-        '''
-        return self._oxo.search(ids=[other_ontology_id],
-                                input_source=input_source,
-                                mapping_target='EFO',
-                                distance=2)
 
     def _is_included(self, iri, ontology=None):
         '''
@@ -413,11 +381,13 @@ class OnToma(object):
 
         return False
 
-    def step1_owl_identifier_match(self, normalised_identifier):
-        """If the term is already present in EFO, return it as is."""
+    ###############################################################################################################
+
+    def filter_by_efo_current(self, normalised_identifiers):
+        """Returns a subset of the idenfitiers which are in EFO and not marked as obsolete."""
         return list(
             self.efo_terms[
-                (self.efo_terms.normalised_id == normalised_identifier) &
+                (self.efo_terms.normalised_id.isin(normalised_identifiers)) &
                 (~ self.efo_terms.is_obsolete)
             ]
             .normalised_id
@@ -425,28 +395,35 @@ class OnToma(object):
 
     def find_xrefs_from_df(self, normalised_identifier, df):
         """Find xrefs using a given xref dataframe and a query."""
-        cross_referenced_ids = df[
-            df.normalised_xref_id == normalised_identifier
-        ].normalised_id
-        return list(
-            self.efo_terms[
-                (self.efo_terms.normalised_id.isin(cross_referenced_ids)) &
-                (~ self.efo_terms.is_obsolete)
-            ]
-            .normalised_id
+        return self.filter_by_efo_current(
+            df[df.normalised_xref_id == normalised_identifier].normalised_id
+        )
+
+    def step1_owl_identifier_match(self, normalised_identifier):
+        """If the term is already present in EFO, return it as is."""
+        return self.filter_by_efo_current(
+            self.efo_terms[self.efo_terms.normalised_id == normalised_identifier].normalised_id
         )
 
     def step2_owl_db_xref(self, normalised_identifier):
         """If there are terms in EFO referenced by the `hasDbXref` field to the query, return them."""
-        return self.find_xrefs_from_df(normalised_identifier, self.efo_xrefs)
+        return self.find_xrefs_from_df(
+            normalised_identifier, self.efo_xrefs
+        )
 
     def step3_manual_xref(self, normalised_identifier):
         """Look for the queried term in the manual ontology-to-ontology mapping list."""
-        return self.find_xrefs_from_df(normalised_identifier, self.manual_xrefs)
+        return self.find_xrefs_from_df(
+            normalised_identifier, self.manual_xrefs
+        )
 
     def step4_oxo_query(self, normalised_identifier):
-        return []
-        return self.icd9_lookup(normalised_identifier)
+        """Find cross-references using OxO."""
+        oxo_mappings = set()
+        for result in self._oxo.search(ids=[normalised_identifier], mapping_target='EFO', distance=2):
+            for mapping in result['mappingResponseList']:
+                oxo_mappings.add(ontology.normalise_ontology_identifier(mapping['curie']))
+        return self.filter_by_efo_current(oxo_mappings)
 
     def step5_owl_name_match(self, query):
         raise NotImplementedError
