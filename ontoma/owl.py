@@ -13,6 +13,8 @@ EFO_RELEASE_API = 'https://api.github.com/repos/EBISPOT/efo/releases/latest'
 
 OWL_FILENAME = 'efo_otar_slim.owl'
 TERMS_FILENAME = 'terms.tsv'
+XREFS_FILENAME = 'xrefs.tsv'
+SYNONYMS_FILENAME = 'synonyms.tsv'
 
 logger = logging.getLogger(__name__)
 
@@ -34,21 +36,35 @@ def preprocess_owl(outdir):
         urllib.request.urlretrieve(otar_slim_url, os.path.join(outdir, OWL_FILENAME))
 
     logging.info('Process the OWL file.')
-    terms_dataset = []
+    terms_dataset, xrefs_dataset, synonyms_dataset = [], [], []
     for term in pronto.Ontology(os.path.join(outdir, OWL_FILENAME)).terms():
         if not term.is_leaf():
             continue
+        normalised_term_id = ontology.normalise_ontology_identifier(term.id)
         terms_dataset.append([
-            ontology.normalise_ontology_identifier(term.id),
+            normalised_term_id,
             term.name.lower() if term.name else '',
             term.obsolete,
         ])
+        for xref in term.xrefs:
+            xrefs_dataset.append([
+                normalised_term_id,
+                ontology.normalise_ontology_identifier(xref.id),
+            ])
+        for synonym in term.synonyms:
+            if synonym.scope == 'EXACT':
+                synonyms_dataset.append([
+                    normalised_term_id,
+                    synonym.description.lower()
+                ])
 
     logging.info('Output the datasets.')
-    (
-        pd.DataFrame(terms_dataset, columns=('normalised_id', 'normalised_label', 'is_obsolete'))
-        .to_csv(os.path.join(outdir, TERMS_FILENAME), sep='\t', index=False)
-    )
-
-
-# preprocess_owl('owl_cache')
+    pd.DataFrame(
+        terms_dataset, columns=('normalised_id', 'normalised_label', 'is_obsolete')
+    ).to_csv(os.path.join(outdir, TERMS_FILENAME), sep='\t', index=False)
+    pd.DataFrame(
+        xrefs_dataset, columns=('normalised_id', 'normalised_xref_id')
+    ).to_csv(os.path.join(outdir, XREFS_FILENAME), sep='\t', index=False)
+    pd.DataFrame(
+        synonyms_dataset, columns=('normalised_id', 'normalised_synonym')
+    ).to_csv(os.path.join(outdir, SYNONYMS_FILENAME), sep='\t', index=False)

@@ -209,7 +209,10 @@ class OnToma(object):
 
         # Import EFO OWL datasets.
         self.efo_terms = pd.read_csv(os.path.join(cache_dir, owl.TERMS_FILENAME), sep='\t')
-        self.logger.info(f'Loaded {len(self.efo_terms)} terms from EFO OWL.')
+        self.efo_xrefs = pd.read_csv(os.path.join(cache_dir, owl.XREFS_FILENAME), sep='\t')
+        self.efo_synonyms = pd.read_csv(os.path.join(cache_dir, owl.SYNONYMS_FILENAME), sep='\t')
+        self.logger.info(f'Loaded {len(self.efo_terms)} terms, {len(self.efo_xrefs)} xrefs, '
+                         f'and {len(self.efo_synonyms)} synonyms from EFO OWL.')
 
         # Import OMIM to EFO mappings
         # TODO: They are possibly not manual and can be fetched directly from EFO OWL. Investigate.
@@ -422,6 +425,7 @@ class OnToma(object):
         )
 
     def step2_owl_db_xref(self, normalised_identifier):
+        """Synonym lookup: """
         return []
 
     def step3_manual_xref(self, normalised_identifier):
