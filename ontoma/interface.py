@@ -415,7 +415,7 @@ class OnToma(object):
         return False
 
     def step1_owl_identifier_match(self, normalised_identifier):
-        """Direct lookup: if the term is already present in EFO, return it as is."""
+        """If the term is already present in EFO, return it as is."""
         return list(
             self.efo_terms[
                 (self.efo_terms.normalised_id == normalised_identifier) &
@@ -425,10 +425,20 @@ class OnToma(object):
         )
 
     def step2_owl_db_xref(self, normalised_identifier):
-        """Synonym lookup: """
-        return []
+        """If there are terms in EFO referenced by the `hasDbXref` field to the query, return them."""
+        cross_referenced_ids = self.efo_xrefs[
+            self.efo_xrefs.normalised_xref_id == normalised_identifier
+        ].normalised_id
+        return list(
+            self.efo_terms[
+                (self.efo_terms.normalised_id.isin(cross_referenced_ids)) &
+                (~ self.efo_terms.is_obsolete)
+            ]
+            .normalised_id
+        )
 
     def step3_manual_xref(self, normalised_identifier):
+        return []
         ontology_name, ontology_id = normalised_identifier.split(':')
         if ontology_name == 'OMIM':
             mapped_ids = [ontology.normalise_ontology_identifier(match['iri'])

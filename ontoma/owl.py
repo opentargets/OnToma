@@ -47,12 +47,14 @@ def preprocess_owl(outdir):
             term.obsolete,
         ])
         for xref in term.xrefs:
-            xrefs_dataset.append([
-                normalised_term_id,
-                ontology.normalise_ontology_identifier(xref.id),
-            ])
+            normalised_xref_id = ontology.normalise_ontology_identifier(xref.id)
+            if normalised_xref_id:
+                xrefs_dataset.append([
+                    normalised_term_id,
+                    normalised_xref_id,
+                ])
         for synonym in term.synonyms:
-            if synonym.scope == 'EXACT':
+            if synonym.description and synonym.scope == 'EXACT':
                 synonyms_dataset.append([
                     normalised_term_id,
                     synonym.description.lower()
