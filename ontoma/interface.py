@@ -393,22 +393,6 @@ class OnToma(object):
             .normalised_id
         )
 
-    def filter_strings_by_efo_current(self, normalised_strings):
-        """Returns a subset of the strings which are in EFO and not marked as obsolete."""
-        return list(
-            self.efo_terms[
-                (self.efo_terms.normalised_label.isin(normalised_strings)) &
-                (~ self.efo_terms.is_obsolete)
-            ]
-            .normalised_id
-        )
-
-    def find_xrefs_from_df(self, normalised_identifier, df):
-        """Find xrefs using a given xref dataframe and a query."""
-        return self.filter_identifiers_by_efo_current(
-            df[df.normalised_xref_id == normalised_identifier].normalised_id
-        )
-
     def step1_owl_identifier_match(self, normalised_identifier):
         """If the term is already present in EFO, return it as is."""
         return self.filter_identifiers_by_efo_current(
@@ -417,14 +401,14 @@ class OnToma(object):
 
     def step2_owl_db_xref(self, normalised_identifier):
         """If there are terms in EFO referenced by the `hasDbXref` field to the query, return them."""
-        return self.find_xrefs_from_df(
-            normalised_identifier, self.efo_xrefs
+        return self.filter_identifiers_by_efo_current(
+            self.efo_xrefs[self.efo_xrefs.normalised_xref_id == normalised_identifier].normalised_id
         )
 
     def step3_manual_xref(self, normalised_identifier):
         """Look for the queried term in the manual ontology-to-ontology mapping list."""
-        return self.find_xrefs_from_df(
-            normalised_identifier, self.manual_xrefs
+        return self.filter_identifiers_by_efo_current(
+            self.manual_xrefs[self.manual_xrefs.normalised_xref_id == normalised_identifier].normalised_id
         )
 
     def step4_oxo_query(self, normalised_identifier):
@@ -437,13 +421,15 @@ class OnToma(object):
 
     def step5_owl_name_match(self, normalised_string):
         """Find EFO terms which match the string query exactly."""
-        return self.filter_strings_by_efo_current(
-            self.efo_terms[self.efo_terms.normalised_label == normalised_string].normalised_label
+        return self.filter_identifiers_by_efo_current(
+            self.efo_terms[self.efo_terms.normalised_label == normalised_string].normalised_id
         )
 
     def step6_owl_exact_synonym(self, normalised_string):
         """Find EFO terms which have the query as an exact synonym."""
-        raise NotImplementedError
+        return self.filter_identifiers_by_efo_current(
+            self.efo_synonyms[self.efo_synonyms.normalised_synonym == normalised_string].normalised_id
+        )
 
     def step7_manual_mapping(self, normalised_string):
         raise NotImplementedError
