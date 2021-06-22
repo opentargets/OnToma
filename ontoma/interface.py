@@ -383,7 +383,7 @@ class OnToma(object):
 
     ###############################################################################################################
 
-    def filter_by_efo_current(self, normalised_identifiers):
+    def filter_identifiers_by_efo_current(self, normalised_identifiers):
         """Returns a subset of the idenfitiers which are in EFO and not marked as obsolete."""
         return list(
             self.efo_terms[
@@ -393,15 +393,25 @@ class OnToma(object):
             .normalised_id
         )
 
+    def filter_strings_by_efo_current(self, normalised_strings):
+        """Returns a subset of the strings which are in EFO and not marked as obsolete."""
+        return list(
+            self.efo_terms[
+                (self.efo_terms.normalised_label.isin(normalised_strings)) &
+                (~ self.efo_terms.is_obsolete)
+            ]
+            .normalised_id
+        )
+
     def find_xrefs_from_df(self, normalised_identifier, df):
         """Find xrefs using a given xref dataframe and a query."""
-        return self.filter_by_efo_current(
+        return self.filter_identifiers_by_efo_current(
             df[df.normalised_xref_id == normalised_identifier].normalised_id
         )
 
     def step1_owl_identifier_match(self, normalised_identifier):
         """If the term is already present in EFO, return it as is."""
-        return self.filter_by_efo_current(
+        return self.filter_identifiers_by_efo_current(
             self.efo_terms[self.efo_terms.normalised_id == normalised_identifier].normalised_id
         )
 
@@ -423,24 +433,28 @@ class OnToma(object):
         for result in self._oxo.search(ids=[normalised_identifier], mapping_target='EFO', distance=2):
             for mapping in result['mappingResponseList']:
                 oxo_mappings.add(ontology.normalise_ontology_identifier(mapping['curie']))
-        return self.filter_by_efo_current(oxo_mappings)
+        return self.filter_identifiers_by_efo_current(oxo_mappings)
 
-    def step5_owl_name_match(self, query):
+    def step5_owl_name_match(self, normalised_string):
+        """Find EFO terms which match the string query exactly."""
+        return self.filter_strings_by_efo_current(
+            self.efo_terms[self.efo_terms.normalised_label == normalised_string].normalised_label
+        )
+
+    def step6_owl_exact_synonym(self, normalised_string):
+        """Find EFO terms which have the query as an exact synonym."""
         raise NotImplementedError
 
-    def step6_owl_exact_synonym(self, query):
+    def step7_manual_mapping(self, normalised_string):
         raise NotImplementedError
 
-    def step7_manual_mapping(self, query):
+    def step8_zooma_high_confidence(self, normalised_string):
         raise NotImplementedError
 
-    def step8_zooma_high_confidence(self, query):
+    def step9_owl_related_synonym(self, normalised_string):
         raise NotImplementedError
 
-    def step9_owl_related_synonym(self, query):
-        raise NotImplementedError
-
-    def step10_zooma_any(self, query):
+    def step10_zooma_any(self, normalised_string):
         raise NotImplementedError
 
     def find_term(
@@ -499,17 +513,18 @@ class OnToma(object):
                 or self.step4_oxo_query(normalised_identifier)
             )
         else:
+            normalised_string = query.lower()
             result = (
-                self.step5_owl_name_match(query)
-                or self.step6_owl_exact_synonym(query)
-                or self.step7_manual_mapping(query)
-                or self.step8_zooma_high_confidence(query)
+                self.step5_owl_name_match(normalised_string)
+                or self.step6_owl_exact_synonym(normalised_string)
+                or self.step7_manual_mapping(normalised_string)
+                or self.step8_zooma_high_confidence(normalised_string)
             )
             if not result and suggest:
                 raise NotImplementedError
                 result = (
-                        self.step9_owl_related_synonym(query) +
-                        self.step10_zooma_any(query)
+                        self.step9_owl_related_synonym(normalised_string) +
+                        self.step10_zooma_any(normalised_string)
                 )
 
         # Convert the term representation into the format supported by the Open Targets schema.
