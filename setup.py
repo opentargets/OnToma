@@ -49,7 +49,6 @@ setup(
     entry_points='''
         [console_scripts]
         ontoma=ontoma.cli:ontoma
-        ontoma-process-owl=ontoma.cli:ontoma_process_owl
     ''',
     python_requires='>=3.7',
     cmdclass={

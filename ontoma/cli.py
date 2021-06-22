@@ -41,9 +41,3 @@ def ontoma(cache_dir, infile, outfile, skip_header):
                        "Found {} EFOids. "
                        "Skipped {} ".format(i+1,mapped,i-mapped+1), err=True
                        )
-
-
-@click.command()
-@click.argument('outdir', type=str)
-def ontoma_process_owl(outdir):
-    owl.preprocess_owl(outdir)
