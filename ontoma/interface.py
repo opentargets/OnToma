@@ -12,7 +12,7 @@ import os
 import obonet
 import pandas as pd
 
-from ontoma.downloaders import get_manual_xrefs, get_ot_zooma_to_efo_mappings
+from ontoma.downloaders import get_manual_xrefs, get_manual_string_mappings
 from ontoma.ols import OlsClient
 from ontoma.zooma import ZoomaClient
 from ontoma.oxo import OxoClient
@@ -202,9 +202,9 @@ class OnToma(object):
         self.exclude = exclude
 
         # Initialize API clients.
-        self._ols = OlsClient()
-        self._zooma = ZoomaClient()
         self._oxo = OxoClient()
+        self._zooma = ZoomaClient()
+        self._ols = OlsClient()
 
         # Import EFO OWL datasets.
         self.efo_terms = pd.read_csv(os.path.join(cache_dir, owl.TERMS_FILENAME), sep='\t')
@@ -215,8 +215,7 @@ class OnToma(object):
 
         # Import manually curated datasets.
         self.manual_xrefs = get_manual_xrefs(URLS['MANUAL_XREF'])
-        # Load OT specific mappings from our github repos.
-        self._zooma_to_efo_map = get_ot_zooma_to_efo_mappings(URLS['ZOOMA_EFO_MAP'])
+        self.manual_string = get_manual_string_mappings(URLS['MANUAL_STRING'])
 
     @lazy_property
     def _efo(self, efourl=URLS['EFO']):
@@ -432,7 +431,10 @@ class OnToma(object):
         )
 
     def step7_manual_mapping(self, normalised_string):
-        raise NotImplementedError
+        """Find the query in the manual string-to-ontology mapping database."""
+        return self.filter_identifiers_by_efo_current(
+            self.manual_string[self.manual_string.normalised_label == normalised_string].normalised_id
+        )
 
     def step8_zooma_high_confidence(self, normalised_string):
         raise NotImplementedError
@@ -507,7 +509,6 @@ class OnToma(object):
                 or self.step8_zooma_high_confidence(normalised_string)
             )
             if not result and suggest:
-                raise NotImplementedError
                 result = (
                         self.step9_owl_related_synonym(normalised_string) +
                         self.step10_zooma_any(normalised_string)
