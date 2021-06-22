@@ -2,13 +2,13 @@ version: 2
 jobs:
   build:
     docker:
-      - image: circleci/python:3.6
+      - image: circleci/python:3.7
         environment:
           PIPENV_VENV_IN_PROJECT: true
     steps:
       - checkout
       - run: sudo chown -R circleci:circleci /usr/local/bin
-      - run: sudo chown -R circleci:circleci /usr/local/lib/python3.6/site-packages
+      - run: sudo chown -R circleci:circleci /usr/local/lib/python3.7/site-packages
       - restore_cache:
           key: deps9-{{ .Branch }}-{{ checksum "Pipfile.lock" }}
       - run:
@@ -20,7 +20,7 @@ jobs:
           paths:
             - ".venv"
             - "/usr/local/bin"
-            - "/usr/local/lib/python3.6/site-packages"
+            - "/usr/local/lib/python3.7/site-packages"
       - run:
           command: |
             pipenv run pytest
@@ -30,10 +30,9 @@ jobs:
           path: /tmp/pylint.out
           destination: pylint.out
 
-
   deploy:
     docker:
-      - image: circleci/python:3.6
+      - image: circleci/python:3.7
         environment:
           PIPENV_VENV_IN_PROJECT: true
     steps:

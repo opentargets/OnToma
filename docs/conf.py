@@ -10,8 +10,8 @@ sys.path.insert(0, os.path.abspath('../'))
 
 # Project information
 project = 'OnToma'
-copyright = '2021, Open Targets data team'
-author = 'Open Targets data team'
+copyright = '2021, Open Targets'
+author = 'Open Targets'
 
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom

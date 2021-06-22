@@ -8,6 +8,7 @@ __all__ = [
 from functools import lru_cache
 import logging
 import os
+import tempfile
 
 import obonet
 import pandas as pd
@@ -197,9 +198,16 @@ class OnToma(object):
 
     """
 
-    def __init__(self, cache_dir, exclude=[]):
+    def __init__(self, cache_dir=None):
+        """Initialise an OnToma instance and fetch the necessary resources. Depending on whether cache_dir is specified
+        and whether it contains anything, the following behaviour is applied:
+        1. If cache_dir is specified and is not empty, OnToma will use EFO cache from it as is.
+        2. If cache_dir is specified and is empty or does not exist, OnToma will download the cache to the directory and
+           then use it.
+        3. If cache_dir is not specified, a temporary directory will be used to fetch and store EFO cache. Note that
+           this cannot be persistent, so the cache would have to be re-downloaded each time.
+        """
         self.logger = logging.getLogger(__name__)
-        self.exclude = exclude
 
         # Initialize API clients.
         self._oxo = OxoClient()
@@ -207,6 +215,19 @@ class OnToma(object):
         self._ols = OlsClient()
 
         # Import EFO OWL datasets.
+        if not cache_dir:
+            cache_dir = tempfile.TemporaryDirectory().name
+            self.logger.warning(
+                f'EFO cache directory is not specified. Created temporary directory to store the cache: {cache_dir}. '
+                f'We recommend that you specify the cache directory to speed up subsequent OnToma runs.'
+            )
+        if not os.path.isdir(cache_dir):
+            os.mkdir(cache_dir)
+            self.logger.info(f'Created EFO cache directory {cache_dir}.')
+        if not os.listdir(cache_dir):
+            self.logger.info(f'Downloading EFO cache to {cache_dir}.')
+            owl.preprocess_owl(cache_dir)
+        self.logger.info(f'Using EFO cache from {cache_dir}.')
         self.efo_terms = pd.read_csv(os.path.join(cache_dir, owl.TERMS_FILENAME), sep='\t')
         self.efo_xrefs = pd.read_csv(os.path.join(cache_dir, owl.XREFS_FILENAME), sep='\t')
         self.efo_synonyms = pd.read_csv(os.path.join(cache_dir, owl.SYNONYMS_FILENAME), sep='\t')
