@@ -1,7 +1,12 @@
 # -*- coding: utf-8 -*-
 
-import sys
 import os
+import sys
+
+import pytest
+
+from ontoma import OnToma
+
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 collect_ignore = [
@@ -9,13 +14,12 @@ collect_ignore = [
     'docs/conf.py',
 ]
 
-import pytest
-from ontoma import OnToma
 
 @pytest.fixture(scope="session")
 def ontclient():
-    '''the ontoma client, reusable between all tests'''
-    return OnToma()
+    """The ontoma client, reusable between all tests."""
+    return OnToma(cache_dir='/tmp/efo_cache')
+
 
 @pytest.fixture
 def rootdir():

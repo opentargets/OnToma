@@ -199,8 +199,14 @@ class OnToma(object):
                 )
 
         # Convert the term representation into the format supported by the Open Targets schema.
-        result = [ontology.convert_to_ot_schema(r) for r in result]
+        processed_results = []
+        for r in result:
+            converted_result = ontology.convert_to_ot_schema(r)
+            if converted_result:
+                processed_results.append(converted_result)
+            else:
+                logger.warning(f'Could not convert {r} into the Open Targets schema representation.')
 
         # Return either the list of dictionaries, or just the mappings, depending on parameters.
-        self.logger.info(f'Processed: {query} → {result}')
-        return result
+        self.logger.info(f'Processed: {query} → {processed_results}')
+        return processed_results
