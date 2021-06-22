@@ -7,9 +7,9 @@ __all__ = [
 
 import io
 import logging
-import requests
 
 import pandas as pd
+import requests
 
 from ontoma.ontology import normalise_ontology_identifier
 

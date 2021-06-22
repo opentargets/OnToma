@@ -1,13 +1,12 @@
 import logging
 import os
-import requests
 import urllib.request
 
 import pandas as pd
 import pronto
+import requests
 
 from ontoma import ontology
-
 
 EFO_RELEASE_API = 'https://api.github.com/repos/EBISPOT/efo/releases/latest'
 

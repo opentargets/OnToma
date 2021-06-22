@@ -4,7 +4,6 @@ import logging
 
 import requests
 
-
 __all__ = [
     'OxoClient'
 ]

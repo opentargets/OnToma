@@ -1,9 +1,10 @@
-import click
 import csv
 import logging
 
-from ontoma.interface import OnToma
+import click
+
 from ontoma.constants import FIELDS
+from ontoma.interface import OnToma
 
 logger = logging.getLogger(__name__)
 

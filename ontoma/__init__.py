@@ -4,7 +4,6 @@ import logging
 
 from ontoma.interface import OnToma
 
-
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 ch = logging.StreamHandler()
