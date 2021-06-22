@@ -38,8 +38,6 @@ def preprocess_owl(outdir):
     logging.info('Process the OWL file.')
     terms_dataset, xrefs_dataset, synonyms_dataset = [], [], []
     for term in pronto.Ontology(os.path.join(outdir, OWL_FILENAME)).terms():
-        if not term.is_leaf():
-            continue
         normalised_term_id = ontology.normalise_ontology_identifier(term.id)
         terms_dataset.append([
             normalised_term_id,

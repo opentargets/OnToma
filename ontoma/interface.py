@@ -207,7 +207,7 @@ class OnToma(object):
         3. If cache_dir is not specified, a temporary directory will be used to fetch and store EFO cache. Note that
            this cannot be persistent, so the cache would have to be re-downloaded each time.
         """
-        self.logger = logging.getLogger(__name__)
+        self.logger = logger
 
         # Initialize API clients.
         self._oxo = OxoClient()
@@ -232,7 +232,7 @@ class OnToma(object):
         self.efo_xrefs = pd.read_csv(os.path.join(cache_dir, owl.XREFS_FILENAME), sep='\t')
         self.efo_synonyms = pd.read_csv(os.path.join(cache_dir, owl.SYNONYMS_FILENAME), sep='\t')
         self.logger.info(f'Loaded {len(self.efo_terms)} terms, {len(self.efo_xrefs)} xrefs, '
-                         f'and {len(self.efo_synonyms)} synonyms from EFO OWL.')
+                         f'and {len(self.efo_synonyms)} synonyms from EFO cache.')
 
         # Import manually curated datasets.
         self.manual_xrefs = get_manual_xrefs(URLS['MANUAL_XREF'])
@@ -543,7 +543,7 @@ class OnToma(object):
         result = [ontology.convert_to_ot_schema(r) for r in result]
 
         # Return either the list of dictionaries, or just the mappings, depending on parameters.
-        logger.info(f'Found: {query} → {result}')
+        self.logger.info(f'Processed: {query} → {result}')
         return result
 
     @lru_cache(maxsize=None)

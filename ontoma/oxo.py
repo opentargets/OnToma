@@ -46,6 +46,6 @@ class OxoClient:
         }
         logger.debug(f'Querying OxO /search with payload: {payload}')
         for page in self._pages(requests.post, self._searchapi, data=payload):
-            logger.info('/search - Returned {} mappings'.format(len(page['_embedded']['searchResults'])))
+            logger.debug('/search - Returned {} mappings'.format(len(page['_embedded']['searchResults'])))
             for mapping in page['_embedded']['searchResults']:
                 yield mapping

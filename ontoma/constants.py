@@ -61,4 +61,4 @@ OT_TOP_NODES = {
     'http://www.ebi.ac.uk/efo/EFO_0009690',          # Urinary system disease
 }
 
-FIELDS = ['query', 'term', 'label', 'source', 'quality', 'action']
+FIELDS = ['query', 'term']
