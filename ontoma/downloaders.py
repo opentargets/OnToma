@@ -39,6 +39,6 @@ def get_manual_string_mappings(url):
         ),
         sep='\t'
     )
-    df.normalised_label = df.PROPERTY_VALUE.lower()
-    df.normalised_id = df.SEMANTIC_TAG.apply(normalise_ontology_identifier)
+    df['normalised_label'] = df.PROPERTY_VALUE.apply(str.lower)
+    df['normalised_id'] = df.SEMANTIC_TAG.apply(normalise_ontology_identifier)
     return df[['normalised_label', 'normalised_id']]

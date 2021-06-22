@@ -1,4 +1,4 @@
-"""Wrapper for the OXO API."""
+"""Wrapper for the OxO API."""
 
 import logging
 

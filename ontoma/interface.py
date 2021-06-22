@@ -437,7 +437,11 @@ class OnToma(object):
         )
 
     def step8_zooma_high_confidence(self, normalised_string):
-        raise NotImplementedError
+        zooma_mappings = {
+            ontology.normalise_ontology_identifier(mapping)
+            for mapping in self._zooma.search(normalised_string)
+        }
+        return self.filter_identifiers_by_efo_current(zooma_mappings)
 
     def step9_owl_related_synonym(self, normalised_string):
         raise NotImplementedError
