@@ -72,25 +72,25 @@ class OnToma(object):
             .normalised_id
         )
 
-    def step1_owl_identifier_match(self, normalised_identifier):
+    def step01_owl_identifier_match(self, normalised_identifier):
         """If the term is already present in EFO, return it as is."""
         return self.filter_identifiers_by_efo_current(
             self.efo_terms[self.efo_terms.normalised_id == normalised_identifier].normalised_id
         )
 
-    def step2_owl_db_xref(self, normalised_identifier):
+    def step02_owl_db_xref(self, normalised_identifier):
         """If there are terms in EFO referenced by the `hasDbXref` field to the query, return them."""
         return self.filter_identifiers_by_efo_current(
             self.efo_xrefs[self.efo_xrefs.normalised_xref_id == normalised_identifier].normalised_id
         )
 
-    def step3_manual_xref(self, normalised_identifier):
+    def step03_manual_xref(self, normalised_identifier):
         """Look for the queried term in the manual ontology-to-ontology mapping list."""
         return self.filter_identifiers_by_efo_current(
             self.manual_xrefs[self.manual_xrefs.normalised_xref_id == normalised_identifier].normalised_id
         )
 
-    def step4_oxo_query(self, normalised_identifier):
+    def step04_oxo_query(self, normalised_identifier):
         """Find cross-references using OxO."""
         oxo_mappings = set()
         for result in self._oxo.search(ids=[normalised_identifier], mapping_target='EFO', distance=2):
@@ -98,32 +98,32 @@ class OnToma(object):
                 oxo_mappings.add(ontology.normalise_ontology_identifier(mapping['curie']))
         return self.filter_identifiers_by_efo_current(oxo_mappings)
 
-    def step5_owl_name_match(self, normalised_string):
+    def step05_owl_name_match(self, normalised_string):
         """Find EFO terms which match the string query exactly."""
         return self.filter_identifiers_by_efo_current(
             self.efo_terms[self.efo_terms.normalised_label == normalised_string].normalised_id
         )
 
-    def step6_owl_exact_synonym(self, normalised_string):
+    def step06_owl_exact_synonym(self, normalised_string):
         """Find EFO terms which have the query as an exact synonym."""
         return self.filter_identifiers_by_efo_current(
             self.efo_synonyms[self.efo_synonyms.normalised_synonym == normalised_string].normalised_id
         )
 
-    def step7_manual_mapping(self, normalised_string):
+    def step07_manual_mapping(self, normalised_string):
         """Find the query in the manual string-to-ontology mapping database."""
         return self.filter_identifiers_by_efo_current(
             self.manual_string[self.manual_string.normalised_label == normalised_string].normalised_id
         )
 
-    def step8_zooma_high_confidence(self, normalised_string):
+    def step08_zooma_high_confidence(self, normalised_string):
         zooma_mappings = {
             ontology.normalise_ontology_identifier(mapping)
             for mapping in self._zooma.search(normalised_string)
         }
         return self.filter_identifiers_by_efo_current(zooma_mappings)
 
-    def step9_owl_related_synonym(self, normalised_string):
+    def step09_owl_related_synonym(self, normalised_string):
         raise NotImplementedError
 
     def step10_zooma_any(self, normalised_string):
@@ -179,22 +179,22 @@ class OnToma(object):
         if code:
             normalised_identifier = ontology.normalise_ontology_identifier(query)
             result = (
-                self.step1_owl_identifier_match(normalised_identifier)
-                or self.step2_owl_db_xref(normalised_identifier)
-                or self.step3_manual_xref(normalised_identifier)
-                or self.step4_oxo_query(normalised_identifier)
+                self.step01_owl_identifier_match(normalised_identifier)
+                or self.step02_owl_db_xref(normalised_identifier)
+                or self.step03_manual_xref(normalised_identifier)
+                or self.step04_oxo_query(normalised_identifier)
             )
         else:
             normalised_string = query.lower()
             result = (
-                self.step5_owl_name_match(normalised_string)
-                or self.step6_owl_exact_synonym(normalised_string)
-                or self.step7_manual_mapping(normalised_string)
-                or self.step8_zooma_high_confidence(normalised_string)
+                self.step05_owl_name_match(normalised_string)
+                or self.step06_owl_exact_synonym(normalised_string)
+                or self.step07_manual_mapping(normalised_string)
+                or self.step08_zooma_high_confidence(normalised_string)
             )
             if not result and suggest:
                 result = (
-                        self.step9_owl_related_synonym(normalised_string) +
+                        self.step09_owl_related_synonym(normalised_string) +
                         self.step10_zooma_any(normalised_string)
                 )
 
