@@ -14,7 +14,7 @@ OnToma supports two kinds of inputs: either identifiers from other ontologies (e
 
 The way OnToma operates is by trying a series of lookups in EFO and also querying tools from the EBI ontology stack such as OxO and ZOOMA.
 
-For each input, it will return anywhere from 0 to multiple matches in EFO. This version of OnToma only returns mappings which are considered high quality.
+For each input, it will return anywhere from 0 to multiple matches in EFO. This version of OnToma only returns mappings which are considered of high quality.
 
 For each input type, you can run OnToma from command line or directly from other Python code.
 

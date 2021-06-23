@@ -26,12 +26,12 @@ Install development packages (optional)
 
 Adding a dependency
 -------------------
-Installation dependencies are stored in the :code:`setup.py` file, in the :code:`install_requires` section.
+Installation dependencies are stored in the ``setup.py`` file, in the ``install_requires`` section.
 
 
 
 Releasing a new version
 -----------------------
-#. Modify the version in the :code:`VERSION` file.
-#. Add a tag: :code:`git tag $(cat VERSION) && git push origin --tags`.
+#. Modify the version in the ``VERSION`` file.
+#. Add a tag: ``git tag $(cat VERSION) && git push origin --tags``.
 #. Create a release on GitHub.

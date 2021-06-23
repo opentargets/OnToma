@@ -1,4 +1,4 @@
-"""Functions that download mapping flat-files from github repo or other repositories."""
+"""Functions that download mapping flat files from github repo or other repositories."""
 
 __all__ = [
     'get_manual_xrefs',

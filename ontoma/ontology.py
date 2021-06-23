@@ -1,6 +1,6 @@
 """Converts between different representations of ontology identifiers.
 
-The idea behind this module is that any incoming ontology representation (from query, EFO OBO file etc.) is first
+The idea behind this module is that any incoming ontology representation (from query, EFO OWL file etc.) is first
 converted into internal, consistent representation. Then direct string-to-string comparisons can be made without having
 to adjust for different ontology representation methods. For example, the following identifiers: ORDO_140162,
 ORPHA:140162, Orphanet:140162 are all consistently converted into ORDO:140162.
@@ -53,7 +53,7 @@ OT_SCHEMA_MAPPING = {
 OT_SCHEMA_MAPPING.update({
     ontology: ontology for ontology in ('NCIT', 'GO', 'HP', 'EFO', 'MONDO', 'DOID', 'MP')
 })
-# While OTAR is listed in the schema, is not included, because it is only used for classes and never for individual
+# While OTAR is listed in the schema, it is not included, because it is only used for classes and never for individual
 # terms.
 
 
