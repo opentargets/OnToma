@@ -11,7 +11,7 @@ jobs:
       - run: sudo chown -R circleci:circleci /usr/local/lib/python3.7/site-packages
       - run:
           command: |
-            sudo pip install pipenv
+            sudo pip install pipenv pytest
             pipenv install --dev
       - run:
           command: |
