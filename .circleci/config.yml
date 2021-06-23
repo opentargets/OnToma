@@ -9,26 +9,13 @@ jobs:
       - checkout
       - run: sudo chown -R circleci:circleci /usr/local/bin
       - run: sudo chown -R circleci:circleci /usr/local/lib/python3.7/site-packages
-      - restore_cache:
-          key: deps9-{{ .Branch }}-{{ checksum "Pipfile.lock" }}
       - run:
           command: |
             sudo pip install pipenv
             pipenv install --dev
-      - save_cache:
-          key: deps9-{{ .Branch }}-{{ checksum "Pipfile.lock" }}
-          paths:
-            - ".venv"
-            - "/usr/local/bin"
-            - "/usr/local/lib/python3.7/site-packages"
       - run:
           command: |
             pipenv run pytest
-      - run:
-          command: pipenv run pylint --reports=y . > /tmp/pylint.out
-      - store_artifacts:
-          path: /tmp/pylint.out
-          destination: pylint.out
 
   deploy:
     docker:
@@ -37,12 +24,6 @@ jobs:
           PIPENV_VENV_IN_PROJECT: true
     steps:
       - checkout
-      # - restore_cache:
-      #     key: deps9-{{ .Branch }}-{{ checksum "Pipfile.lock" }}
-      # - run:
-      #     command: |
-      #       sudo pip install pipenv
-      #       pipenv install --dev
       - run:
           name: verify git tag vs. version
           command: |
