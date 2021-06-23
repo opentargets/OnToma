@@ -11,7 +11,7 @@ jobs:
           command: |
             python3 -m venv env
             pip install -e .
-            pip install pytest
+            pip install --user pytest
       - run:
           command: |
             pytest
