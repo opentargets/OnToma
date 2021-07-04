@@ -220,5 +220,5 @@ class OnToma:
             )
 
         # Return either the list of dictionaries, or just the mappings, depending on parameters.
-        self.logger.debug(f'Processed: {query} → {processed_results}')
+        self.logger.info(f'Processed: {query} → {processed_results}')
         return processed_results
