@@ -3,7 +3,7 @@ import logging
 
 import click
 
-from ontoma.constants import FIELDS
+from ontoma.constants import RESULT_FIELDS
 from ontoma.interface import OnToma
 
 logger = logging.getLogger(__name__)
@@ -37,14 +37,21 @@ logger = logging.getLogger(__name__)
     default=None,
     help='A directory to store EFO cache. Specifying it is not required, but will speed up subsequent OnToma runs.'
 )
-def ontoma(infile, outfile, input_type, cache_dir):
+@click.option(
+    '--columns',
+    type=str,
+    default='query,id_ot_schema',
+    help=f'Which columns to output, comma separated. The available options are: {",".join(RESULT_FIELDS)}'
+)
+def ontoma(infile, outfile, input_type, cache_dir, columns):
     """Maps ontology identifiers and strings to EFO, the ontology used by the Open Targets Platform."""
     if infile.name == '/dev/stdin':
         logger.warning('Reading input from STDIN. If this is not what you wanted, re-run with --help to see usage.')
 
     logger.info('Initialising OnToma main interface.')
     otmap = OnToma(cache_dir)
-    efo_writer = csv.DictWriter(outfile, FIELDS, delimiter='\t')
+    columns = columns.split(',')
+    efo_writer = csv.DictWriter(outfile, columns, delimiter='\t')
     efo_writer.writeheader()
 
     logger.info(f'Treating the input as (type = {input_type}) and mapping to EFO.')
@@ -53,8 +60,8 @@ def ontoma(infile, outfile, input_type, cache_dir):
     for line in infile:
         query = line.rstrip()
         results = otmap.find_term(query, code=input_type == 'ontology')
-        for efo_id in results:
-            efo_writer.writerow({'query': query, 'term': efo_id})
+        for result in results:
+            efo_writer.writerow({c: getattr(result, c) for c in columns})
         if results:
             mapped += 1
         else:

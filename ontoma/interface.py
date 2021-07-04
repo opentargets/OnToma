@@ -4,6 +4,7 @@ __all__ = [
     'OnToma',
 ]
 
+from collections import namedtuple
 import logging
 import os
 import tempfile
@@ -12,7 +13,7 @@ import pandas as pd
 
 from ontoma import ontology
 from ontoma import owl
-from ontoma.constants import URLS
+from ontoma.constants import URLS, RESULT_FIELDS
 from ontoma.downloaders import get_manual_xrefs, get_manual_string_mappings
 from ontoma.oxo import OxoClient
 from ontoma.zooma import ZoomaClient
@@ -20,7 +21,10 @@ from ontoma.zooma import ZoomaClient
 logger = logging.getLogger(__name__)
 
 
-class OnToma(object):
+OnTomaResult = namedtuple('OnTomaResult', RESULT_FIELDS)
+
+
+class OnToma:
     """Open Targets ontology mapping wrapper. Please refer to documentation for usage details."""
 
     def __init__(self, cache_dir=None):
@@ -71,6 +75,16 @@ class OnToma(object):
             ]
             .normalised_id
         )
+
+    def get_label_from_efo(self, normalised_identifier):
+        matches = list(
+            self.efo_terms[
+                self.efo_terms.normalised_id == normalised_identifier
+            ]
+            .normalised_label
+        )
+        assert len(matches) == 1
+        return matches[0]
 
     def step01_owl_identifier_match(self, normalised_identifier):
         """If the term is already present in EFO, return it as is."""
@@ -134,7 +148,6 @@ class OnToma(object):
             query: str,
             code: bool = False,
             suggest: bool = False,
-            verbose: bool = False,
     ) -> list:
         """For a given query (an ontology identifier or a string), find matches in EFO Open Targets slim.
 
@@ -165,15 +178,10 @@ class OnToma(object):
             query: Either an ontology identifier, or the disease/phenotype string to be matched to an EFO code.
             code: Whether to treat the query as an ontology identifier.
             suggest: Whether to report low quality mappings which are not guaranteed to be contained in EFO OT slim.
-            verbose: If specified, return a dictionary containing {term, label, source, quality, action} instead of only
-                the term.
 
         Returns:
             A list of values dependent on the `verbose` flag (either strings with ontology identifiers, or a dictionary
             of additional information). The list will be empty if no hits were identified."""
-
-        if verbose:
-            raise NotImplementedError
 
         # Attempt mapping using various strategies for identifier/string inputs.
         if code:
@@ -201,12 +209,16 @@ class OnToma(object):
         # Convert the term representation into the format supported by the Open Targets schema.
         processed_results = []
         for r in result:
-            converted_result = ontology.convert_to_ot_schema(r)
-            if converted_result:
-                processed_results.append(converted_result)
-            else:
-                logger.warning(f'Could not convert {r} into the Open Targets schema representation.')
+            processed_results.append(
+                OnTomaResult(
+                    query=query,
+                    id_normalised=r,
+                    id_ot_schema=ontology.convert_to_ot_schema(r),
+                    id_full_uri=ontology.convert_to_uri(r),
+                    label=self.get_label_from_efo(r),
+                )
+            )
 
         # Return either the list of dictionaries, or just the mappings, depending on parameters.
-        self.logger.info(f'Processed: {query} → {processed_results}')
+        self.logger.debug(f'Processed: {query} → {processed_results}')
         return processed_results

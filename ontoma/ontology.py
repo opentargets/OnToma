@@ -1,4 +1,4 @@
-"""Converts between different representations of ontology identifiers.
+"""Contains utilities for handling ontology terms and normalising the identifier representation.
 
 The idea behind this module is that any incoming ontology representation (from query, EFO OWL file etc.) is first
 converted into internal, consistent representation. Then direct string-to-string comparisons can be made without having
@@ -13,7 +13,7 @@ for example:
 import re
 from typing import Optional
 
-
+# Some ontologies (most notably Orphanet) have multiple labels for specifying the same namespace.
 NORMALISATION_MAPPING = {
     'ORPHA': 'ORDO',
     'ORPHANET': 'ORDO',
