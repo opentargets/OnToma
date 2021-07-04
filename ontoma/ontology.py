@@ -25,7 +25,7 @@ def normalise_ontology_identifier(identifier: str) -> Optional[str]:
     if 'identifiers.org' in identifier:
         # If this is an identifiers.org link, extract ontology name and identifier from the last two elements.
         # http://identifiers.org/omim/137215" → [omim, 137215].
-        ontology_name, ontology_id = identifier.split('/')[:-2]
+        ontology_name, ontology_id = identifier.split('/')[-2:]
     else:
         # For any other type of link (EFO, OBO, Orphanet), extract ontology name and identifier from the last element.
         # http://www.orpha.net/ORDO/Orphanet_140162 → Orphanet_140162.
