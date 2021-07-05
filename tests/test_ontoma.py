@@ -1,5 +1,11 @@
+from util import assert_result_ot_label
+
+
 def test_find_term_asthma(ontclient):
-    assert ontclient.find_term('asthma') == ['EFO_0000270']
+    assert_result_ot_label(
+        ontclient.find_term('asthma'),
+        ['EFO_0000270']
+    )
 
 
 def test_is_included(ontclient):
@@ -9,24 +15,32 @@ def test_is_included(ontclient):
     assert ontclient.filter_identifiers_by_efo_current(['UBERON:0000310']) == ['UBERON:0000310']
 
 
-def test_find_term_excludes(ontclient):
-    assert not ontclient.find_term('breast')
-
-
 def test_suggest_hp_term_not_excluded(ontclient):
-    assert ontclient.find_term('hypogammaglobulinemia') == ['Orphanet_183669']
+    assert_result_ot_label(
+        ontclient.find_term('hypogammaglobulinemia'),
+        ['Orphanet_183669']
+    )
 
 
 def test_catch_ordo(ontclient):
-    assert ontclient.find_term('Camptodactyly-arthropathy-coxa-vara-pericarditis syndrome') == ['EFO_0009028']
-    assert set(ontclient.find_term('OMIM:208250', code=True)) == {'EFO_0009028', 'MONDO_0008828'}
+    assert_result_ot_label(
+        ontclient.find_term('Camptodactyly-arthropathy-coxa-vara-pericarditis syndrome'),
+        ['EFO_0009028']
+    )
+    assert_result_ot_label(
+        ontclient.find_term('OMIM:208250', code=True),
+        {'EFO_0009028', 'MONDO_0008828'}
+    )
 
 
 def test_query_comma(ontclient):
     # The test deliberately expects no results, since a match from “3-methylglutaconic aciduria, type III” to
     # “Orphanet_67047” is obtained from fuzzy OLS lookup.
-    assert ontclient.find_term('3-methylglutaconic aciduria, type III') == []
+    assert not ontclient.find_term('3-methylglutaconic aciduria, type III')
 
 
 def test_find_term_alzheimer(ontclient):
-    assert ontclient.find_term('alzheimer\'s disease') == ['EFO_0000249']
+    assert_result_ot_label(
+        ontclient.find_term('alzheimer\'s disease'),
+        ['EFO_0000249']
+    )
