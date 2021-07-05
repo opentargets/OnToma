@@ -20,8 +20,7 @@ ontoma = OnToma(cache_dir='/tmp/efo_cache')
 old_mappings, new_mappings = [set(open(f).read().splitlines()) for f in (args.old, args.new)]
 all_mappings = sorted(old_mappings | new_mappings)
 
-print('\t'.join(['Pivot table key', 'Query', 'EFO URI', 'EFO label', 'Present in the old set', 'Present in the new set',
-                 'Mapping category']))
+print('\t'.join(['Query', 'EFO URI', 'EFO label', 'Old', 'New', 'Mapping category']))
 for m in all_mappings:
     query, efo_uri = m.split('\t')
     normalised_id = ontology.normalise_ontology_identifier(efo_uri)
@@ -30,14 +29,13 @@ for m in all_mappings:
     if ontoma.filter_identifiers_by_efo_current([normalised_id]) == [normalised_id]:
         present_in_efo = True
         efo_label = ontoma.get_label_from_efo(normalised_id)
-        mapping_quality = 'Letter to letter' if query.lower() == efo_label.lower() else ''
+        mapping_quality = '🟢 Letter to letter' if query.lower() == efo_label.lower() else ''
     else:
         present_in_efo = False
         efo_label = ''
-        mapping_quality = 'Not in EFO'
+        mapping_quality = '🟥 Not in EFO'
 
     print('\t'.join([
-        f'{query} -> {efo_uri}',
         query,
         efo_uri,
         efo_label,
