@@ -3,7 +3,7 @@ wget -qO- 'https://ftp.ncbi.nlm.nih.gov/pub/clinvar/disease_names' \
   | tail -n+2 \
   | cut -f1 \
   | sort -uf \
-  | shuf -n 200 \
+  | shuf -n 100 \
 > sample_clinvar.txt
 
 # PhenoDigm
@@ -11,7 +11,7 @@ wget -qO- 'https://www.ebi.ac.uk/mi/impc/solr/phenodigm/select?q=*:*&fq=type=dis
   | tail -n+2 \
   | tr -d '"' \
   | sort -uf \
-  | shuf -n 200 \
+  | shuf -n 100 \
 > sample_phenodigm.txt
 
 # gene2phenotype
@@ -22,7 +22,7 @@ done) \
   | tail -n+2 \
   | csvtool format '%(3)\n' - \
   | sort -uf \
-  | shuf -n 200 \
+  | shuf -n 100 \
 > sample_gene2phenotype.txt
 
 # Sort and concatenate
