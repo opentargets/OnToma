@@ -15,6 +15,8 @@ TERMS_FILENAME = 'terms.tsv'
 XREFS_FILENAME = 'xrefs.tsv'
 SYNONYMS_FILENAME = 'synonyms.tsv'
 
+ALL_FILENAMES = {OWL_FILENAME, TERMS_FILENAME, XREFS_FILENAME, SYNONYMS_FILENAME}
+
 logger = logging.getLogger(__name__)
 
 

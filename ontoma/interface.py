@@ -52,7 +52,7 @@ class OnToma:
         if not os.path.isdir(cache_dir):
             os.mkdir(cache_dir)
             self.logger.info(f'Created EFO cache directory {cache_dir}.')
-        if not os.listdir(cache_dir):
+        if not owl.ALL_FILENAMES <= set(os.listdir(cache_dir)):  # If not all EFO cache files are present.
             self.logger.info(f'Downloading EFO cache to {cache_dir}.')
             owl.preprocess_owl(cache_dir)
         self.logger.info(f'Using EFO cache from {cache_dir}.')
