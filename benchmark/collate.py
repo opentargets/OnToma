@@ -4,13 +4,6 @@ from ontoma.interface import OnToma
 from ontoma import ontology
 
 
-def read_mappings(filename):
-    return {  # query, term, label
-        line.split('\t')
-        for line in open(filename).read().splitlines()
-    }
-
-
 if __name__ == '__main__':
     parser = argparse.ArgumentParser('Compares results between two OnToma runs.')
     parser.add_argument('--old', required=True)
