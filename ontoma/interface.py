@@ -27,7 +27,7 @@ OnTomaResult = namedtuple('OnTomaResult', RESULT_FIELDS)
 class OnToma:
     """Open Targets ontology mapping wrapper. Please refer to documentation for usage details."""
 
-    def __init__(self, cache_dir=None):
+    def __init__(self, cache_dir=None, efo_release='latest'):
         """Initialise an OnToma instance and fetch the necessary resources. Depending on whether cache_dir is specified
         and whether it contains anything, the following behaviour is applied:
         1. If cache_dir is specified and is not empty, OnToma will use EFO cache from it as is.
@@ -54,7 +54,7 @@ class OnToma:
             self.logger.info(f'Created EFO cache directory {cache_dir}.')
         if not owl.ALL_FILENAMES <= set(os.listdir(cache_dir)):  # If not all EFO cache files are present.
             self.logger.info(f'Downloading EFO cache to {cache_dir}.')
-            owl.preprocess_owl(cache_dir)
+            owl.preprocess_owl(outdir=cache_dir, efo_release=efo_release)
         self.logger.info(f'Using EFO cache from {cache_dir}.')
         self.efo_terms = pd.read_csv(os.path.join(cache_dir, owl.TERMS_FILENAME), sep='\t')
         self.efo_xrefs = pd.read_csv(os.path.join(cache_dir, owl.XREFS_FILENAME), sep='\t')

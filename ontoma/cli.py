@@ -28,8 +28,8 @@ logger = logging.getLogger(__name__)
     '--input-type',
     type=click.Choice(['string', 'ontology']),
     default='string',
-    help='Can be one of two values. When set to “string”, input values are treated as strings, e.g. “Diabetes”. When '
-         'set to “ontology”, input values are treated as ontology identifiers, e.g. “MONDO_0005015”.'
+    help='Can be one of two values. When set to “string” (default), input values are treated as strings, e.g. '
+         '“Diabetes”. When set to “ontology”, input values are treated as ontology identifiers, e.g. “MONDO_0005015”.'
 )
 @click.option(
     '--cache-dir',
@@ -43,13 +43,20 @@ logger = logging.getLogger(__name__)
     default='query,id_ot_schema',
     help=f'Which columns to output, comma separated. The available options are: {",".join(RESULT_FIELDS)}'
 )
-def ontoma(infile, outfile, input_type, cache_dir, columns):
+@click.option(
+    '--efo-release',
+    type=str,
+    default='latest',
+    help='EFO release to use. The tag must match the one in their GitHub releases, for example v3.31.0. By default, '
+         'the latest available version is used.'
+)
+def ontoma(infile, outfile, input_type, cache_dir, columns, efo_release):
     """Maps ontology identifiers and strings to EFO, the ontology used by the Open Targets Platform."""
     if infile.name == '/dev/stdin':
         logger.warning('Reading input from STDIN. If this is not what you wanted, re-run with --help to see usage.')
 
     logger.info('Initialising OnToma main interface.')
-    otmap = OnToma(cache_dir)
+    otmap = OnToma(cache_dir=cache_dir, efo_release=efo_release)
     columns = columns.split(',')
     efo_writer = csv.DictWriter(outfile, columns, delimiter='\t')
     efo_writer.writeheader()
