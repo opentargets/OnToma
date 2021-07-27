@@ -3,7 +3,7 @@ import logging
 
 import click
 
-from ontoma.constants import RESULT_FIELDS
+from ontoma.constants import RESULT_FIELDS, EFO_DEFAULT_VERSION
 from ontoma.interface import OnToma
 
 logger = logging.getLogger(__name__)
@@ -46,9 +46,9 @@ logger = logging.getLogger(__name__)
 @click.option(
     '--efo-release',
     type=str,
-    default='latest',
-    help='EFO release to use. The tag must match the one in their GitHub releases, for example v3.31.0. By default, '
-         'the latest available version is used.'
+    default=EFO_DEFAULT_VERSION,
+    help=f'EFO release to use. This must be be either “latest”, or match the specific tag name in their GitHub '
+         f'releases, for example v3.31.0. By default, {EFO_DEFAULT_VERSION!r} is used.'
 )
 def ontoma(infile, outfile, input_type, cache_dir, columns, efo_release):
     """Maps ontology identifiers and strings to EFO, the ontology used by the Open Targets Platform."""
