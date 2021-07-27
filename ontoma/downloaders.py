@@ -1,50 +1,32 @@
-'''
-Functions that download mapping flat-files from github repo or other
-repositories
-'''
+"""Functions that download mapping flat files from github repo or other repositories."""
 
 __all__ = [
-    "get_ot_zooma_to_efo_mappings",
-    "get_omim_to_efo_mappings"
-    ]
+    'get_manual_xrefs',
+    'get_manual_string_mappings',
+]
 
-import csv
 import logging
-import requests
-from ontoma.constants import URLS #pylint: disable=unused-import
+
+import pandas as pd
+
+from ontoma.ontology import normalise_ontology_identifier
 
 logger = logging.getLogger(__name__)
 
-def get_omim_to_efo_mappings(url):
-    '''returns a dictionary that maps OMIM codes to EFO_uri
-    >>> d = get_omim_to_efo_mappings(URLS['OMIM_EFO_MAP'])
-    >>> d['609909']
-    [{'iri': 'http://www.orpha.net/ORDO/Orphanet_217607', 'label': 'Familial dilated cardiomyopathy'}, {'iri': 'http://www.orpha.net/ORDO/Orphanet_154', 'label': 'Familial isolated dilated cardiomyopathy'}]
-    '''
-    mappings = {}
-    logger.debug("OMIM to EFO mappings - requesting from URL %s", url)
-    with requests.get(url, stream=True) as req:
-        for i, row in enumerate(csv.DictReader(req.iter_lines(decode_unicode=True), delimiter='\t')):
-            if row['OMIM'] not in mappings:
-                mappings[row['OMIM']] = []
-            mappings[row['OMIM']].append({'iri':row['efo_uri'].strip(),'label':row['efo_label']})
-        logger.info("OMIM to EFO mappings - Parsed %s rows", i)
-    return mappings
+
+def get_manual_xrefs(url):
+    """Download the manual cross-reference list and convert to a Pandas dataframe."""
+    logger.debug(f'Requesting manual ontology-to-EFO mappings from URL {url}')
+    df = pd.read_csv(url, sep='\t')
+    df.normalised_xref_id = df.normalised_xref_id.apply(normalise_ontology_identifier)
+    df.normalised_id = df.normalised_id.apply(normalise_ontology_identifier)
+    return df
 
 
-def get_ot_zooma_to_efo_mappings(url):
-    '''download zooma and returns a dict
-    >>> d = get_ot_zooma_to_efo_mappings(URLS['ZOOMA_EFO_MAP'])
-    >>> d['skeletal dysplasias']
-    'http://purl.obolibrary.org/obo/HP_0002652'
-    '''
-    mappings = {}
-    logger.debug("ZOOMA to EFO mappings - requesting from URL %s", url)
-    with requests.get(url, stream=True) as req:
-        for i, row in enumerate(csv.DictReader(req.iter_lines(decode_unicode=True), delimiter='\t')):
-            #(study, bioentity, property_type, property_value,
-            # semantic_tag, annotator, annotation_date)
-            # Note here should be 1:1 correspondence
-            mappings[row['PROPERTY_VALUE'].lower()] = row['SEMANTIC_TAG'].strip()
-        logger.info("ZOOMA to EFO mappings - Parsed %s rows", i)
-    return mappings
+def get_manual_string_mappings(url):
+    """Download the manual string-to-ontology mapping list and convert to a Pandas dataframe."""
+    logger.debug(f'Requesting manual string-to-EFO mappings from URL {url}')
+    df = pd.read_csv(url, sep='\t')
+    df['normalised_label'] = df.PROPERTY_VALUE.apply(str.lower)
+    df['normalised_id'] = df.SEMANTIC_TAG.apply(normalise_ontology_identifier)
+    return df[['normalised_label', 'normalised_id']]
