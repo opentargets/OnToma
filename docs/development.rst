@@ -15,12 +15,15 @@ Set up environment
 
 
 
-Install development packages (optional)
----------------------------------------
+Install development packages
+----------------------------
 
 .. code-block:: bash
 
-    python3 -m pip install --upgrade pytest sphinx sphinx-rtd-theme
+    python3 -m pip install --upgrade \
+      build pip twine \
+      pytest \
+      sphinx sphinx-rtd-theme
 
 
 
@@ -35,6 +38,8 @@ Releasing a new version
 #. Modify the version in the ``VERSION`` file.
 #. Add a tag: ``git tag $(cat VERSION) && git push origin --tags``.
 #. Create a release on GitHub.
+#. Generate distribution archives: ``python3 -m build``.
+#. Upload the release: ``python3 -m twine upload dist/*``. Use the usual login and password for PyPi.
 
 
 

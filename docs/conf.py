@@ -8,10 +8,13 @@ import sys
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 sys.path.insert(0, os.path.abspath('../'))
 
-# Project information
+# Project information.
 project = 'OnToma'
 copyright = '2021, Open Targets'
 author = 'Open Targets'
+
+# Main document for ReadTheDocs.
+master_doc = 'index'
 
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
