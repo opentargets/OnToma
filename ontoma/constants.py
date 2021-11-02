@@ -9,4 +9,4 @@ URLS = {
 # List of fields to available for result output.
 RESULT_FIELDS = ('query', 'id_normalised', 'id_ot_schema', 'id_full_uri', 'label')
 
-EFO_DEFAULT_VERSION = 'v3.31.0'
+EFO_DEFAULT_VERSION = 'latest'
