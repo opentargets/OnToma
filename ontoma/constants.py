@@ -2,8 +2,8 @@
 
 # Manual mapping databases.
 URLS = {
-    'MANUAL_XREF': 'https://raw.githubusercontent.com/opentargets/mappings/master/manual_xref.tsv',
-    'MANUAL_STRING': 'https://raw.githubusercontent.com/opentargets/mappings/master/manual_string.tsv',
+    'MANUAL_XREF': 'https://raw.githubusercontent.com/opentargets/curation/master/mappings/disease/manual_xref.tsv',
+    'MANUAL_STRING': 'https://raw.githubusercontent.com/opentargets/curation/master/mappings/disease/manual_string.tsv',
 }
 
 # List of fields to available for result output.
