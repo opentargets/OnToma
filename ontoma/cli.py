@@ -1,5 +1,6 @@
 import csv
 import logging
+from sys import stderr
 
 import click
 
@@ -7,6 +8,10 @@ from ontoma.constants import RESULT_FIELDS, EFO_DEFAULT_VERSION
 from ontoma.interface import OnToma
 
 logger = logging.getLogger(__name__)
+
+
+def get_version():
+    return open('../VERSION').read().strip()
 
 
 @click.command()
@@ -50,8 +55,17 @@ logger = logging.getLogger(__name__)
     help=f'EFO release to use. This must be be either “latest”, or match the specific tag name in their GitHub '
          f'releases, for example v3.31.0. By default, {EFO_DEFAULT_VERSION!r} is used.'
 )
-def ontoma(infile, outfile, input_type, cache_dir, columns, efo_release):
+@click.option(
+    '--version',
+    help='Print version number and exit.',
+    is_flag=True
+)
+def ontoma(infile, outfile, input_type, cache_dir, columns, efo_release, version):
     """Maps ontology identifiers and strings to EFO, the ontology used by the Open Targets Platform."""
+    if version:
+        stderr.write(f'OnToma version {get_version()}.')
+        return
+
     if infile.name == '/dev/stdin':
         logger.warning('Reading input from STDIN. If this is not what you wanted, re-run with --help to see usage.')
 
