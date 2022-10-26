@@ -69,14 +69,15 @@ def convert_to_ot_schema(normalised_identifier: str) -> Optional[str]:
 
 
 URI_MAPPING = {
-    'NCIT':  'http://purl.obolibrary.org/obo/NCIT_{}',
-    'ORDO':  'http://www.orpha.net/ORDO/Orphanet_{}',
+    'CHEBI': 'http://purl.obolibrary.org/obo/CHEBI_{}',
+    'DOID':  'http://purl.obolibrary.org/obo/DOID_{}',
+    'EFO':   'http://www.ebi.ac.uk/efo/EFO_{}',
     'GO':    'http://purl.obolibrary.org/obo/GO_{}',
     'HP':    'http://purl.obolibrary.org/obo/HP_{}',
-    'EFO':   'http://www.ebi.ac.uk/efo/EFO_{}',
     'MONDO': 'http://purl.obolibrary.org/obo/MONDO_{}',
-    'DOID':  'http://purl.obolibrary.org/obo/DOID_{}',
     'MP':    'http://purl.obolibrary.org/obo/MP_{}',
+    'NCIT':  'http://purl.obolibrary.org/obo/NCIT_{}',
+    'ORDO':  'http://www.orpha.net/ORDO/Orphanet_{}',
 }
 
 
