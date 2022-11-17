@@ -19,5 +19,5 @@ def test_file_batch_input(rootdir):
     ])
     assert result.exit_code == 0
     output = open('/tmp/ontoma-1.txt').read()
-    assert 'EFO_0000270' in output
+    assert 'MONDO_0004979' in output
     # assert 'MONDO_0002279' in output  # Related synonyms are not processed by this version.

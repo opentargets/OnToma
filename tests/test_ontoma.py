@@ -4,21 +4,18 @@ from util import assert_result_ot_label
 def test_find_term_asthma(ontclient):
     assert_result_ot_label(
         ontclient.find_term('asthma'),
-        ['EFO_0000270']
+        ['MONDO_0004979']
     )
 
 
 def test_is_included(ontclient):
-    assert ontclient.filter_identifiers_by_efo_current(['ORDO:354']) == ['ORDO:354']
-    # FIXME: This represents a term which is in EFO, but perhaps should not be considered by OnToma, because this is
-    # FIXME: a body part rather than a disease/drug response/etc.
-    assert ontclient.filter_identifiers_by_efo_current(['UBERON:0000310']) == ['UBERON:0000310']
+    assert ontclient.filter_identifiers_by_efo_current(['MONDO:0018149']) == ['MONDO:0018149']
 
 
 def test_suggest_hp_term_not_excluded(ontclient):
     assert_result_ot_label(
         ontclient.find_term('hypogammaglobulinemia'),
-        ['Orphanet_183669']
+        ['MONDO_0015977']
     )
 
 
@@ -29,7 +26,7 @@ def test_catch_ordo(ontclient):
     )
     assert_result_ot_label(
         ontclient.find_term('OMIM:208250', code=True),
-        {'EFO_0009028', 'MONDO_0008828'}
+        {'EFO_0009028'}
     )
 
 
@@ -42,5 +39,5 @@ def test_query_comma(ontclient):
 def test_find_term_alzheimer(ontclient):
     assert_result_ot_label(
         ontclient.find_term('alzheimer\'s disease'),
-        ['EFO_0000249']
+        ['MONDO_0004975']
     )

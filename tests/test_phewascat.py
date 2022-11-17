@@ -4,14 +4,14 @@ from util import assert_result_ot_label
 def test_find_term_asthma(ontclient):
     assert_result_ot_label(
         ontclient.find_term('asthma'),
-        ['EFO_0000270']
+        ['MONDO_0004979']
     )
 
 
 def test_efo_direct_match(ontclient):
-    # The test deliberately expects no results, since a match from “Dementias” to “EFO_0004718” is a fuzzy one and
-    # cannot be assumed of high quality.
-    assert not ontclient.find_term('Dementias')
+    # The test deliberately expects no results, since a match from “Xeroderma Pigmentosa” to “MONDO_0019600” is a fuzzy
+    # one and cannot be assumed of high quality.
+    assert not ontclient.find_term('Xeroderma Pigmentosa')
 
 
 def test_otzooma_mappings_whitespace(ontclient):
@@ -24,7 +24,7 @@ def test_otzooma_mappings_whitespace(ontclient):
 def test_efo_match_with_apostrophe(ontclient):
     assert_result_ot_label(
         ontclient.find_term('Alzheimer\'s disease'),
-        ['EFO_0000249']
+        ['MONDO_0004975']
     )
 
 
