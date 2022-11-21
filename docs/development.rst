@@ -27,6 +27,16 @@ Install development packages
 
 
 
+Installing locally and running the tests
+----------------------------------------
+
+.. code-block:: bash
+
+    pip install -e .
+    pytest
+
+
+
 Adding a dependency
 -------------------
 Installation dependencies are stored in the ``setup.py`` file, in the ``install_requires`` section.
