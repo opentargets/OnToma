@@ -30,7 +30,7 @@ class OnToma:
     def __init__(self, cache_dir=None, efo_release='latest'):
         """Initialise an OnToma instance and fetch the necessary resources. Depending on whether cache_dir is specified
         and whether it contains anything, the following behaviour is applied:
-        1. If cache_dir is specified and is not empty, OnToma will use EFO cache from it as is.
+        1. If cache_dir is specified and is not empty, OnToma will use EFO cache from it as is. <- This should be reviewed
         2. If cache_dir is specified and is empty or does not exist, OnToma will download the cache to the directory and
            then use it.
         3. If cache_dir is not specified, a temporary directory will be used to fetch and store EFO cache. Note that
@@ -220,5 +220,5 @@ class OnToma:
             )
 
         # Return either the list of dictionaries, or just the mappings, depending on parameters.
-        self.logger.info(f'Processed: {query} → {processed_results}')
+        self.logger.debug(f'Processed: {query} → {processed_results}')
         return processed_results

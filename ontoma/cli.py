@@ -1,6 +1,7 @@
 import csv
 import logging
 from sys import stderr
+import os
 
 import click
 
@@ -10,8 +11,15 @@ from ontoma.interface import OnToma
 logger = logging.getLogger(__name__)
 
 
-def get_version():
-    return open('../VERSION').read().strip()
+def get_version() -> str:
+    """
+    It reads the VERSION file in the same directory as the script and returns its contents
+
+    Returns:
+      The version number of the script.
+    """
+    script_path = os.path.dirname(__file__)
+    return open(f'{script_path}/../VERSION').read().strip()
 
 
 @click.command()
