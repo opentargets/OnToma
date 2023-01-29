@@ -16,9 +16,12 @@ logger = logging.getLogger(__name__)
 
 
 class efo_handler:
-    """A collection of functions to manage EFO data retrieve and version control and caching."""
+    """A collection of functions to manage EFO data retrieve, version control and caching."""
 
     EFO_RELEASE_API_TEMPLATE = "https://api.github.com/repos/EBISPOT/efo/releases/{}"
+
+    # List of cached datasets:
+    DATASETS = {"terms", "xrefs", "synonyms"}
 
     def __init__(self, efo_release: str, cache_dir: str) -> None:
         """By providing and EFO version and cache dir, the class tries to load cached data or create new cache.
@@ -28,23 +31,13 @@ class efo_handler:
             cache_dir (str): Folder into which the cache dataset will be saved.
         """
         # Get EFO release related meta data:
-        efo_release_info = self.__get_efo_version(efo_release)
+        efo_release_info = self.__get_efo_github_data(efo_release)
         self.efo_version = efo_release_info["tag_name"]
         self.assets = efo_release_info["assets"]
         self.cache_dir = cache_dir
 
-        # Fix filenames:
+        # The OWL filename is fixed and won't change by versions:
         self.OWL_FILENAME = "efo_otar_slim.owl"
-        self.TERMS_FILENAME = f"terms.{self.efo_version}.tsv"
-        self.XREFS_FILENAME = f"xrefs.{self.efo_version}.tsv"
-        self.SYNONYMS_FILENAME = f"synonyms.{self.efo_version}.tsv"
-
-        # datasets:
-        self.ALL_DATASETS = {
-            self.TERMS_FILENAME: "terms_df",
-            self.XREFS_FILENAME: "xrefs_df",
-            self.SYNONYMS_FILENAME: "synonyms_df",
-        }
 
         # If cache dir doesn't exist, create it:
         if not os.path.isdir(cache_dir):
@@ -52,17 +45,35 @@ class efo_handler:
             logger.info(f"Created EFO cache directory {cache_dir}.")
 
         # Try to load all the files, if any of the file is missing, rebuilding cache:
-        for filename, dataset_name in self.ALL_DATASETS.items():
+        for dataset_name in self.DATASETS:
             try:
                 setattr(
                     self,
                     dataset_name,
-                    pd.read_csv(os.path.join(cache_dir, filename), sep="\t"),
+                    self.__load_cache(dataset_name),
                 )
             except FileNotFoundError:
-                logger.info(f"{filename} was not found. Re-building cache.")
+                logger.info(
+                    f"{dataset_name} could not be build from cache. Re-building cache."
+                )
                 self.__generate_cache()
                 break
+
+    def __save_cache(self, dataset_name: str, dataset: pd.DataFrame) -> None:
+        # Generate file name:
+        file_name = os.path.join(
+            self.cache_dir, f"{dataset_name}.{self.efo_version}.tsv"
+        )
+        # Save pandas datafarme:
+        logger.info(f"Saving {dataset_name} to {file_name}")
+        dataset.to_csv(file_name, sep="\t", index=False)
+
+    def __load_cache(self, dataset_name: str) -> pd.DataFrame:
+        file_name = os.path.join(
+            self.cache_dir, f"{dataset_name}.{self.efo_version}.tsv"
+        )
+        logger.info(f"Loading {dataset_name} from cache: {file_name}")
+        return pd.read_csv(file_name, sep="\t")
 
     def __generate_cache(self) -> None:
         otar_slim_assets = [a for a in self.assets if a["name"] == self.OWL_FILENAME]
@@ -121,45 +132,38 @@ class efo_handler:
         logging.info("Output the datasets.")
 
         # Strore datasets list:
-        self.terms_df = pd.DataFrame(
+        self.terms = pd.DataFrame(
             terms_dataset, columns=("normalised_id", "normalised_label", "is_obsolete")
         )
-        self.xrefs_df = pd.DataFrame(
+        self.xrefs = pd.DataFrame(
             xrefs_dataset,
             columns=(
                 "normalised_xref_id",
                 "normalised_id",
             ),
         )
-        self.synonyms_df = pd.DataFrame(
+        self.synonyms = pd.DataFrame(
             synonyms_dataset, columns=("normalised_synonym", "normalised_id")
         )
 
-        # Save datasets
-        self.terms_df.to_csv(
-            os.path.join(self.cache_dir, self.TERMS_FILENAME), sep="\t", index=False
-        )
-        self.xrefs_df.to_csv(
-            os.path.join(self.cache_dir, self.XREFS_FILENAME), sep="\t", index=False
-        )
-        self.synonyms_df.to_csv(
-            os.path.join(self.cache_dir, self.SYNONYMS_FILENAME), sep="\t", index=False
-        )
+        # Looping through all datasets and save cache:
+        for dataset_name in self.DATASETS:
+            self.__save_cache(dataset_name, getattr(self, dataset_name))
 
     def get_terms(self) -> pd.DataFrame:
         """This function returns the EFO term list as a pandas DataFrame."""
-        return self.terms_df
+        return self.terms
 
     def get_xrefs(self) -> pd.DataFrame:
         """This function returns the EFO term cross references as a pandas DataFrame."""
-        return self.xrefs_df
+        return self.xrefs
 
     def get_synonyms(self) -> pd.DataFrame:
         """This function returns the EFO term synonyms as pandas DataFrame."""
-        return self.synonyms_df
+        return self.synonyms
 
     @retry(logger=logger, tries=5, delay=3, backoff=1.5, jitter=(1, 3))
-    def __get_efo_version(self, efo_release: str) -> Dict[str, str]:
+    def __get_efo_github_data(self, efo_release: str) -> Dict[str, str]:
         """Queries GitHub API to fetch the latest EFO release."""
         if efo_release == "latest":
             url = self.EFO_RELEASE_API_TEMPLATE.format(efo_release)
@@ -169,5 +173,6 @@ class efo_handler:
         response.raise_for_status()  # In case of HTTP errors, this will be caught by the @retry decorator.
         return response.json()
 
-
-efo = efo_handler(release, cache_dir)
+    def get_efo_version(self) -> str:
+        """Return the cached EFO version."""
+        return self.efo_version
