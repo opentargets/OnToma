@@ -28,13 +28,10 @@ class OnToma:
     """Open Targets ontology mapping wrapper. Please refer to documentation for usage details."""
 
     def __init__(self, cache_dir=None, efo_release="latest"):
-        """Initialise an OnToma instance and fetch the necessary resources. Depending on whether cache_dir is specified
-        and whether it contains anything, the following behaviour is applied:
-        1. If cache_dir is specified and is not empty, OnToma will use EFO cache from it as is. <- This should be reviewed
-        2. If cache_dir is specified and is empty or does not exist, OnToma will download the cache to the directory and
-           then use it.
-        3. If cache_dir is not specified, a temporary directory will be used to fetch and store EFO cache. Note that
-           this cannot be persistent, so the cache would have to be re-downloaded each time.
+        """Initialise an OnToma instance and fetch the necessary resources.
+
+        If cache_dir is not specified, a temporary directory will be used to fetch and store EFO cache.
+        Note that this cannot be persistent, so the cache would have to be re-downloaded each time.
         """
         self.logger = logger
 
