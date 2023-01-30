@@ -12,7 +12,7 @@ import tempfile
 import pandas as pd
 
 from ontoma import ontology
-from ontoma.owl import efo_handler
+from ontoma.EFO_Handler import efo_handler
 from ontoma.constants import URLS, RESULT_FIELDS
 from ontoma.downloaders import get_manual_xrefs, get_manual_string_mappings
 from ontoma.oxo import OxoClient

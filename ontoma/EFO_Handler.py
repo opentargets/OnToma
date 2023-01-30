@@ -23,6 +23,9 @@ class efo_handler:
     # List of cached datasets:
     DATASETS = {"terms", "xrefs", "synonyms"}
 
+    # The OWL filename is fixed and won't change by versions:
+    OWL_FILENAME = "efo_otar_slim.owl"
+
     def __init__(self, efo_release: str, cache_dir: str) -> None:
         """By providing and EFO version and cache dir, the class tries to load cached data or create new cache.
 
@@ -35,9 +38,6 @@ class efo_handler:
         self.efo_version = efo_release_info["tag_name"]
         self.assets = efo_release_info["assets"]
         self.cache_dir = cache_dir
-
-        # The OWL filename is fixed and won't change by versions:
-        self.OWL_FILENAME = "efo_otar_slim.owl"
 
         # If cache dir doesn't exist, create it:
         if not os.path.isdir(cache_dir):
@@ -129,9 +129,7 @@ class efo_handler:
                         ]
                     )
 
-        logging.info("Output the datasets.")
-
-        # Strore datasets list:
+        # Strore datasets:
         self.terms = pd.DataFrame(
             terms_dataset, columns=("normalised_id", "normalised_label", "is_obsolete")
         )
@@ -147,6 +145,7 @@ class efo_handler:
         )
 
         # Looping through all datasets and save cache:
+        logging.info("Save cache.")
         for dataset_name in self.DATASETS:
             self.__save_cache(dataset_name, getattr(self, dataset_name))
 
