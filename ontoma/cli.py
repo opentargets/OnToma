@@ -13,10 +13,10 @@ logger = logging.getLogger()
 
 def get_version() -> str:
     """
-    It reads the VERSION file in the same directory as the script and returns its contents
+    Reads the VERSION file in the same directory as the script and returns its contents.
 
     Returns:
-      The version number of the script.
+        The version number of the script.
     """
     script_path = os.path.dirname(__file__)
     return open(f"{script_path}/../VERSION").read().strip()

@@ -16,7 +16,7 @@ logger = logging.getLogger()
 
 
 class efo_handler:
-    """A collection of functions to manage EFO data retrieve, version control and caching."""
+    """A collection of functions to manage EFO data retrieving, version control and caching."""
 
     EFO_RELEASE_API_TEMPLATE = "https://api.github.com/repos/EBISPOT/efo/releases/{}"
 
@@ -129,7 +129,7 @@ class efo_handler:
                         ]
                     )
 
-        # Strore datasets:
+        # Store datasets:
         self.terms = pd.DataFrame(
             terms_dataset, columns=("normalised_id", "normalised_label", "is_obsolete")
         )
