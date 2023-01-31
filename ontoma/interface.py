@@ -12,7 +12,7 @@ import tempfile
 import pandas as pd
 
 from ontoma import ontology
-from ontoma.EFO_Handler import efo_handler
+from ontoma.efo_handler import EFOHandler
 from ontoma.constants import URLS, RESULT_FIELDS
 from ontoma.downloaders import get_manual_xrefs, get_manual_string_mappings
 from ontoma.oxo import OxoClient
@@ -48,7 +48,7 @@ class OnToma:
             )
 
         # Initializing efo handler object with efo version and cache dir. If cache exists, it will load data:
-        efo = efo_handler(efo_release, cache_dir)
+        efo = EFOHandler(efo_release, cache_dir)
 
         # Load terms cross-references and synonyms:
         self.efo_terms = efo.get_terms()

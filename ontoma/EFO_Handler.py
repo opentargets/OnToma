@@ -15,7 +15,7 @@ from ontoma import ontology
 logger = logging.getLogger()
 
 
-class efo_handler:
+class EFOHandler:
     """A collection of functions to manage EFO data retrieving, version control and caching."""
 
     EFO_RELEASE_API_TEMPLATE = "https://api.github.com/repos/EBISPOT/efo/releases/{}"
