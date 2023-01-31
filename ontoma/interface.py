@@ -18,7 +18,7 @@ from ontoma.downloaders import get_manual_xrefs, get_manual_string_mappings
 from ontoma.oxo import OxoClient
 from ontoma.zooma import ZoomaClient
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger()
 
 
 OnTomaResult = namedtuple("OnTomaResult", RESULT_FIELDS)

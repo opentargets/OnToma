@@ -12,7 +12,7 @@ from typing import Dict
 
 from ontoma import ontology
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger()
 
 
 class efo_handler:
