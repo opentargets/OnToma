@@ -14,7 +14,7 @@ from ontoma.ontology import normalise_ontology_identifier
 logger = logging.getLogger(__name__)
 
 
-def get_manual_xrefs(url):
+def get_manual_xrefs(url: str) -> pd.DataFrame:
     """Download the manual cross-reference list and convert to a Pandas dataframe."""
     logger.debug(f'Requesting manual ontology-to-EFO mappings from URL {url}')
     df = pd.read_csv(url, sep='\t')
@@ -23,7 +23,7 @@ def get_manual_xrefs(url):
     return df
 
 
-def get_manual_string_mappings(url):
+def get_manual_string_mappings(url: str) -> pd.DataFrame:
     """Download the manual string-to-ontology mapping list and convert to a Pandas dataframe."""
     logger.debug(f'Requesting manual string-to-EFO mappings from URL {url}')
     df = pd.read_csv(url, sep='\t')

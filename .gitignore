@@ -1,10 +1,6 @@
 # Byte-compiled / optimized / DLL files
 __pycache__/
-*.py[cod]
-*$py.class
 
-# C extensions
-*.so
 
 .pytest_cache/
 
@@ -101,8 +97,5 @@ ENV/
 
 # mypy
 .mypy_cache/
-
-#editors
-.vscode
 
 outputs/
