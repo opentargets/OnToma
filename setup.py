@@ -44,7 +44,7 @@ setup(
         'pandas',
         'pronto',
         'requests',
-        'retry',
+        'retry2',
     ],
     entry_points='''
         [console_scripts]
