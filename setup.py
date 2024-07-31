@@ -40,11 +40,11 @@ setup(
     ],
     keywords='opentargets ontology efo mapper',
     install_requires=[
-        'click',
-        'pandas',
-        'pronto',
-        'requests',
-        'retry2',
+        'click==8.1.7',
+        'pandas==2.2.2',
+        'pronto==2.5.3',
+        'requests==2.32.0',
+        'retry2==0.9.5',
     ],
     entry_points='''
         [console_scripts]
