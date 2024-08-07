@@ -35,13 +35,13 @@ setup(
         "Operating System :: OS Independent",
         "Topic :: Software Development :: Libraries :: Python Modules",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3 :: Only",
     ],
     keywords='opentargets ontology efo mapper',
     install_requires=[
         'click==8.1.7',
-        'pandas==2.2.2',
+        'pandas==1.5.3',
         'pronto==2.5.3',
         'requests==2.32.0',
         'retry2==0.9.5',
@@ -50,7 +50,7 @@ setup(
         [console_scripts]
         ontoma=ontoma.cli:ontoma
     ''',
-    python_requires='>=3.7',
+    python_requires='>=3.8',
     cmdclass={
         'verify': VerifyVersionCommand,
     }
