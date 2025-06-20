@@ -43,7 +43,7 @@ setup(
         'click==8.1.7',
         'pandas==1.5.3',
         'pronto==2.5.3',
-        'requests==2.32.0',
+        'requests==2.32.4',
         'retry2==0.9.5',
     ],
     entry_points='''
