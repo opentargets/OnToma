@@ -3,6 +3,7 @@
 import logging
 import os
 import urllib.request
+import warnings
 
 import pandas as pd
 import pronto
@@ -13,6 +14,11 @@ from typing import Dict
 from ontoma import ontology
 
 logger = logging.getLogger()
+
+# Suppressing the SyntaxWarning from pronto:
+warnings.filterwarnings(
+    "ignore", category=pronto.warnings.SyntaxWarning, module="pronto"
+)
 
 
 class EFOHandler:
