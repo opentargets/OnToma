@@ -1,0 +1,11 @@
+[project]
+name = "ontoma"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "ipykernel>=6.30.1",
+    "pyspark>=4.0.1",
+    "spark-nlp>=6.1.3",
+]
