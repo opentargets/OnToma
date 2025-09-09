@@ -8,7 +8,7 @@ from collections import defaultdict
 
 from pyspark.sql.types import ArrayType, StructType
 
-from src.ontoma import schemas
+from ontoma import schemas
 
 
 class SchemaValidationError(Exception):

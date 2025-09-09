@@ -11,15 +11,15 @@ from typing import TYPE_CHECKING
 import pyspark.sql.functions as f
 from pyspark.sql import Window
 
-from src.ontoma.common.utils import (
+from ontoma.common.utils import (
     get_alternative_translations,
     clean_disease_label,
     format_identifier
 )
-from src.ontoma.dataset.raw_entity_lut import RawEntityLUT
-from src.ontoma.dataset.normalised_entity_lut import NormalisedEntityLUT
-from src.ontoma.dataset.ready_entity_lut import ReadyEntityLUT
-from src.ontoma.nlp_pipeline import NLPPipeline
+from ontoma.dataset.raw_entity_lut import RawEntityLUT
+from ontoma.dataset.normalised_entity_lut import NormalisedEntityLUT
+from ontoma.dataset.ready_entity_lut import ReadyEntityLUT
+from ontoma.nlp_pipeline import NLPPipeline
 
 if TYPE_CHECKING:
     from pyspark.sql import Column, DataFrame, SparkSession

@@ -10,7 +10,7 @@ from pyspark.sql import DataFrame
 from pyspark.sql import types as t
 from typing_extensions import Self
 
-from src.ontoma.common.schemas import SchemaValidationError, compare_struct_schemas
+from ontoma.common.schemas import SchemaValidationError, compare_struct_schemas
 
 if TYPE_CHECKING:
     from pyspark.sql.types import StructType

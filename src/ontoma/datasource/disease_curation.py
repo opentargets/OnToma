@@ -6,8 +6,8 @@ from typing import TYPE_CHECKING
 
 import pyspark.sql.functions as f
 
-from src.ontoma.dataset.raw_entity_lut import RawEntityLUT
-from src.ontoma.common.utils import (
+from ontoma.dataset.raw_entity_lut import RawEntityLUT
+from ontoma.common.utils import (
     annotate_entity,
     get_alternative_translations,
     clean_disease_label

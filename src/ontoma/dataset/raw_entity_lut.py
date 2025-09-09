@@ -5,8 +5,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-from src.ontoma.common.schemas import parse_spark_schema
-from src.ontoma.dataset.dataset import Dataset
+from ontoma.common.schemas import parse_spark_schema
+from ontoma.dataset.dataset import Dataset
 
 if TYPE_CHECKING:
     from pyspark.sql.types import StructType
