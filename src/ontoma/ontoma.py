@@ -45,6 +45,7 @@ class OnToma:
         """Post init.
 
         Initialises an entity lookup table for mapping entities using the list of entity lookup tables provided.
+        If a cache directory is specified, it will load cached data or save to cache.
 
         Raises:
             ValueError: When entity_lut_list is empty or when required Spark NLP configuration is missing.
@@ -99,6 +100,7 @@ class OnToma:
         """
         return self._entity_lut.df
     
+    @staticmethod
     def _check_spark_config(spark: SparkSession, config_key: str, expected_value: str) -> bool:
         """Checks if the spark session has the required configuration set with the expected value.
 
