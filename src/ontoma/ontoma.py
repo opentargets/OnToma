@@ -38,7 +38,7 @@ class OnToma:
 
     spark: SparkSession
     entity_lut_list: list[RawEntityLUT]
-    cache_dir: str | None
+    cache_dir: str | None = None
     _entity_lut: ReadyEntityLUT | None = field(init=False, default=None)
 
     def __post_init__(self: OnToma) -> None:
@@ -47,9 +47,17 @@ class OnToma:
         Initialises an entity lookup table for mapping entities using the list of entity lookup tables provided.
 
         Raises:
+            ValueError: When entity_lut_list is empty or when required Spark NLP configuration is missing.
             TypeError: When entity_lut_list is not a list or when elements of entity_lut_list are not RawEntityLUT.
-            ValueError: When entity_lut_list is empty.
         """
+        # check for required spark config
+        if not self._check_spark_config(
+            self.spark,
+            "spark.jars.packages",
+            "com.johnsnowlabs.nlp:spark-nlp_2.12:5.0.0"
+        ):
+            raise ValueError("Spark session is missing configuration required for Spark NLP.")
+
         # validate the input
         if not isinstance(self.entity_lut_list, list):
             raise TypeError("entity_lut_list must be a list.")
@@ -91,6 +99,23 @@ class OnToma:
         """
         return self._entity_lut.df
     
+    def _check_spark_config(spark: SparkSession, config_key: str, expected_value: str) -> bool:
+        """Checks if the spark session has the required configuration set with the expected value.
+
+        Args:
+            spark (SparkSession): Spark session.
+            config_key (str): Required Spark configuration key.
+            expected_value (str): Expected Spark configuration value.
+
+        Returns:
+            bool: True if the required configuration is set with the expected value, False otherwise.
+        """
+        try:
+            actual_value = spark.conf.get(config_key)
+        except Exception:
+            return False
+        return actual_value == expected_value
+
     def _generate_entity_lut(self: OnToma, lut_list: list[RawEntityLUT]) -> ReadyEntityLUT:
         """Wrapper containing logic for generating an entity lookup table ready to be used for entity mapping given a list of raw entity lookup tables.
 
