@@ -24,13 +24,15 @@ class DiseaseCuration:
     def as_label_lut(
         cls: type[DiseaseCuration], 
         disease_curation: DataFrame,
-        disease_index: DataFrame
+        disease_index: DataFrame,
+        curation_source: str
     ) -> RawEntityLUT:
         """Generate disease label lookup table from a disease curation table.
 
         Args:
             disease_curation (DataFrame): Input disease curation table.
             disease_index (DataFrame): Open Targets disease index.
+            curation_source (str): Source of the curation table.
         
         Returns:
             RawEntityLUT: Disease label lookup table.
@@ -44,10 +46,10 @@ class DiseaseCuration:
                         f.col("SEMANTIC_TAG"), r'^http.+/(\w+_\w+)$', 1
                     ).alias("entityId"),
                     annotate_entity(
-                        f.array(f.col("PROPERTY_VALUE")), 1.0, "term"
+                        f.array(f.col("PROPERTY_VALUE")), 1.0, "term", curation_source
                     ).alias("curationTerm"),
                     annotate_entity(
-                        f.array(f.col("PROPERTY_VALUE")), 1.0, "symbol"
+                        f.array(f.col("PROPERTY_VALUE")), 1.0, "symbol", curation_source
                     ).alias("curationSymbol")
                 )
                 # flatten and explode array of structs
@@ -75,6 +77,7 @@ class DiseaseCuration:
                     ).alias("entityLabel"),
                     f.col("entity.entityScore").alias("entityScore"),
                     f.col("entity.nlpPipelineTrack").alias("nlpPipelineTrack"),
+                    f.col("entity.entitySource").alias("entitySource"),
                     f.lit("DS").alias("entityType"),
                     f.lit("label").alias("entityKind")
                 )
