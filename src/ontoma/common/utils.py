@@ -11,13 +11,14 @@ if TYPE_CHECKING:
     from pyspark.sql import Column, DataFrame
 
 
-def annotate_entity(c: Column, entity_score: float, nlp_pipeline_track: str) -> Column:
+def annotate_entity(c: Column, entity_score: float, nlp_pipeline_track: str, entity_source: str) -> Column:
     """Annotate entity with score and the NLP pipeline to be processed with.
     
     Args:
         c (Column): Column containing entity label.
         entity_score (float): Score of the entity.
         nlp_pipeline_track (str): NLP pipeline track to be used.
+        entity_source (str): Source of the entity.
     
     Returns:
         Column: Column of struct of annotated entities.
@@ -28,7 +29,8 @@ def annotate_entity(c: Column, entity_score: float, nlp_pipeline_track: str) -> 
         lambda x: f.struct(
             x.alias("entityLabel"),
             f.lit(entity_score).alias("entityScore"),
-            f.lit(nlp_pipeline_track).alias("nlpPipelineTrack")
+            f.lit(nlp_pipeline_track).alias("nlpPipelineTrack"),
+            f.lit(entity_source).alias("entitySource")
         )
     )
 

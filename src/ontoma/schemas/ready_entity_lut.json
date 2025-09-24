@@ -22,8 +22,30 @@
             "name": "entityIds",
             "type": {
                 "containsNull": false,
-                "elementType": "string",
-                "type": "array"
+                "type": "array",
+                "elementType": {
+                    "type": "struct",
+                    "fields": [
+                        {
+                            "name": "entityId",
+                            "type": "string",
+                            "nullable": false,
+                            "metadata": {}
+                        },
+                        {
+                            "name": "entitySource",
+                            "type": "string",
+                            "nullable": false,
+                            "metadata": {}
+                        },
+                        {
+                            "name": "nlpPipelineTrack",
+                            "type": "string",
+                            "nullable": false,
+                            "metadata": {}
+                        }
+                    ]
+                }
               },
             "nullable": false,
             "metadata": {}

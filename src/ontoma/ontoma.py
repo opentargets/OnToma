@@ -228,6 +228,7 @@ class OnToma:
                 normalised_entity_lut.df
                 .withColumn("entityRank", f.dense_rank().over(w))
                 .filter(f.col("entityRank") == 1)
+                .withColumn("entityId", f.struct("entityId", "entitySource", "nlpPipelineTrack"))
                 .groupBy("entityKind", "entityType", "entityLabelNormalised")
                 .agg(f.collect_set(f.col("entityId")).alias("entityIds"))
             ),

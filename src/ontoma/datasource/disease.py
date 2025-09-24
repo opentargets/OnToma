@@ -41,34 +41,34 @@ class OpenTargetsDisease:
                 .select(
                     f.col("id").alias("entityId"),
                     annotate_entity(
-                        f.array(f.col("name")), 1.0, "term"
+                        f.array(f.col("name")), 1.0, "term", "name"
                     ).alias("nameTerm"),
                     annotate_entity(
-                        f.array(f.col("name")), 1.0, "symbol"
+                        f.array(f.col("name")), 1.0, "symbol", "name"
                     ).alias("nameSymbol"),
                     annotate_entity(
-                        f.col("synonyms.hasExactSynonym"), 0.999, "term"
+                        f.col("synonyms.hasExactSynonym"), 0.999, "term", "exact_synonym"
                     ).alias("exactSynonymsTerm"),
                     annotate_entity(
-                        f.col("synonyms.hasExactSynonym"), 0.999, "symbol"
+                        f.col("synonyms.hasExactSynonym"), 0.999, "symbol", "exact_synonym"
                     ).alias("exactSynonymsSymbol"),
                     annotate_entity(
-                        f.col("synonyms.hasNarrowSynonym"), 0.998, "term"
+                        f.col("synonyms.hasNarrowSynonym"), 0.998, "term", "narrow_synonym"
                     ).alias("narrowSynonymsTerm"),
                     annotate_entity(
-                        f.col("synonyms.hasNarrowSynonym"), 0.998, "symbol"
+                        f.col("synonyms.hasNarrowSynonym"), 0.998, "symbol", "narrow_synonym"
                     ).alias("narrowSynonymsSymbol"),
                     annotate_entity(
-                        f.col("synonyms.hasBroadSynonym"), 0.997, "term"
+                        f.col("synonyms.hasBroadSynonym"), 0.997, "term", "broad_synonym"
                     ).alias("broadSynonymsTerm"),
                     annotate_entity(
-                        f.col("synonyms.hasBroadSynonym"), 0.997, "symbol"
+                        f.col("synonyms.hasBroadSynonym"), 0.997, "symbol", "broad_synonym"
                     ).alias("broadSynonymsSymbol"),
                     annotate_entity(
-                        f.col("synonyms.hasRelatedSynonym"), 0.996, "term"
+                        f.col("synonyms.hasRelatedSynonym"), 0.996, "term", "related_synonym"
                     ).alias("relatedSynonymsTerm"),
                     annotate_entity(
-                        f.col("synonyms.hasRelatedSynonym"), 0.996, "symbol"
+                        f.col("synonyms.hasRelatedSynonym"), 0.996, "symbol", "related_synonym"
                     ).alias("relatedSynonymsSymbol")
                 )
                 # flatten and explode array of structs
@@ -103,6 +103,7 @@ class OpenTargetsDisease:
                     ).alias("entityLabel"),
                     f.col("entity.entityScore").alias("entityScore"),
                     f.col("entity.nlpPipelineTrack").alias("nlpPipelineTrack"),
+                    f.col("entity.entitySource").alias("entitySource"),
                     f.lit("DS").alias("entityType"),
                     f.lit("label").alias("entityKind")
                 )
@@ -133,13 +134,13 @@ class OpenTargetsDisease:
                 .select(
                     f.col("id").alias("entityId"),
                     annotate_entity(
-                        f.array(f.col("id")), 1.0, "symbol"
+                        f.array(f.col("id")), 1.0, "symbol", "id"
                     ).alias("identifier"),
                     annotate_entity(
-                        f.col("dbXRefs"), 0.999, "symbol"
+                        f.col("dbXRefs"), 0.999, "symbol", "crossref"
                     ).alias("crossRefs"),
                     annotate_entity(
-                        f.col("obsoleteXRefs"), 0.998, "symbol"
+                        f.col("obsoleteXRefs"), 0.998, "symbol", "obsolete_crossref"
                     ).alias("obsoleteCrossRefs")
                 )
                 # flatten and explode array of structs
@@ -161,6 +162,7 @@ class OpenTargetsDisease:
                     f.upper(f.trim(f.col("entity.entityLabel"))).alias("entityLabel"),
                     f.col("entity.entityScore").alias("entityScore"),
                     f.col("entity.nlpPipelineTrack").alias("nlpPipelineTrack"),
+                    f.col("entity.entitySource").alias("entitySource"),
                     f.lit("DS").alias("entityType"),
                     f.lit("id").alias("entityKind")
                 )
