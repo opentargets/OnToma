@@ -53,9 +53,9 @@ class OnToma:
         """
         # check for required spark config
         if not self._check_spark_config(
-            self.spark,
-            "spark.jars.packages",
-            "com.johnsnowlabs.nlp:spark-nlp_2.12:5.0.0"
+            spark=self.spark,
+            config_key="spark.jars.packages",
+            expected_value="spark-nlp"
         ):
             raise ValueError("Spark session is missing configuration required for Spark NLP.")
 
@@ -116,7 +116,7 @@ class OnToma:
             actual_value = spark.conf.get(config_key)
         except Exception:
             return False
-        return actual_value == expected_value
+        return expected_value in actual_value
 
     def _generate_entity_lut(self: OnToma, lut_list: list[RawEntityLUT]) -> ReadyEntityLUT:
         """Wrapper containing logic for generating an entity lookup table ready to be used for entity mapping given a list of raw entity lookup tables.
