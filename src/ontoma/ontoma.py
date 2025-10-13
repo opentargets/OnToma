@@ -289,19 +289,20 @@ class OnToma:
                     (f.col("entityKind") == f.col("lookup_entityKind")) &
                     # Use regex with word boundaries to match complete words only
                     # This prevents partial matches like "tep" in "Dalteparin"
-                    f.col("entityLabelNormalised").rlike(
-                        f.concat(
-                            f.lit("(^|\\s+)"),  # Start of string or whitespace
-                            f.col("lookup_label_normalised"),  # The lookup term
-                            f.lit("(\\s+|$)")   # Whitespace or end of string
+                    # Using regexp_extract instead of rlike for better version compatibility
+                    (f.length(
+                        f.regexp_extract(
+                            f.col("entityLabelNormalised"),
+                            f.concat(
+                                f.lit("(^|\\s+)("),  # Group 1: start or whitespace
+                                f.col("lookup_label_normalised"),  # The lookup term
+                                f.lit(")(\\s+|$)")   # Group 2: whitespace or end
+                            ),
+                            2  # Extract the lookup term (group 2)
                         )
-                    ) &
+                    ) > 0) &
                     # Avoid trivial matches (empty strings, very short terms)
-                    (f.length(f.col("lookup_label_normalised")) >= 3) &
-                    # Avoid exact matches (should be handled by exact matching first)
-                    (f.col("entityLabelNormalised") != f.col("lookup_label_normalised"))
-                ),
-                "left"
+                    (f.length(f.col("lookup_label_normalised")) >= 3)
             )
             .select(
                 *[col for col in normalised_query_entities.columns],
