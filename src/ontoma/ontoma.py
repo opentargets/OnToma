@@ -287,12 +287,27 @@ class OnToma:
                 (
                     (f.col(type_col_name) == f.col(f"lookup_{type_col_name}")) &
                     (f.col("entityKind") == f.col("lookup_entityKind")) &
-                    # Use regex with word boundaries to match complete words only
-                    f.col("entityLabelNormalised").rlike(
-                        f.concat(
-                            f.lit("(^|\\s+)"),  # Start of string or whitespace
-                            f.col("lookup_label_normalised"),  # The lookup term
-                            f.lit("(\\s+|$)")   # Whitespace or end of string
+                    # Use word boundary matching to prevent partial matches like "tep" in "Dalteparin"
+                    # Check if lookup term appears as complete word (surrounded by word boundaries)
+                    (
+                        # Match at start of string followed by space/punctuation
+                        f.col("entityLabelNormalised").startswith(
+                            f.concat(f.col("lookup_label_normalised"), f.lit(" "))
+                        ) |
+                        # Match at end of string preceded by space/punctuation  
+                        f.col("entityLabelNormalised").endswith(
+                            f.concat(f.lit(" "), f.col("lookup_label_normalised"))
+                        ) |
+                        # Match in middle surrounded by spaces
+                        f.col("entityLabelNormalised").contains(
+                            f.concat(f.lit(" "), f.col("lookup_label_normalised"), f.lit(" "))
+                        ) |
+                        # Handle punctuation boundaries - match after punctuation
+                        f.col("entityLabelNormalised").contains(
+                            f.concat(f.lit(") "), f.col("lookup_label_normalised"))
+                        ) |
+                        f.col("entityLabelNormalised").contains(
+                            f.concat(f.lit("% "), f.col("lookup_label_normalised"))
                         )
                     ) &
                     # Avoid trivial matches (empty strings, very short terms)
