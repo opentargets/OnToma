@@ -14,7 +14,7 @@ from pyspark.sql import Window
 from ontoma.common.utils import (
     get_alternative_translations,
     clean_disease_label,
-    format_identifier
+    format_identifier,
 )
 from ontoma.dataset.raw_entity_lut import RawEntityLUT
 from ontoma.dataset.normalised_entity_lut import NormalisedEntityLUT
@@ -27,7 +27,7 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 handler = logging.StreamHandler()
-formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 handler.setFormatter(formatter)
 logger.addHandler(handler)
 
@@ -55,39 +55,47 @@ class OnToma:
         if not self._check_spark_config(
             spark=self.spark,
             config_key="spark.jars.packages",
-            expected_value="spark-nlp"
+            expected_value="spark-nlp",
         ):
-            raise ValueError("Spark session is missing configuration required for Spark NLP.")
+            raise ValueError(
+                "Spark session is missing configuration required for Spark NLP."
+            )
 
         # validate the input
         if not isinstance(self.entity_lut_list, list):
             raise TypeError("entity_lut_list must be a list.")
-        
+
         if not self.entity_lut_list:
             raise ValueError("entity_lut_list must contain at least one element.")
-        
-        if not all(isinstance(entity_lut, RawEntityLUT) for entity_lut in self.entity_lut_list):
+
+        if not all(
+            isinstance(entity_lut, RawEntityLUT) for entity_lut in self.entity_lut_list
+        ):
             raise TypeError("Each entity_lut must be a RawEntityLUT.")
 
         # if cache_dir is provided and it exists, load the entity lookup table
         if self.cache_dir and os.path.exists(self.cache_dir):
             self._entity_lut = ReadyEntityLUT(
                 _df=self.spark.read.parquet(self.cache_dir),
-                _schema=ReadyEntityLUT.get_schema()
+                _schema=ReadyEntityLUT.get_schema(),
             )
             logger.info(f"Loaded entity lookup table from {self.cache_dir}.")
 
         # if cache_dir is provided but doesn't exist yet, generate and save the entity lookup table
         elif self.cache_dir:
-            logger.info(f"{self.cache_dir} does not exist. Generating entity lookup table.")
+            logger.info(
+                f"{self.cache_dir} does not exist. Generating entity lookup table."
+            )
             self._entity_lut = self._generate_entity_lut(self.entity_lut_list)
 
             self._entity_lut.df.write.parquet(self.cache_dir)
             logger.info(f"Saved entity lookup table to {self.cache_dir}.")
-            
+
         # cache_dir is not provided so just generate the entity lookup table
         else:
-            logger.warning(f"Cache directory is not specified. Specify a cache directory to speed up subsequent OnToma usage.")
+            logger.warning(
+                f"Cache directory is not specified. Specify a cache directory to speed up subsequent OnToma usage."
+            )
             logger.info(f"Generating entity lookup table.")
             self._entity_lut = self._generate_entity_lut(self.entity_lut_list)
 
@@ -99,9 +107,11 @@ class OnToma:
             DataFrame: Entity lookup table initialised in the post init.
         """
         return self._entity_lut.df
-    
+
     @staticmethod
-    def _check_spark_config(spark: SparkSession, config_key: str, expected_value: str) -> bool:
+    def _check_spark_config(
+        spark: SparkSession, config_key: str, expected_value: str
+    ) -> bool:
         """Checks if the spark session has the required configuration set with the expected value.
 
         Args:
@@ -118,7 +128,9 @@ class OnToma:
             return False
         return expected_value in actual_value
 
-    def _generate_entity_lut(self: OnToma, lut_list: list[RawEntityLUT]) -> ReadyEntityLUT:
+    def _generate_entity_lut(
+        self: OnToma, lut_list: list[RawEntityLUT]
+    ) -> ReadyEntityLUT:
         """Wrapper containing logic for generating an entity lookup table ready to be used for entity mapping given a list of raw entity lookup tables.
 
         Args:
@@ -148,10 +160,14 @@ class OnToma:
         """
         if len(lut_list) == 1:
             return lut_list[0]
-        
-        return reduce(lambda lut1, lut2: RawEntityLUT(lut1.df.unionByName(lut2.df)), lut_list)
 
-    def _normalise_entity_lut(self: OnToma, raw_entity_lut: RawEntityLUT) -> NormalisedEntityLUT:
+        return reduce(
+            lambda lut1, lut2: RawEntityLUT(lut1.df.unionByName(lut2.df)), lut_list
+        )
+
+    def _normalise_entity_lut(
+        self: OnToma, raw_entity_lut: RawEntityLUT
+    ) -> NormalisedEntityLUT:
         """Wrapper for applying the _normalise_entities function to entity lookup tables.
 
         Args:
@@ -162,12 +178,14 @@ class OnToma:
         """
         return NormalisedEntityLUT(
             _df=(
-                self._normalise_entities(raw_entity_lut.df)
-                .filter(f.col("entityLabelNormalised").isNotNull() & (f.length("entityLabelNormalised") > 0))
+                self._normalise_entities(raw_entity_lut.df).filter(
+                    f.col("entityLabelNormalised").isNotNull()
+                    & (f.length("entityLabelNormalised") > 0)
+                )
             ),
-            _schema=NormalisedEntityLUT.get_schema()
+            _schema=NormalisedEntityLUT.get_schema(),
         )
-    
+
     @staticmethod
     def _normalise_entities(df: DataFrame) -> DataFrame:
         """Normalise entities using an NLP pipeline.
@@ -183,8 +201,7 @@ class OnToma:
         normalised_entities = NLPPipeline.apply_pipeline(df, "entityLabel")
 
         return (
-            normalised_entities
-            .withColumn(
+            normalised_entities.withColumn(
                 "entityLabelNormalised",
                 f.when(
                     f.col("nlpPipelineTrack") == "term",
@@ -192,127 +209,135 @@ class OnToma:
                         f.array_sort(
                             f.filter(
                                 f.array_distinct(f.col("finished_term")),
-                                lambda c: c.isNotNull() & (c != "")
+                                lambda c: c.isNotNull() & (c != ""),
                             )
                         ),
-                        ""
-                    )
+                        "",
+                    ),
                 ).when(
                     f.col("nlpPipelineTrack") == "symbol",
                     f.array_join(
                         f.filter(
-                            f.col("finished_symbol"), 
-                            lambda c: c.isNotNull() & (c != "")
+                            f.col("finished_symbol"),
+                            lambda c: c.isNotNull() & (c != ""),
                         ),
-                        ""
-                    )
-                )
-            )
-            .drop("finished_term", "finished_symbol") #, "nlpPipelineTrack", "entityLabel")
+                        "",
+                    ),
+                ),
+            ).drop(
+                "finished_term", "finished_symbol"
+            )  # , "nlpPipelineTrack", "entityLabel")
         )
-    
+
     def _map_entities_substring(
-        self: OnToma,
-        normalised_query_entities: DataFrame,
-        type_col_name: str
+        self: OnToma, normalised_query_entities: DataFrame, type_col_name: str
     ) -> DataFrame:
         """Map entities using substring matching instead of exact matching.
-        
+
         This method finds lookup table entries where the complete normalised lookup label
         appears as a substring within the normalised query label.
-        
+
         Performance optimizations:
         - Pre-filter lookup table to only relevant entity types/kinds
         - Use broadcast join to avoid expensive cross joins
         - Only match complete lookup terms within queries (avoids false positives)
-        
+
         Example: "oral ibuprofen" will match "ibuprofen" but NOT "ibup" or partial terms.
 
         !!! note
             This method only matches when the complete lookup label is contained in the query.
-        
+
         Args:
             normalised_query_entities (DataFrame): Normalised query entities from NLP pipeline.
             type_col_name (str): Name of the type column.
-            
+
         Returns:
             DataFrame: Mapped entities with substring matches.
         """
         from functools import reduce
-        
+
         # Cache the normalised query entities to avoid recomputation
         normalised_query_entities = normalised_query_entities.cache()
-        
+
         # Extract unique entity types and kinds from query to filter lookup table
         query_types_kinds = (
-            normalised_query_entities
-            .select(f.col(type_col_name).alias("entityType"), f.col("entityKind"))
+            normalised_query_entities.select(
+                f.col(type_col_name).alias("entityType"), f.col("entityKind")
+            )
             .distinct()
             .collect()
         )
-        
+
         # Pre-filter lookup table to only relevant types and kinds
         type_kind_conditions = [
-            (f.col("entityType") == row["entityType"]) & (f.col("entityKind") == row["entityKind"])
+            (f.col("entityType") == row["entityType"])
+            & (f.col("entityKind") == row["entityKind"])
             for row in query_types_kinds
         ]
-        
+
         if not type_kind_conditions:
             # No valid type/kind combinations, return empty result
             return normalised_query_entities.select(
                 *normalised_query_entities.columns,
-                f.array().cast("array<string>").alias("entityIds")
+                f.array().cast("array<string>").alias("entityIds"),
             )
-        
+
         # Filter lookup table to only relevant types/kinds and cache it
         filtered_lookup_df = (
-            self.df
-            .filter(reduce(lambda a, b: a | b, type_kind_conditions))
+            self.df.filter(reduce(lambda a, b: a | b, type_kind_conditions))
             .select(
                 f.col("entityLabelNormalised").alias("lookup_label_normalised"),
                 f.col("entityType").alias(f"lookup_{type_col_name}"),
                 f.col("entityKind").alias("lookup_entityKind"),
-                f.col("entityIds")
+                f.col("entityIds"),
             )
             .cache()
         )
-        
+
         # Only match when complete lookup label appears as complete words in query
         # Use word boundaries to prevent partial matches like "tep" in "Dalteparin"
         # E.g., "oral ibuprofen" matches "ibuprofen" but "Dalteparin" does NOT match "tep"
-        return (
-            normalised_query_entities
-            .join(
-                f.broadcast(filtered_lookup_df),
+        return normalised_query_entities.join(
+            f.broadcast(filtered_lookup_df),
+            (
+                (f.col(type_col_name) == f.col(f"lookup_{type_col_name}"))
+                & (f.col("entityKind") == f.col("lookup_entityKind"))
+                &
+                # Use regex with word boundaries to match complete words only
+                # This prevents partial matches like "tep" in "Dalteparin"
+                # Using regexp_extract with flexible boundaries (whitespace, punctuation, start/end)
                 (
-                    (f.col(type_col_name) == f.col(f"lookup_{type_col_name}")) &
-                    (f.col("entityKind") == f.col("lookup_entityKind")) &
-                    # Use regex with word boundaries to match complete words only
-                    # This prevents partial matches like "tep" in "Dalteparin"
-                    # Using regexp_extract with flexible boundaries (whitespace, punctuation, start/end)
-                    (f.length(
+                    f.length(
                         f.regexp_extract(
                             f.col("entityLabelNormalised"),
                             f.concat(
-                                f.lit("(^|[\\s\\W])("),  # Group 1: start, whitespace, or non-word char
+                                f.lit(
+                                    "(^|[\\s\\W])("
+                                ),  # Group 1: start, whitespace, or non-word char
                                 f.col("lookup_label_normalised"),  # The lookup term
-                                f.lit(")([\\s\\W]|$)")   # Group 2: whitespace, non-word char, or end
+                                f.lit(
+                                    ")([\\s\\W]|$)"
+                                ),  # Group 2: whitespace, non-word char, or end
                             ),
-                            2  # Extract the lookup term (group 2)
+                            2,  # Extract the lookup term (group 2)
                         )
-                    ) > 0) &
-                    # Avoid trivial matches (empty strings, very short terms)
-                    (f.length(f.col("lookup_label_normalised")) >= 3)
+                    )
+                    > 0
+                )
+                &
+                # Avoid trivial matches (empty strings, very short terms)
+                (f.length(f.col("lookup_label_normalised")) >= 3)
             )
             .select(
-                *[col for col in normalised_query_entities.columns],
-                f.col("entityIds")
+                *[col for col in normalised_query_entities.columns], f.col("entityIds")
             )
-            .filter(f.col("entityIds").isNotNull())  # Only keep successful matches
+            .filter(f.col("entityIds").isNotNull()),  # Only keep successful matches
         )
-    
+
     @staticmethod
-    def _get_relevant_entity_ids(normalised_entity_lut: NormalisedEntityLUT) -> ReadyEntityLUT:
+    def _get_relevant_entity_ids(
+        normalised_entity_lut: NormalisedEntityLUT,
+    ) -> ReadyEntityLUT:
         """Get relevant entity ids for each entity label.
 
         Args:
@@ -321,25 +346,25 @@ class OnToma:
         Returns:
             ReadyEntityLUT: Entity lookup table containing only the relevant entity ids for each entity label, ready to be used for entity mapping.
         """
-        w = Window.partitionBy("entityKind", "entityType", "entityLabelNormalised").orderBy(f.col("entityScore").desc())
+        w = Window.partitionBy(
+            "entityKind", "entityType", "entityLabelNormalised"
+        ).orderBy(f.col("entityScore").desc())
 
         return ReadyEntityLUT(
             _df=(
-                normalised_entity_lut.df
-                .withColumn("entityRank", f.dense_rank().over(w))
+                normalised_entity_lut.df.withColumn(
+                    "entityRank", f.dense_rank().over(w)
+                )
                 .filter(f.col("entityRank") == 1)
                 .groupBy("entityKind", "entityType", "entityLabelNormalised")
                 .agg(f.collect_set(f.col("entityId")).alias("entityIds"))
             ),
-            _schema=ReadyEntityLUT.get_schema()
+            _schema=ReadyEntityLUT.get_schema(),
         )
-    
+
     @staticmethod
     def _check_mapping_compatibility(
-        lut: DataFrame, 
-        df: DataFrame, 
-        lut_col_name: str,
-        df_col_name: str
+        lut: DataFrame, df: DataFrame, lut_col_name: str, df_col_name: str
     ) -> bool:
         """Check if the entity lookup table can be used to map the entities in the provided dataframe.
 
@@ -357,7 +382,7 @@ class OnToma:
         df_properties = df.select(df_col_name).distinct().collect()
 
         return all(val in lut_properties for val in df_properties)
-    
+
     @staticmethod
     def _extract_query_entity_labels(
         df: DataFrame,
@@ -372,7 +397,7 @@ class OnToma:
             df (DataFrame): DataFrame containing entity labels to be extracted.
             label_col_name (str): Name of the column containing the entity labels.
             type_col_name (str): Name of the column containing the type of the entity label.
-        
+
         Returns:
             DataFrame: DataFrame with additional columns containing entity string and NLP pipeline track.
         """
@@ -382,26 +407,24 @@ class OnToma:
             # labels that contain special characters should not always be translated
             .withColumn(
                 "entityLabel",
-                f.explode(get_alternative_translations(f.trim(f.col(label_col_name))))
+                f.explode(get_alternative_translations(f.trim(f.col(label_col_name)))),
             )
             # all query entities will be normalised using both the term and symbol tracks of the NLP pipeline
             .withColumn(
-                "nlpPipelineTrack",
-                f.explode(f.array(f.lit("term"), f.lit("symbol")))
+                "nlpPipelineTrack", f.explode(f.array(f.lit("term"), f.lit("symbol")))
             )
             # disease labels require an additional cleaning step
             .withColumn(
                 "entityLabel",
-                f.when(f.col(type_col_name) == "DS", clean_disease_label(f.col("entityLabel")))
-                .otherwise(f.col("entityLabel"))
+                f.when(
+                    f.col(type_col_name) == "DS",
+                    clean_disease_label(f.col("entityLabel")),
+                ).otherwise(f.col("entityLabel")),
             )
         )
-    
+
     @staticmethod
-    def _extract_query_entity_ids(
-        df: DataFrame,
-        id_col_name: str
-    ) -> DataFrame:
+    def _extract_query_entity_ids(df: DataFrame, id_col_name: str) -> DataFrame:
         """Extract query entity ids from the provided dataframe.
 
         Entity ids are set up for normalisation via the symbol track of the NLP pipeline.
@@ -413,28 +436,25 @@ class OnToma:
         Returns:
             DataFrame: DataFrame with additional columns containing entity string and NLP pipeline track.
         """
-        return (
-            df
-            .withColumns(
-                {
-                    # format ids to be consistent
-                    "entityLabel": format_identifier(f.upper(f.trim(f.col(id_col_name)))),
-                    # all query ids will be normalised using the symbol track of the NLP pipeline
-                    "nlpPipelineTrack": f.lit("symbol")
-                }
-            )
+        return df.withColumns(
+            {
+                # format ids to be consistent
+                "entityLabel": format_identifier(f.upper(f.trim(f.col(id_col_name)))),
+                # all query ids will be normalised using the symbol track of the NLP pipeline
+                "nlpPipelineTrack": f.lit("symbol"),
+            }
         )
 
     def map_entities(
-        self: OnToma, 
-        df: DataFrame, 
+        self: OnToma,
+        df: DataFrame,
         result_col_name: str,
-        entity_col_name: str, 
+        entity_col_name: str,
         entity_kind: str,
-        type_col_name: str | None = None, 
+        type_col_name: str | None = None,
         type_col: Column | None = None,
-        map_substring: bool = False
-     ) -> DataFrame:
+        map_substring: bool = False,
+    ) -> DataFrame:
         """Map entities using the entity lookup table.
 
         Logic:
@@ -460,34 +480,41 @@ class OnToma:
                 or when the input dataframe contains unmappable entity types.
         """
         # validate input for the type column
-        if (
-            (type_col_name is None and type_col is None) 
-            or (type_col_name is not None and type_col is not None)
+        if (type_col_name is None and type_col is None) or (
+            type_col_name is not None and type_col is not None
         ):
-            raise ValueError("Exactly one of 'type_col_name' or 'type_col' must be provided.")
-        
+            raise ValueError(
+                "Exactly one of 'type_col_name' or 'type_col' must be provided."
+            )
+
         # create snapshot of columns from input dataframe
         original_columns = df.columns
-        
+
         # if type information is provided as a Column, add it to the input dataframe
         if type_col is not None:
             type_col_name = "entityType"
             df = df.withColumn(type_col_name, type_col)
 
         # check if all the entity types to be mapped are in the entity lookup table
-        if not self._check_mapping_compatibility(self.df, df, "entityType", type_col_name):
+        if not self._check_mapping_compatibility(
+            self.df, df, "entityType", type_col_name
+        ):
             raise ValueError("Unable to map the provided entity type(s).")
-        
+
         # add kind information to the input dataframe
         df = df.withColumn("entityKind", f.lit(entity_kind))
 
         # check if all the entity kinds to be mapped are in the entity lookup table
-        if not self._check_mapping_compatibility(self.df, df, "entityKind", "entityKind"):
+        if not self._check_mapping_compatibility(
+            self.df, df, "entityKind", "entityKind"
+        ):
             raise ValueError("Unable to map the provided entity kind(s).")
-    
+
         # extract entities from input dataframe
         if entity_kind == "label":
-            extracted_entities = self._extract_query_entity_labels(df, entity_col_name, type_col_name)
+            extracted_entities = self._extract_query_entity_labels(
+                df, entity_col_name, type_col_name
+            )
         if entity_kind == "id":
             extracted_entities = self._extract_query_entity_ids(df, entity_col_name)
 
@@ -497,32 +524,32 @@ class OnToma:
                 self._normalise_entities(extracted_entities), type_col_name
             )
         else:
-            mapped_entities = (
-                self._normalise_entities(extracted_entities)
-                .join(
-                    (
-                        self.df
-                        .select(
-                            f.col("entityLabelNormalised"),
-                            f.col("entityType").alias(type_col_name),
-                            f.col("entityKind"),
-                            f.col("entityIds")
-                        )
-                    ),
-                    on=["entityLabelNormalised", type_col_name, "entityKind"],
-                    how="left"
-                )
+            mapped_entities = self._normalise_entities(extracted_entities).join(
+                (
+                    self.df.select(
+                        f.col("entityLabelNormalised"),
+                        f.col("entityType").alias(type_col_name),
+                        f.col("entityKind"),
+                        f.col("entityIds"),
+                    )
+                ),
+                on=["entityLabelNormalised", type_col_name, "entityKind"],
+                how="left",
             )
 
         # aggregate results from both tracks
         return (
-            mapped_entities
-            .groupBy(original_columns)
-            .agg(f.array_distinct(f.flatten(f.collect_set(f.col("entityIds")))).alias(result_col_name))
+            mapped_entities.groupBy(original_columns)
+            .agg(
+                f.array_distinct(f.flatten(f.collect_set(f.col("entityIds")))).alias(
+                    result_col_name
+                )
+            )
             # replace empty list with null
             .withColumn(
                 result_col_name,
-                f.when(f.size(result_col_name) == 0, None)
-                .otherwise(f.col(result_col_name))
+                f.when(f.size(result_col_name) == 0, None).otherwise(
+                    f.col(result_col_name)
+                ),
             )
         )
