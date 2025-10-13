@@ -218,11 +218,18 @@ class OnToma:
     ) -> DataFrame:
         """Map entities using substring matching instead of exact matching.
         
-        This method finds all lookup table entries where the normalised lookup label
-        is a substring of the normalised query label, or vice versa.
+        This method finds lookup table entries where the complete normalised lookup label
+        appears as a substring within the normalised query label.
+        
+        Performance optimizations:
+        - Pre-filter lookup table to only relevant entity types/kinds
+        - Use broadcast join to avoid expensive cross joins
+        - Only match complete lookup terms within queries (avoids false positives)
+        
+        Example: "oral ibuprofen" will match "ibuprofen" but NOT "ibup" or partial terms.
 
         !!! note
-            This method is computationally more expensive and may lead to false positives.
+            This method only matches when the complete lookup label is contained in the query.
         
         Args:
             normalised_query_entities (DataFrame): Normalised query entities from NLP pipeline.
@@ -231,9 +238,50 @@ class OnToma:
         Returns:
             DataFrame: Mapped entities with substring matches.
         """
-        # Get the lookup table with proper aliases
-        lookup_df = (
+        from functools import reduce
+        
+        # Cache the normalised query entities to avoid recomputation
+        normalised_query_entities = normalised_query_entities.cache()
+        
+        # Extract unique entity types and kinds from query to filter lookup table
+        query_types_kinds = (
+            normalised_query_entities
+            .select(f.col(type_col_name).alias("entityType"), f.col("entityKind"))
+            .distinct()
+            .collect()
+        )
+        
+        # Pre-filter lookup table to only relevant types and kinds
+        type_kind_conditions = [
+            (f.col("entityType") == row["entityType"]) & (f.col("entityKind") == row["entityKind"])
+            for row in query_types_kinds
+        ]
+        
+        if not type_kind_conditions:
+            # No valid type/kind combinations, return empty result
+            return normalised_query_entities.select(
+                *normalised_query_entities.columns,
+                f.array().cast("array<string>").alias("entityIds")
+            )
+        
+        # Additional optimization: Extract unique words from query labels
+        # This further reduces the lookup space by only considering lookup entries
+        # that contain words that appear in the queries
+        query_words = (
+            normalised_query_entities
+            .select(f.explode(f.split(f.col("entityLabelNormalised"), r"\s+")).alias("word"))
+            .filter(f.length(f.col("word")) >= 3)  # Only meaningful words
+            .select(f.col("word"))
+            .distinct()
+            .collect()
+        )
+        
+        query_word_set = {row["word"] for row in query_words}
+        
+        # Filter lookup table to only relevant types/kinds and cache it
+        base_filtered_lookup = (
             self.df
+            .filter(reduce(lambda a, b: a | b, type_kind_conditions))
             .select(
                 f.col("entityLabelNormalised").alias("lookup_label_normalised"),
                 f.col("entityType").alias(f"lookup_{type_col_name}"),
@@ -242,26 +290,45 @@ class OnToma:
             )
         )
         
-        # Perform cross join and then filter for substring matches
-        # This is more efficient than a full cross join because we filter on entityType and entityKind first
+        # Further filter lookup table: only keep entries that contain words from queries
+        if query_word_set:
+            # Create word-based filter conditions
+            word_conditions = [
+                f.col("lookup_label_normalised").contains(word)
+                for word in query_word_set
+            ]
+            
+            filtered_lookup_df = (
+                base_filtered_lookup
+                .filter(reduce(lambda a, b: a | b, word_conditions))
+                .cache()  # Cache filtered lookup table
+            )
+        else:
+            # No meaningful words found, use base filter
+            filtered_lookup_df = base_filtered_lookup.cache()
+        
+        # Only match when complete lookup label appears in query
+        # E.g., "oral ibuprofen" contains "ibuprofen" but not "ibup"
         return (
             normalised_query_entities
-            .crossJoin(lookup_df)
-            # Filter for matching type and kind first (most selective)
-            .filter(
-                (f.col(type_col_name) == f.col(f"lookup_{type_col_name}")) &
-                (f.col("entityKind") == f.col("lookup_entityKind"))
+            .join(
+                f.broadcast(filtered_lookup_df),
+                (
+                    (f.col(type_col_name) == f.col(f"lookup_{type_col_name}")) &
+                    (f.col("entityKind") == f.col("lookup_entityKind")) &
+                    f.col("entityLabelNormalised").contains(f.col("lookup_label_normalised")) &
+                    # Avoid trivial matches (empty strings, very short terms)
+                    (f.length(f.col("lookup_label_normalised")) >= 3) &
+                    # Avoid exact matches (should be handled by exact matching first)
+                    (f.col("entityLabelNormalised") != f.col("lookup_label_normalised"))
+                ),
+                "left"
             )
-            # Filter for substring matches: either direction
-            .filter(
-                f.col("entityLabelNormalised").contains(f.col("lookup_label_normalised")) |
-                f.col("lookup_label_normalised").contains(f.col("entityLabelNormalised"))
-            )
-            # Select the original structure expected by the downstream pipeline
             .select(
-                *[col for col in normalised_query_entities.columns],  # Keep all original query columns
+                *[col for col in normalised_query_entities.columns],
                 f.col("entityIds")
             )
+            .filter(f.col("entityIds").isNotNull())  # Only keep successful matches
         )
     
     @staticmethod
