@@ -297,41 +297,28 @@ class OnToma:
         # Only match when complete lookup label appears as complete words in query
         # Use word boundaries to prevent partial matches like "tep" in "Dalteparin"
         # E.g., "oral ibuprofen" matches "ibuprofen" but "Dalteparin" does NOT match "tep"
-        return normalised_query_entities.join(
-            f.broadcast(filtered_lookup_df),
-            (
-                (f.col(type_col_name) == f.col(f"lookup_{type_col_name}"))
-                & (f.col("entityKind") == f.col("lookup_entityKind"))
-                &
-                # Use regex with word boundaries to match complete words only
-                # This prevents partial matches like "tep" in "Dalteparin"
-                # Using regexp_extract with flexible boundaries (whitespace, punctuation, start/end)
+        return (
+            normalised_query_entities
+            .join(
+                f.broadcast(filtered_lookup_df),
                 (
-                    f.length(
-                        f.regexp_extract(
-                            f.col("entityLabelNormalised"),
-                            f.concat(
-                                f.lit(
-                                    "(^|[\\s\\W])("
-                                ),  # Group 1: start, whitespace, or non-word char
-                                f.col("lookup_label_normalised"),  # The lookup term
-                                f.lit(
-                                    ")([\\s\\W]|$)"
-                                ),  # Group 2: whitespace, non-word char, or end
-                            ),
-                            2,  # Extract the lookup term (group 2)
-                        )
-                    )
-                    > 0
-                )
-                &
-                # Avoid trivial matches (empty strings, very short terms)
-                (f.length(f.col("lookup_label_normalised")) >= 3)
+                    (f.col(type_col_name) == f.col(f"lookup_{type_col_name}")) &
+                    (f.col("entityKind") == f.col("lookup_entityKind")) &
+                    # Use SQL expr for bulletproof regex matching across all PySpark versions
+                    # This prevents partial matches like "tep" in "Dalteparin" but allows "0.01% atropine"
+                    f.expr(
+                        "length(regexp_extract(entityLabelNormalised, concat('(^|[\\\\s\\\\W])(', lookup_label_normalised, ')([\\\\s\\\\W]|$)'), 2)) > 0"
+                    ) &
+                    # Avoid trivial matches (empty strings, very short terms)
+                    (f.length(f.col("lookup_label_normalised")) >= 3)
+                ),
+                "left"
             )
             .select(
-                *[col for col in normalised_query_entities.columns], f.col("entityIds")
+                *[col for col in normalised_query_entities.columns],
+                f.col("entityIds")
             )
-            .filter(f.col("entityIds").isNotNull()),  # Only keep successful matches
+            .filter(f.col("entityIds").isNotNull())  # Only keep successful matches
         )
 
     @staticmethod
