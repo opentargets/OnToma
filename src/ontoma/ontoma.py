@@ -277,8 +277,9 @@ class OnToma:
             .cache()
         )
         
-        # Only match when complete lookup label appears in query
-        # E.g., "oral ibuprofen" contains "ibuprofen" but not "ibup"
+        # Only match when complete lookup label appears as complete words in query
+        # Use word boundaries to prevent partial matches like "tep" in "Dalteparin"
+        # E.g., "oral ibuprofen" matches "ibuprofen" but "Dalteparin" does NOT match "tep"
         return (
             normalised_query_entities
             .join(
@@ -286,7 +287,14 @@ class OnToma:
                 (
                     (f.col(type_col_name) == f.col(f"lookup_{type_col_name}")) &
                     (f.col("entityKind") == f.col("lookup_entityKind")) &
-                    f.col("entityLabelNormalised").contains(f.col("lookup_label_normalised")) &
+                    # Use regex with word boundaries to match complete words only
+                    f.col("entityLabelNormalised").rlike(
+                        f.concat(
+                            f.lit("(^|\\s+)"),  # Start of string or whitespace
+                            f.col("lookup_label_normalised"),  # The lookup term
+                            f.lit("(\\s+|$)")   # Whitespace or end of string
+                        )
+                    ) &
                     # Avoid trivial matches (empty strings, very short terms)
                     (f.length(f.col("lookup_label_normalised")) >= 3) &
                     # Avoid exact matches (should be handled by exact matching first)
