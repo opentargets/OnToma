@@ -211,6 +211,59 @@ class OnToma:
             .drop("finished_term", "finished_symbol") #, "nlpPipelineTrack", "entityLabel")
         )
     
+    def _map_entities_substring(
+        self: OnToma,
+        normalised_query_entities: DataFrame,
+        type_col_name: str
+    ) -> DataFrame:
+        """Map entities using substring matching instead of exact matching.
+        
+        This method finds all lookup table entries where the normalised lookup label
+        is a substring of the normalised query label, or vice versa.
+
+        !!! note
+            This method is computationally more expensive and may lead to false positives.
+        
+        Args:
+            normalised_query_entities (DataFrame): Normalised query entities from NLP pipeline.
+            type_col_name (str): Name of the type column.
+            
+        Returns:
+            DataFrame: Mapped entities with substring matches.
+        """
+        # Get the lookup table with proper aliases
+        lookup_df = (
+            self.df
+            .select(
+                f.col("entityLabelNormalised").alias("lookup_label_normalised"),
+                f.col("entityType").alias(f"lookup_{type_col_name}"),
+                f.col("entityKind").alias("lookup_entityKind"),
+                f.col("entityIds")
+            )
+        )
+        
+        # Perform cross join and then filter for substring matches
+        # This is more efficient than a full cross join because we filter on entityType and entityKind first
+        return (
+            normalised_query_entities
+            .crossJoin(lookup_df)
+            # Filter for matching type and kind first (most selective)
+            .filter(
+                (f.col(type_col_name) == f.col(f"lookup_{type_col_name}")) &
+                (f.col("entityKind") == f.col("lookup_entityKind"))
+            )
+            # Filter for substring matches: either direction
+            .filter(
+                f.col("entityLabelNormalised").contains(f.col("lookup_label_normalised")) |
+                f.col("lookup_label_normalised").contains(f.col("entityLabelNormalised"))
+            )
+            # Select the original structure expected by the downstream pipeline
+            .select(
+                *[col for col in normalised_query_entities.columns],  # Keep all original query columns
+                f.col("entityIds")
+            )
+        )
+    
     @staticmethod
     def _get_relevant_entity_ids(normalised_entity_lut: NormalisedEntityLUT) -> ReadyEntityLUT:
         """Get relevant entity ids for each entity label.
@@ -332,14 +385,15 @@ class OnToma:
         entity_col_name: str, 
         entity_kind: str,
         type_col_name: str | None = None, 
-        type_col: Column | None = None
+        type_col: Column | None = None,
+        map_substring: bool = False
      ) -> DataFrame:
         """Map entities using the entity lookup table.
 
         Logic:
         1. Extract entities from input dataframe.
         2. Normalise entities using both tracks of the NLP pipeline.
-        3. Join with entity lookup table.
+        3. Join with entity lookup table (exact match or substring match).
         4. Aggregate results from both tracks.
 
         Args:
@@ -349,10 +403,11 @@ class OnToma:
             entity_kind (str): Kind (label or id) of the entity label.
             type_col_name (str | None): Name of the column containing the type of the entity label.
             type_col (Column | None): Column containing the type of the entity label.
+            map_substring (bool): If True, perform substring matching instead of exact matching. Defaults to False.
 
         Returns:
             DataFrame: DataFrame with additional column containing a list of relevant entity ids for each entity label.
-        
+
         Raises:
             ValueError: When both or none of 'type_col_name' or 'type_col' are provided,
                 or when the input dataframe contains unmappable entity types.
@@ -390,22 +445,27 @@ class OnToma:
             extracted_entities = self._extract_query_entity_ids(df, entity_col_name)
 
         # normalise entities and join with entity lookup table
-        mapped_entities = (
-            self._normalise_entities(extracted_entities)
-            .join(
-                (
-                    self.df
-                    .select(
-                        f.col("entityLabelNormalised"),
-                        f.col("entityType").alias(type_col_name),
-                        f.col("entityKind"),
-                        f.col("entityIds")
-                    )
-                ),
-                on=["entityLabelNormalised", type_col_name, "entityKind"],
-                how="left"
+        if map_substring:
+            mapped_entities = self._map_entities_substring(
+                self._normalise_entities(extracted_entities), type_col_name
             )
-        )
+        else:
+            mapped_entities = (
+                self._normalise_entities(extracted_entities)
+                .join(
+                    (
+                        self.df
+                        .select(
+                            f.col("entityLabelNormalised"),
+                            f.col("entityType").alias(type_col_name),
+                            f.col("entityKind"),
+                            f.col("entityIds")
+                        )
+                    ),
+                    on=["entityLabelNormalised", type_col_name, "entityKind"],
+                    how="left"
+                )
+            )
 
         # aggregate results from both tracks
         return (
