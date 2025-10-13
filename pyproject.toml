@@ -5,7 +5,6 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
-    "ipykernel>=6.30.1",
     "numpy>=2.2.6",
     "pyspark==3.3.4",
     "spark-nlp>=6.1.3",
@@ -17,3 +16,27 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/ontoma"]
+
+[dependency-groups]
+dev = [
+    "setuptools>=80.9.0",
+    "pytest>=8.4.2",
+    "typing-extensions>=4.15.0",
+    "ipykernel>=6.30.1",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = ["-v", "--tb=short", "--strict-markers"]
+markers = [
+    "integration: marks tests as integration tests (may require more resources)",
+    "slow: marks tests as slow (deselect with '-m not slow')",
+]
+filterwarnings = [
+    "ignore::UserWarning",
+    "ignore::DeprecationWarning:pyspark.*",
+    "ignore::DeprecationWarning:sparknlp.*",
+]
