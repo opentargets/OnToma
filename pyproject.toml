@@ -6,7 +6,7 @@ readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
     "numpy>=2.2.6",
-    "pyspark==3.3.4",
+    "pyspark==4.0.0",
     "spark-nlp>=6.1.3",
 ]
 

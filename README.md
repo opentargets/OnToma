@@ -14,6 +14,39 @@ The package features entity normalisation using [Spark NLP](https://sparknlp.org
 
 Successfully mapped entities may be mapped to multiple identifiers.
 
+## Prerequisites
+
+### Java Runtime Environment
+
+OnToma requires OpenJDK 17 or higher to be installed on your system, as it's a prerequisite for Apache Spark 4.0.0.
+
+#### macOS Installation
+
+Install OpenJDK 17 using Homebrew:
+
+```bash
+brew install openjdk@17
+```
+
+After installation, you need to set the `JAVA_HOME` environment variable. Add the following to your shell configuration file (e.g., `~/.zshrc` or `~/.bash_profile`):
+
+```bash
+export JAVA_HOME="/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home"
+export PATH="$JAVA_HOME/bin:$PATH"
+```
+
+Reload your shell configuration:
+
+```bash
+source ~/.zshrc  # or source ~/.bash_profile
+```
+
+Verify the installation:
+
+```bash
+java -version
+```
+
 ## Installation
 
 ```bash
@@ -31,7 +64,7 @@ from pyspark.conf import SparkConf
 # add Spark NLP library to Spark configuration
 config = (
     SparkConf()
-    .set("spark.jars.packages", "com.johnsnowlabs.nlp:spark-nlp_2.12:5.0.0")
+    .set("spark.jars.packages", "com.johnsnowlabs.nlp:spark-nlp_2.12:6.1.3")
 )
 
 # create Spark session
