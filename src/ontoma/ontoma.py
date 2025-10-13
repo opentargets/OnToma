@@ -254,71 +254,58 @@ class OnToma:
         Returns:
             DataFrame: Mapped entities with substring matches.
         """
-        from functools import reduce
-
-        # Cache the normalised query entities to avoid recomputation
-        normalised_query_entities = normalised_query_entities.cache()
-
-        # Extract unique entity types and kinds from query to filter lookup table
-        query_types_kinds = (
-            normalised_query_entities.select(
-                f.col(type_col_name).alias("entityType"), f.col("entityKind")
-            )
-            .distinct()
-            .collect()
-        )
-
-        # Pre-filter lookup table to only relevant types and kinds
-        type_kind_conditions = [
-            (f.col("entityType") == row["entityType"])
-            & (f.col("entityKind") == row["entityKind"])
-            for row in query_types_kinds
-        ]
-
-        if not type_kind_conditions:
-            # No valid type/kind combinations, return empty result
-            return normalised_query_entities.select(
-                *normalised_query_entities.columns,
-                f.array().cast("array<string>").alias("entityIds"),
-            )
-
-        # Filter lookup table to only relevant types/kinds and cache it
-        filtered_lookup_df = (
-            self.df.filter(reduce(lambda a, b: a | b, type_kind_conditions))
+        lookup_df = (
+            self.df
             .select(
                 f.col("entityLabelNormalised").alias("lookup_label_normalised"),
                 f.col("entityType").alias(f"lookup_{type_col_name}"),
                 f.col("entityKind").alias("lookup_entityKind"),
                 f.col("entityIds"),
             )
-            .cache()
         )
 
-        # Only match when complete lookup label appears as complete words in query
-        # Use word boundaries to prevent partial matches like "tep" in "Dalteparin"
-        # E.g., "oral ibuprofen" matches "ibuprofen" but "Dalteparin" does NOT match "tep"
+        # Hybrid approach: Fast cross join + simple word boundary checks
         return (
             normalised_query_entities
-            .join(
-                f.broadcast(filtered_lookup_df),
+            .crossJoin(lookup_df)
+            # First filter: type and kind matching (most selective)
+            .filter(
+                (f.col(type_col_name) == f.col(f"lookup_{type_col_name}")) &
+                (f.col("entityKind") == f.col("lookup_entityKind"))
+            )
+            # Second filter: Fast word boundary checks using simple string operations
+            .filter(
+                # The query contains the lookup term AND...
+                f.col("entityLabelNormalised").contains(f.col("lookup_label_normalised")) &
+                # ...it's a complete word (surrounded by non-alphanumeric chars or string boundaries)
                 (
-                    (f.col(type_col_name) == f.col(f"lookup_{type_col_name}")) &
-                    (f.col("entityKind") == f.col("lookup_entityKind")) &
-                    # Use SQL expr for bulletproof regex matching across all PySpark versions
-                    # This prevents partial matches like "tep" in "Dalteparin" but allows "0.01% atropine"
-                    f.expr(
-                        "length(regexp_extract(entityLabelNormalised, concat('(^|[\\\\s\\\\W])(', lookup_label_normalised, ')([\\\\s\\\\W]|$)'), 2)) > 0"
-                    ) &
-                    # Avoid trivial matches (empty strings, very short terms)
-                    (f.length(f.col("lookup_label_normalised")) >= 3)
-                ),
-                "left"
+                    # At start of string followed by non-alphanumeric
+                    f.col("entityLabelNormalised").startswith(
+                        f.concat(f.col("lookup_label_normalised"), f.lit(" "))
+                    ) |
+                    # At end of string preceded by non-alphanumeric
+                    f.col("entityLabelNormalised").endswith(
+                        f.concat(f.lit(" "), f.col("lookup_label_normalised"))
+                    ) |
+                    # In middle surrounded by spaces
+                    f.col("entityLabelNormalised").contains(
+                        f.concat(f.lit(" "), f.col("lookup_label_normalised"), f.lit(" "))
+                    ) |
+                    # After common punctuation
+                    f.col("entityLabelNormalised").contains(
+                        f.concat(f.lit(") "), f.col("lookup_label_normalised"))
+                    ) |
+                    f.col("entityLabelNormalised").contains(
+                        f.concat(f.lit("% "), f.col("lookup_label_normalised"))
+                    ) |
+                    # Exact match (full term)
+                    (f.col("entityLabelNormalised") == f.col("lookup_label_normalised"))
+                )
             )
             .select(
                 *[col for col in normalised_query_entities.columns],
                 f.col("entityIds")
             )
-            .filter(f.col("entityIds").isNotNull())  # Only keep successful matches
         )
 
     @staticmethod
