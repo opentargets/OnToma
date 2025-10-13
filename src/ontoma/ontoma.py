@@ -264,22 +264,8 @@ class OnToma:
                 f.array().cast("array<string>").alias("entityIds")
             )
         
-        # Additional optimization: Extract unique words from query labels
-        # This further reduces the lookup space by only considering lookup entries
-        # that contain words that appear in the queries
-        query_words = (
-            normalised_query_entities
-            .select(f.explode(f.split(f.col("entityLabelNormalised"), r"\s+")).alias("word"))
-            .filter(f.length(f.col("word")) >= 3)  # Only meaningful words
-            .select(f.col("word"))
-            .distinct()
-            .collect()
-        )
-        
-        query_word_set = {row["word"] for row in query_words}
-        
         # Filter lookup table to only relevant types/kinds and cache it
-        base_filtered_lookup = (
+        filtered_lookup_df = (
             self.df
             .filter(reduce(lambda a, b: a | b, type_kind_conditions))
             .select(
@@ -288,24 +274,8 @@ class OnToma:
                 f.col("entityKind").alias("lookup_entityKind"),
                 f.col("entityIds")
             )
+            .cache()
         )
-        
-        # Further filter lookup table: only keep entries that contain words from queries
-        if query_word_set:
-            # Create word-based filter conditions
-            word_conditions = [
-                f.col("lookup_label_normalised").contains(word)
-                for word in query_word_set
-            ]
-            
-            filtered_lookup_df = (
-                base_filtered_lookup
-                .filter(reduce(lambda a, b: a | b, word_conditions))
-                .cache()  # Cache filtered lookup table
-            )
-        else:
-            # No meaningful words found, use base filter
-            filtered_lookup_df = base_filtered_lookup.cache()
         
         # Only match when complete lookup label appears in query
         # E.g., "oral ibuprofen" contains "ibuprofen" but not "ibup"
