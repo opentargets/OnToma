@@ -18,27 +18,27 @@ Successfully mapped entities may be mapped to multiple identifiers.
 
 ### Java Runtime Environment
 
-OnToma requires OpenJDK 17 or higher to be installed on your system, as it's a prerequisite for Apache Spark 4.0.0.
+OnToma requires OpenJDK 8 or 11 to be installed on your system, as it's a prerequisite for PySpark and Spark-NLP.
 
 #### macOS Installation
 
-Install OpenJDK 17 using Homebrew:
+Install OpenJDK 8 or 11 using Homebrew:
 
 ```bash
-brew install openjdk@17
+brew install openjdk@11
 ```
 
 After installation, you need to set the `JAVA_HOME` environment variable. Add the following to your shell configuration file (e.g., `~/.zshrc` or `~/.bash_profile`):
 
 ```bash
-export JAVA_HOME="/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home"
+export JAVA_HOME="/opt/homebrew/opt/openjdk@11/libexec/openjdk.jdk/Contents/Home"
 export PATH="$JAVA_HOME/bin:$PATH"
 ```
 
 Reload your shell configuration:
 
 ```bash
-source ~/.zshrc  # or source ~/.bash_profile
+source ~/.zshrc
 ```
 
 Verify the installation:
