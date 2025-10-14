@@ -94,9 +94,9 @@ class OnToma:
         # cache_dir is not provided so just generate the entity lookup table
         else:
             logger.warning(
-                f"Cache directory is not specified. Specify a cache directory to speed up subsequent OnToma usage."
+                "Cache directory is not specified. Specify a cache directory to speed up subsequent OnToma usage."
             )
-            logger.info(f"Generating entity lookup table.")
+            logger.info("Generating entity lookup table.")
             self._entity_lut = self._generate_entity_lut(self.entity_lut_list)
 
     @property
@@ -273,32 +273,16 @@ class OnToma:
                 (f.col(type_col_name) == f.col(f"lookup_{type_col_name}")) &
                 (f.col("entityKind") == f.col("lookup_entityKind"))
             )
-            # Second filter: Fast word boundary checks using simple string operations
+            # Second filter: Suffix/Prefix matching for normalized strings (no spaces after normalization)
             .filter(
-                # The query contains the lookup term AND...
+                # The query contains the lookup term AND it's at a word boundary
                 f.col("entityLabelNormalised").contains(f.col("lookup_label_normalised")) &
-                # ...it's a complete word (surrounded by non-alphanumeric chars or string boundaries)
                 (
-                    # At start of string followed by non-alphanumeric
-                    f.col("entityLabelNormalised").startswith(
-                        f.concat(f.col("lookup_label_normalised"), f.lit(" "))
-                    ) |
-                    # At end of string preceded by non-alphanumeric
-                    f.col("entityLabelNormalised").endswith(
-                        f.concat(f.lit(" "), f.col("lookup_label_normalised"))
-                    ) |
-                    # In middle surrounded by spaces
-                    f.col("entityLabelNormalised").contains(
-                        f.concat(f.lit(" "), f.col("lookup_label_normalised"), f.lit(" "))
-                    ) |
-                    # After common punctuation
-                    f.col("entityLabelNormalised").contains(
-                        f.concat(f.lit(") "), f.col("lookup_label_normalised"))
-                    ) |
-                    f.col("entityLabelNormalised").contains(
-                        f.concat(f.lit("% "), f.col("lookup_label_normalised"))
-                    ) |
-                    # Exact match (full term)
+                    # Lookup term at the end (suffix) - e.g., "001atropine" ends with "atropine"
+                    f.col("entityLabelNormalised").endswith(f.col("lookup_label_normalised")) |
+                    # Lookup term at the start (prefix) - e.g., "atropine001" starts with "atropine" 
+                    f.col("entityLabelNormalised").startswith(f.col("lookup_label_normalised")) |
+                    # Exact match
                     (f.col("entityLabelNormalised") == f.col("lookup_label_normalised"))
                 )
             )
