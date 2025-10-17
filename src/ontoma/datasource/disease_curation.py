@@ -85,6 +85,7 @@ class DiseaseCuration:
                     how="inner"
                 )
                 # cleanup
+                .filter(~f.col("entityLabel").rlike('^[12]\)$')) # specifically to remove "1)" and "2)"
                 .filter((f.col("entityId").isNotNull()) & (f.length("entityId") > 0))
                 .filter((f.col("entityLabel").isNotNull()) & (f.length("entityLabel") > 0))
                 .distinct()
