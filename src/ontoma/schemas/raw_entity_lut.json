@@ -1,0 +1,41 @@
+{
+    "fields": [
+        {
+            "name": "entityId",
+            "type": "string",
+            "nullable": false,
+            "metadata": {}
+        },
+        {
+            "name": "entityLabel",
+            "type": "string",
+            "nullable": false,
+            "metadata": {}
+        },
+        {
+            "name": "entityScore",
+            "type": "double",
+            "nullable": false,
+            "metadata": {}
+        },
+        {
+            "name": "nlpPipelineTrack",
+            "type": "string",
+            "nullable": false,
+            "metadata": {}
+        },
+        {
+            "name": "entityType",
+            "type": "string",
+            "nullable": false,
+            "metadata": {}
+        },
+        {
+            "name": "entityKind",
+            "type": "string",
+            "nullable": false,
+            "metadata": {}
+        }
+    ],
+    "type": "struct"
+}
