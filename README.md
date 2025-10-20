@@ -50,7 +50,7 @@ java -version
 ## Installation
 
 ```bash
-uv pip install "git+https://github.com/opentargets/OnToma@vh-new-ontoma"
+pip install ontoma
 ```
 
 ## Spark session configuration
