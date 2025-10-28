@@ -6,6 +6,8 @@ OnToma is a Python package for mapping entities to identifiers using lookup tabl
 
 OnToma supports the mapping of two kinds of entities: labels (e.g. `brachydactyly`) and ids (e.g. `OMIM:112500`).
 
+OnToma includes a NER (**Named Entity Recognition**) module for extracting clean entity names from raw text labels. This is useful when your data contains dosages, drug forms, or other text that needs preprocessing. To use NER features, see [NER Module Documentation](src/ontoma/ner/README.md).
+
 OnToma currently has modules to generate lookup tables from the following datasources:
 - Open Targets disease, target, and drug indices
 - Disease curation tables with the `SEMANTIC_TAG` and `PROPERTY_VALUE` fields
@@ -106,6 +108,36 @@ mapped_disease_df = ont.map_entities(
 )
 ```
 
+## Using NER for preprocessing (drugs)
+
+When your drug labels contain dosages, forms, or brand names, use the NER module to extract clean entity names before mapping:
+
+```python
+from ontoma.ner.drug import extract_drug_entities
+import pyspark.sql.functions as f
+
+# Extract clean drug entities from raw labels
+df_extracted = extract_drug_entities(
+    spark=spark,
+    df=raw_drug_df,
+    input_col="raw_drug_label",
+    output_col="extracted_drugs"
+)
+
+# Explode arrays for mapping
+df_exploded = df_extracted.select("*", f.explode("extracted_drugs").alias("clean_drug"))
+
+# Map with OnToma
+mapped_df = ont.map_entities(
+    df=df_exploded,
+    entity_col_name="clean_drug",
+    entity_kind="label",
+    type_col=f.lit("drug")
+)
+```
+
+See [NER Module Documentation](src/ontoma/ner/README.md) for more details.
+
 ## Speeding up subsequent OnToma usage
 
 PySpark uses lazy evaluation, meaning transformations are not executed until an action is triggered. 
@@ -119,3 +151,27 @@ ont = OnToma(
     cache_dir = "path/to/cache/dir"
 )
 ```
+
+## Development
+
+### Running Tests
+
+Install development dependencies:
+
+```bash
+uv sync --dev
+```
+
+Run all tests:
+
+```bash
+uv run pytest
+```
+
+Skip slow tests (e.g., NER tests that download large models):
+
+```bash
+uv run pytest -m "not slow"
+```
+
+See [tests/README.md](tests/README.md) for more details.
