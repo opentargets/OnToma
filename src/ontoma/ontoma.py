@@ -37,7 +37,7 @@ class OnToma:
     """Class to initialise an entity lookup table for mapping entities."""
 
     spark: SparkSession
-    entity_lut_list: list[RawEntityLUT]
+    entity_lut_list: list[RawEntityLUT] | None = None
     cache_dir: str | None = None
     _entity_lut: ReadyEntityLUT | None = field(init=False, default=None)
 
@@ -48,7 +48,7 @@ class OnToma:
         If a cache directory is specified, it will load cached data or save to cache.
 
         Raises:
-            ValueError: When entity_lut_list is empty or when required Spark NLP configuration is missing.
+            ValueError: When required Spark NLP configuration is missing or when provided inputs are not valid.
             TypeError: When entity_lut_list is not a list or when elements of entity_lut_list are not RawEntityLUT.
         """
         # check for required spark config
@@ -58,16 +58,18 @@ class OnToma:
             expected_value="spark-nlp"
         ):
             raise ValueError("Spark session is missing configuration required for Spark NLP.")
-
-        # validate the input
-        if not isinstance(self.entity_lut_list, list):
-            raise TypeError("entity_lut_list must be a list.")
         
-        if not self.entity_lut_list:
-            raise ValueError("entity_lut_list must contain at least one element.")
+        # raise error if both entity_lut_list and a valid cache_dir are not provided
+        if not self.entity_lut_list and (not self.cache_dir or not os.path.isdir(self.cache_dir)):
+            raise ValueError("At least one of 'entity_lut_list' or a valid 'cache_dir' must be provided.")
         
-        if not all(isinstance(entity_lut, RawEntityLUT) for entity_lut in self.entity_lut_list):
-            raise TypeError("Each entity_lut must be a RawEntityLUT.")
+        # if entity_lut_list is provided, validate the input
+        if self.entity_lut_list:
+            if not isinstance(self.entity_lut_list, list):
+                raise TypeError("entity_lut_list must be a list.")
+            
+            if not all(isinstance(entity_lut, RawEntityLUT) for entity_lut in self.entity_lut_list):
+                raise TypeError("Each entity_lut must be a RawEntityLUT.")
 
         # if cache_dir is provided and it exists, load the entity lookup table
         if self.cache_dir and os.path.exists(self.cache_dir):
