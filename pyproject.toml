@@ -1,6 +1,6 @@
 [project]
 name = "ontoma"
-version = "2.0.0"
+version = "2.1.0"
 description = "Ontology mapping for Open Targets"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -17,3 +17,6 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/ontoma"]
+
+[tool.hatch.build.targets.sdist]
+include = ["src/**", "README.md", "LICENSE"]

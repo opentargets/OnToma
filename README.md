@@ -8,7 +8,8 @@ OnToma supports the mapping of two kinds of entities: labels (e.g. `brachydactyl
 
 OnToma currently has modules to generate lookup tables from the following datasources:
 - Open Targets disease, target, and drug indices
-- Disease curation tables with the `SEMANTIC_TAG` and `PROPERTY_VALUE` fields
+- Disease curation tables with the `SEMANTIC_TAG` and `PROPERTY_VALUE` fields (e.g. the [Open Targets disease curation table](https://raw.githubusercontent.com/opentargets/curation/refs/heads/master/mappings/disease/manual_string.tsv))
+- You can also provide your own curation tables as long as they are compatible with the defined schema
 
 The package features entity normalisation using [Spark NLP](https://sparknlp.org/), where entities in both the lookup table and the input dataframe are normalised to improve entity matching.
 
@@ -78,8 +79,7 @@ Here is an example showing how OnToma can be used to map diseases:
 First, load data to generate a disease label lookup table:
 
 ```python
-from ontoma import OnToma
-from ontoma import OpenTargetsDisease
+from ontoma import OnToma, OpenTargetsDisease
 
 disease_index = spark.read.parquet("path/to/disease/index")
 disease_label_lut = OpenTargetsDisease.as_label_lut(disease_index)
@@ -106,6 +106,8 @@ mapped_disease_df = ont.map_entities(
 )
 ```
 
+Mapping results can be found in the column `mapped_ids`. The results will be in the form of a list of identifiers that the entity is successfully mapped to.
+
 ## Speeding up subsequent OnToma usage
 
 PySpark uses lazy evaluation, meaning transformations are not executed until an action is triggered. 
@@ -116,6 +118,15 @@ When using the same OnToma object multiple times, it is recommended to specify a
 ont = OnToma(
     spark = spark, 
     entity_lut_list = [disease_label_lut],
+    cache_dir = "path/to/cache/dir"
+)
+```
+
+During subsequent usage, the OnToma object can be created by just specifying `cache_dir`.
+
+```python
+ont = OnToma(
+    spark = spark,
     cache_dir = "path/to/cache/dir"
 )
 ```
