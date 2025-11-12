@@ -59,8 +59,15 @@ class OnToma:
         ):
             raise ValueError("Spark session is missing configuration required for Spark NLP.")
         
+        # if spark can read cache_dir, set cache_exists to True, otherwise False
+        try:
+            self.spark.read.parquet(self.cache_dir)
+            cache_exists = True
+        except:
+            cache_exists = False
+
         # raise error if both entity_lut_list and a valid cache_dir are not provided
-        if not self.entity_lut_list and (not self.cache_dir or not os.path.isdir(self.cache_dir)):
+        if not self.entity_lut_list and (not self.cache_dir or not cache_exists):
             raise ValueError("At least one of 'entity_lut_list' or a valid 'cache_dir' must be provided.")
         
         # if entity_lut_list is provided, validate the input
@@ -72,7 +79,7 @@ class OnToma:
                 raise TypeError("Each entity_lut must be a RawEntityLUT.")
 
         # if cache_dir is provided and it exists, load the entity lookup table
-        if self.cache_dir and os.path.exists(self.cache_dir):
+        if self.cache_dir and cache_exists:
             self._entity_lut = ReadyEntityLUT(
                 _df=self.spark.read.parquet(self.cache_dir),
                 _schema=ReadyEntityLUT.get_schema()
