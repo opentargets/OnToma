@@ -61,15 +61,15 @@ class OnToma:
         
         # if spark can read cache_dir, set cache_exists to True, otherwise False
         try:
-            self.spark.read.parquet(self.cache_dir)
+            cached_df = self.spark.read.parquet(self.cache_dir)
             cache_exists = True
-        except:
+        except Exception:
             cache_exists = False
 
         # raise error if both entity_lut_list and a valid cache_dir are not provided
-        if not self.entity_lut_list and (not self.cache_dir or not cache_exists):
+        if not self.entity_lut_list and not cache_exists:
             raise ValueError("At least one of 'entity_lut_list' or a valid 'cache_dir' must be provided.")
-        
+
         # if entity_lut_list is provided, validate the input
         if self.entity_lut_list:
             if not isinstance(self.entity_lut_list, list):
@@ -78,27 +78,27 @@ class OnToma:
             if not all(isinstance(entity_lut, RawEntityLUT) for entity_lut in self.entity_lut_list):
                 raise TypeError("Each entity_lut must be a RawEntityLUT.")
 
-        # if cache_dir is provided and it exists, load the entity lookup table
-        if self.cache_dir and cache_exists:
+        # if cache exists, load the entity lookup table    
+        if cache_exists:
             self._entity_lut = ReadyEntityLUT(
-                _df=self.spark.read.parquet(self.cache_dir),
+                _df=cached_df,
                 _schema=ReadyEntityLUT.get_schema()
             )
             logger.info(f"Loaded entity lookup table from {self.cache_dir}.")
-
-        # if cache_dir is provided but doesn't exist yet, generate and save the entity lookup table
-        elif self.cache_dir:
-            logger.info(f"{self.cache_dir} does not exist. Generating entity lookup table.")
-            self._entity_lut = self._generate_entity_lut(self.entity_lut_list)
-
-            self._entity_lut.df.write.parquet(self.cache_dir)
-            logger.info(f"Saved entity lookup table to {self.cache_dir}.")
-            
-        # cache_dir is not provided so just generate the entity lookup table
+        
+        # cache does not exist, so generate the entity lookup table
         else:
-            logger.warning(f"Cache directory is not specified. Specify a cache directory to speed up subsequent OnToma usage.")
             logger.info(f"Generating entity lookup table.")
             self._entity_lut = self._generate_entity_lut(self.entity_lut_list)
+
+            # if cache_dir is provided, save the entity lookup table
+            if self.cache_dir:
+                self._entity_lut.df.write.parquet(self.cache_dir)
+                logger.info(f"Saved entity lookup table to {self.cache_dir}.")
+            
+            # cache_dir is not provided, so suggest specifying a cache_directory
+            else:
+                logger.warning(f"Cache directory is not specified. Specify a cache directory to speed up subsequent OnToma usage.")
 
     @property
     def df(self: OnToma) -> DataFrame:
