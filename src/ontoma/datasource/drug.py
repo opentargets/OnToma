@@ -17,17 +17,17 @@ if TYPE_CHECKING:
 
 
 class OpenTargetsDrug:
-    """Class to extract drug entities from the Open Targets drug index."""
+    """Class to extract drug entities from a dataset following the Open Targets drug index schema."""
 
     @classmethod
     def as_label_lut(
         cls: type[OpenTargetsDrug], 
         drug_index: DataFrame
     ) -> RawEntityLUT:
-        """Generate drug label lookup table from the Open Targets drug index.
+        """Generate drug label lookup table from a dataset following the Open Targets drug index schema.
         
         Args:
-            drug_index (DataFrame): Open Targets drug index.
+            drug_index (DataFrame): Dataset following the Open Targets drug index schema.
 
         Returns:
             RawEntityLUT: Drug label lookup table.
@@ -35,6 +35,12 @@ class OpenTargetsDrug:
         return RawEntityLUT(
             _df=(
                 drug_index
+                # early filter: only process drugs with meaningful label information
+                .filter(
+                    (~f.lower(f.col("name")).startswith("chembl"))
+                    | (f.size(f.col("tradeNames")) > 0)
+                    | (f.size(f.col("synonyms")) > 0)
+                )
                 # filter crossReferences for sources that have labels
                 .withColumn(
                     "crossReferences", 
