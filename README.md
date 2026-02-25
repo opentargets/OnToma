@@ -6,7 +6,7 @@ OnToma is a Python package for mapping entities to identifiers using lookup tabl
 
 OnToma supports the mapping of two kinds of entities: labels (e.g. `brachydactyly`) and ids (e.g. `OMIM:112500`).
 
-OnToma includes a NER (**Named Entity Recognition**) module for extracting clean entity names from raw text labels. This is useful when your data contains dosages, drug forms, or other text that needs preprocessing. To use NER features, see [NER Module Documentation](src/ontoma/ner/README.md).
+OnToma includes a NER (**Named Entity Recognition**) module for extracting clean entity names from raw text labels. This is useful when your data contains labels that need preprocessing. Currently, this feature is available for drugs and diseases. To use NER features, see [NER Module Documentation](src/ontoma/ner/README.md).
 
 OnToma currently has modules to generate lookup tables from the following datasources:
 - Open Targets disease, target, and drug indices
@@ -174,4 +174,3 @@ Skip slow tests (e.g., NER tests that download large models):
 uv run pytest -m "not slow"
 ```
 
-See [tests/README.md](tests/README.md) for more details.

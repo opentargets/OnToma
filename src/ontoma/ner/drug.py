@@ -159,7 +159,6 @@ def extract_drug_entities(
     use_biobert: bool = True,
     use_drugtemist: bool = True,
     batch_size: int = 128,
-    explode_results: bool = False
 ) -> DataFrame:
     """Extract drug entities from raw drug labels using NER.
     
@@ -181,7 +180,6 @@ def extract_drug_entities(
         use_biobert: Use BioBERT for precise entity extraction (default: True)
         use_drugtemist: Use DrugTEMIST as fallback (default: True)
         batch_size: Batch size for NER processing (default: 128)
-        explode_results: If True, explode array to one row per entity (default: False)
         
     Returns:
         Spark DataFrame with extracted entities column

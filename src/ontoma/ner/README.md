@@ -63,7 +63,6 @@ extract_drug_entities(
     use_biobert=True,         # BioBERT for precise extraction
     use_drugtemist=True,      # DrugTEMIST for brand names (fallback)
     batch_size=128,           # Increase for GPU, decrease for memory
-    explode_results=False     # Set True to auto-explode arrays
 )
 ```
 
