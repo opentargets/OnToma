@@ -55,3 +55,5 @@ norecursedirs = [".git", ".venv", "__pycache__", "*.egg-info"]
 # Logging
 log_cli = false
 log_cli_level = "INFO"
+[tool.hatch.build.targets.sdist]
+include = ["src/**", "README.md", "LICENSE"]

@@ -10,7 +10,8 @@ OnToma includes a NER (**Named Entity Recognition**) module for extracting clean
 
 OnToma currently has modules to generate lookup tables from the following datasources:
 - Open Targets disease, target, and drug indices
-- Disease curation tables with the `SEMANTIC_TAG` and `PROPERTY_VALUE` fields
+- Disease curation tables with the `SEMANTIC_TAG` and `PROPERTY_VALUE` fields (e.g. the [Open Targets disease curation table](https://raw.githubusercontent.com/opentargets/curation/refs/heads/master/mappings/disease/manual_string.tsv))
+- You can also provide your own curation tables as long as they are compatible with the defined schema
 
 The package features entity normalisation using [Spark NLP](https://sparknlp.org/), where entities in both the lookup table and the input dataframe are normalised to improve entity matching.
 
@@ -80,8 +81,7 @@ Here is an example showing how OnToma can be used to map diseases:
 First, load data to generate a disease label lookup table:
 
 ```python
-from ontoma import OnToma
-from ontoma import OpenTargetsDisease
+from ontoma import OnToma, OpenTargetsDisease
 
 disease_index = spark.read.parquet("path/to/disease/index")
 disease_label_lut = OpenTargetsDisease.as_label_lut(disease_index)
@@ -107,6 +107,7 @@ mapped_disease_df = ont.map_entities(
     type_col = f.lit("DS")
 )
 ```
+Mapping results can be found in the column `mapped_ids`. The results will be in the form of a list of identifiers that the entity is successfully mapped to.
 
 ## Using NER for preprocessing (drugs)
 
@@ -173,4 +174,3 @@ Skip slow tests (e.g., NER tests that download large models):
 ```bash
 uv run pytest -m "not slow"
 ```
-
