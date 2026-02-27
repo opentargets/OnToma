@@ -14,6 +14,7 @@ dependencies = [
     "spark-nlp==6.1.5",
     "pandas>=2.3.3",
     "pyarrow>=22.0.0",
+    "sentencepiece>=0.2.1",
 ]
 
 [build-system]
@@ -22,6 +23,17 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/ontoma"]
+
+[tool.uv]
+index-strategy = "unsafe-best-match"
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[tool.uv.sources]
+torch = { index = "pytorch-cpu" }
 
 [dependency-groups]
 dev = [
