@@ -107,7 +107,7 @@ extract_drug_entities(
     use_regex=True,           # Regex for biologics (-mab, -tinib, etc.)
     use_biobert=True,         # BioBERT for precise extraction
     use_drugtemist=True,      # DrugTEMIST for brand names (fallback)
-    batch_size=128,           # Increase for GPU, decrease for memory
+    batch_size=128,           # Increase if MPS available, decrease for memory
 )
 ```
 
