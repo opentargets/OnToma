@@ -18,14 +18,11 @@ def get_device():
     """Detect and return the best available device for inference.
     
     Returns:
-        Device identifier: "mps" for Apple Silicon, 0 for CUDA GPU, -1 for CPU
+        Device identifier: "mps" for Apple Silicon, -1 for CPU
     """
     if torch.backends.mps.is_available():
         return "mps"
-    elif torch.cuda.is_available():
-        return 0
-    else:
-        return -1
+    return -1
 
 
 def create_ner_pipeline(
