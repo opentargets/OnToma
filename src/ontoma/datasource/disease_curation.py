@@ -46,22 +46,15 @@ class DiseaseCuration:
                         f.col("SEMANTIC_TAG"), r'^http.+/(\w+_\w+)$', 1
                     ).alias("entityId"),
                     annotate_entity(
-                        f.array(f.col("PROPERTY_VALUE")), 1.0, "term", curation_source
-                    ).alias("curationTerm"),
-                    annotate_entity(
-                        f.array(f.col("PROPERTY_VALUE")), 1.0, "symbol", curation_source
-                    ).alias("curationSymbol")
+                        # remove prefixes from curated disease labels
+                        f.array(clean_disease_label(f.trim(f.col("PROPERTY_VALUE")))), "tbd", 1.0, curation_source
+                    ).alias("curation")
                 )
-                # flatten and explode array of structs
+                # explode array of structs
                 .withColumn(
                     "entity",
                     f.explode(
-                        f.flatten(
-                            f.array(
-                                f.col("curationTerm"),
-                                f.col("curationSymbol")
-                            )
-                        )
+                        f.col("curation")    
                     )
                 )
                 # select relevant fields and specify entity type
@@ -71,8 +64,7 @@ class DiseaseCuration:
                     # labels that contain special characters should not always be translated
                     f.explode(
                         get_alternative_translations(
-                            # remove prefixes from curated disease labels
-                            clean_disease_label(f.trim(f.col("entity.entityLabel")))
+                            f.col("entity.entityLabel")
                         )
                     ).alias("entityLabel"),
                     f.col("entity.entityScore").alias("entityScore"),

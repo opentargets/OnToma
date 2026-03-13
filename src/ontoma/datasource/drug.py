@@ -63,29 +63,17 @@ class OpenTargetsDrug:
                 .select(
                     f.col("id").alias("entityId"),
                     annotate_entity(
-                        f.array(f.col("name")), 1.0, "term", "name"
-                    ).alias("nameTerm"),
+                        f.array(f.col("name")), "tbd", 1.0, "name"
+                    ).alias("name"),
                     annotate_entity(
-                        f.array(f.col("name")), 1.0, "symbol", "name"
-                    ).alias("nameSymbol"),
+                        f.col("tradeNames"), "tbd", 0.999, "trade_name"
+                    ).alias("tradeNames"),
                     annotate_entity(
-                        f.col("tradeNames"), 0.999, "term", "trade_name"
-                    ).alias("tradeNamesTerm"),
+                        f.col("synonyms"), "tbd", 0.999, "synonym"
+                    ).alias("synonyms"),
                     annotate_entity(
-                        f.col("tradeNames"), 0.999, "symbol", "trade_name"
-                    ).alias("tradeNamesSymbol"),
-                    annotate_entity(
-                        f.col("synonyms"), 0.999, "term", "synonym"
-                    ).alias("synonymsTerm"),
-                    annotate_entity(
-                        f.col("synonyms"), 0.999, "symbol", "synonym"
-                    ).alias("synonymsSymbol"),
-                    annotate_entity(
-                        f.flatten(f.col("crossReferences")), 0.998, "term", "crossref"
-                    ).alias("crossReferencesTerm"),
-                    annotate_entity(
-                        f.flatten(f.col("crossReferences")), 0.998, "symbol", "crossref"
-                    ).alias("crossReferencesSymbol")
+                        f.flatten(f.col("crossReferences")), "tbd", 0.998, "crossref"
+                    ).alias("crossReferences")
                 )
                 # flatten and explode array of structs
                 .withColumn(
@@ -93,14 +81,10 @@ class OpenTargetsDrug:
                     f.explode(
                         f.flatten(
                             f.array(
-                                f.col("nameTerm"),
-                                f.col("nameSymbol"),
-                                f.col("tradeNamesTerm"),
-                                f.col("tradeNamesSymbol"),
-                                f.col("synonymsTerm"),
-                                f.col("synonymsSymbol"),
-                                f.col("crossReferencesTerm"),
-                                f.col("crossReferencesSymbol")
+                                f.col("name"),
+                                f.col("tradeNames"),
+                                f.col("synonyms"),
+                                f.col("crossReferences")
                             )
                         )
                     )
@@ -174,14 +158,22 @@ class OpenTargetsDrug:
                 .select(
                     f.col("id").alias("entityId"),
                     annotate_entity(
-                        f.col("crossReferences"), 1.0, "symbol", "crossref"
-                    ).alias("crossReferences")
+                        f.array(f.col("id")), "symbol", 1.0, "id"
+                    ).alias("identifier"),
+                    annotate_entity(
+                        f.col("crossReferences"), "symbol", 0.999, "crossref"
+                    ).alias("crossRefs")
                 )
-                # explode array of structs
+                # flatten and explode array of structs
                 .withColumn(
                     "entity",
                     f.explode(
-                        f.col("crossReferences"),
+                        f.flatten(
+                            f.array(    
+                                f.col("identifier"),
+                                f.col("crossRefs")
+                            )
+                        )
                     )
                 )
                 # select relevant fields and specify entity type

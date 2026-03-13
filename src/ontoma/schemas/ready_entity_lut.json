@@ -37,12 +37,6 @@
                             "type": "string",
                             "nullable": false,
                             "metadata": {}
-                        },
-                        {
-                            "name": "nlpPipelineTrack",
-                            "type": "string",
-                            "nullable": false,
-                            "metadata": {}
                         }
                     ]
                 }

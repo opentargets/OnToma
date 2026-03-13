@@ -41,35 +41,20 @@ class OpenTargetsDisease:
                 .select(
                     f.col("id").alias("entityId"),
                     annotate_entity(
-                        f.array(f.col("name")), 1.0, "term", "name"
-                    ).alias("nameTerm"),
+                        f.array(f.col("name")), "tbd", 1.0, "name"
+                    ).alias("name"),
                     annotate_entity(
-                        f.array(f.col("name")), 1.0, "symbol", "name"
-                    ).alias("nameSymbol"),
+                        f.col("synonyms.hasExactSynonym"), "tbd", 0.999, "exact_synonym"
+                    ).alias("exactSynonyms"),
                     annotate_entity(
-                        f.col("synonyms.hasExactSynonym"), 0.999, "term", "exact_synonym"
-                    ).alias("exactSynonymsTerm"),
+                        f.col("synonyms.hasNarrowSynonym"), "tbd", 0.998, "narrow_synonym"
+                    ).alias("narrowSynonyms"),
                     annotate_entity(
-                        f.col("synonyms.hasExactSynonym"), 0.999, "symbol", "exact_synonym"
-                    ).alias("exactSynonymsSymbol"),
+                        f.col("synonyms.hasBroadSynonym"), "tbd", 0.997, "broad_synonym"
+                    ).alias("broadSynonyms"),
                     annotate_entity(
-                        f.col("synonyms.hasNarrowSynonym"), 0.998, "term", "narrow_synonym"
-                    ).alias("narrowSynonymsTerm"),
-                    annotate_entity(
-                        f.col("synonyms.hasNarrowSynonym"), 0.998, "symbol", "narrow_synonym"
-                    ).alias("narrowSynonymsSymbol"),
-                    annotate_entity(
-                        f.col("synonyms.hasBroadSynonym"), 0.997, "term", "broad_synonym"
-                    ).alias("broadSynonymsTerm"),
-                    annotate_entity(
-                        f.col("synonyms.hasBroadSynonym"), 0.997, "symbol", "broad_synonym"
-                    ).alias("broadSynonymsSymbol"),
-                    annotate_entity(
-                        f.col("synonyms.hasRelatedSynonym"), 0.996, "term", "related_synonym"
-                    ).alias("relatedSynonymsTerm"),
-                    annotate_entity(
-                        f.col("synonyms.hasRelatedSynonym"), 0.996, "symbol", "related_synonym"
-                    ).alias("relatedSynonymsSymbol")
+                        f.col("synonyms.hasRelatedSynonym"), "tbd", 0.996, "related_synonym"
+                    ).alias("relatedSynonyms")
                 )
                 # flatten and explode array of structs
                 .withColumn(
@@ -77,16 +62,11 @@ class OpenTargetsDisease:
                     f.explode(
                         f.flatten(
                             f.array(
-                                f.col("nameTerm"),
-                                f.col("nameSymbol"),
-                                f.col("exactSynonymsTerm"),
-                                f.col("exactSynonymsSymbol"),
-                                f.col("narrowSynonymsTerm"),
-                                f.col("narrowSynonymsSymbol"),
-                                f.col("broadSynonymsTerm"),
-                                f.col("broadSynonymsSymbol"),
-                                f.col("relatedSynonymsTerm"),
-                                f.col("relatedSynonymsSymbol")
+                                f.col("name"),
+                                f.col("exactSynonyms"),
+                                f.col("narrowSynonyms"),
+                                f.col("broadSynonyms"),
+                                f.col("relatedSynonyms")
                             )
                         )
                     )
@@ -134,13 +114,13 @@ class OpenTargetsDisease:
                 .select(
                     f.col("id").alias("entityId"),
                     annotate_entity(
-                        f.array(f.col("id")), 1.0, "symbol", "id"
+                        f.array(f.col("id")), "symbol", 1.0, "id"
                     ).alias("identifier"),
                     annotate_entity(
-                        f.col("dbXRefs"), 0.999, "symbol", "crossref"
+                        f.col("dbXRefs"), "symbol", 0.999, "crossref"
                     ).alias("crossRefs"),
                     annotate_entity(
-                        f.col("obsoleteXRefs"), 0.998, "symbol", "obsolete_crossref"
+                        f.col("obsoleteXRefs"), "symbol", 0.998, "obsolete_crossref"
                     ).alias("obsoleteCrossRefs")
                 )
                 # flatten and explode array of structs

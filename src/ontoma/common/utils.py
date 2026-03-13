@@ -11,13 +11,13 @@ if TYPE_CHECKING:
     from pyspark.sql import Column, DataFrame
 
 
-def annotate_entity(c: Column, entity_score: float, nlp_pipeline_track: str, entity_source: str) -> Column:
+def annotate_entity(c: Column, nlp_pipeline_track: str, entity_score: float, entity_source: str) -> Column:
     """Annotate entity with score and the NLP pipeline to be processed with.
     
     Args:
         c (Column): Column containing entity label.
-        entity_score (float): Score of the entity.
         nlp_pipeline_track (str): NLP pipeline track to be used.
+        entity_score (float): Score of the entity.
         entity_source (str): Source of the entity.
     
     Returns:
@@ -28,13 +28,61 @@ def annotate_entity(c: Column, entity_score: float, nlp_pipeline_track: str, ent
         f.coalesce(c, f.array()),
         lambda x: f.struct(
             x.alias("entityLabel"),
+            (
+                determine_track(x) if nlp_pipeline_track == "tbd"
+                else f.lit(nlp_pipeline_track)
+            ).alias("nlpPipelineTrack"),
             f.lit(entity_score).alias("entityScore"),
-            f.lit(nlp_pipeline_track).alias("nlpPipelineTrack"),
             f.lit(entity_source).alias("entitySource")
         )
     )
 
-def translate_greek_alphabet(label: Column) -> Column:
+def determine_track(label: Column) -> Column:
+    """Return the NLP pipeline track to be used, based on particular criteria.
+
+    There are two potential tracks: "term" and "symbol".
+
+    The label will be processed using the "symbol" track if it is an acronym,
+    determined using the following criteria:
+    - does not contain spaces, and
+    1. is 6 characters or less, or
+    2. is 11 characters or less, and contains 50% or more uppercase letters
+
+    Args:
+        label (Column): Column containing entity label.
+
+    Returns:
+        Column: Column specifying the NLP pipeline track to be used.
+    """
+    return f.when(
+        (
+            ~label.contains(" ") & 
+            (
+                (f.length(label) <= 6) | 
+                ((f.length(label) <= 11) & (_uppercase_proportion(label) > 0.5))
+            )
+        ),
+        f.lit("symbol")
+    ).otherwise(f.lit("term"))
+
+def _uppercase_proportion(label: Column) -> Column:
+    """Return the proportion of uppercase letters in the label.
+
+    The number of uppercase letters is divided by the number of alphabetic characters.
+    Digits and symbols are disregarded for this calculation.
+
+    Args:
+        label (Column): Column containing entity label.
+
+    Returns:
+        Column: Column specifying the proportion of uppercase letters in the label.
+    """
+    num_uppercase = f.length(f.regexp_replace(label, "[^A-Z]", ""))
+    num_letters = f.length(f.regexp_replace(label, "[^A-Za-z]", ""))
+
+    return f.when(num_letters == 0, None).otherwise(num_uppercase / num_letters)
+
+def _translate_greek_alphabet(label: Column) -> Column:
     """Translate greek alphabet into latin alphabet.
 
     Translations are based on https://www.rapidtables.com/math/symbols/greek_alphabet.html
@@ -53,7 +101,7 @@ def translate_greek_alphabet(label: Column) -> Column:
         )
     )
 
-def translate_special_characters(label: Column) -> Column:
+def _translate_special_characters(label: Column) -> Column:
     """Translate accented latin characters into latin alphabet.
 
     Translations are based on https://en.wikipedia.org/wiki/Latin-1_Supplement
@@ -94,8 +142,8 @@ def get_alternative_translations(label: Column) -> Column:
     """
     return (
         f.array(
-            translate_special_characters(translate_greek_alphabet(label)),
-            translate_greek_alphabet(label)
+            _translate_special_characters(_translate_greek_alphabet(label)),
+            _translate_greek_alphabet(label)
         )
     )
 

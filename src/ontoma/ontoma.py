@@ -12,6 +12,7 @@ import pyspark.sql.functions as f
 from pyspark.sql import Window
 
 from ontoma.common.utils import (
+    determine_track,
     get_alternative_translations,
     clean_disease_label,
     format_identifier
@@ -228,7 +229,7 @@ class OnToma:
                 normalised_entity_lut.df
                 .withColumn("entityRank", f.dense_rank().over(w))
                 .filter(f.col("entityRank") == 1)
-                .withColumn("entityId", f.struct("entityId", "entitySource", "nlpPipelineTrack"))
+                .withColumn("entityId", f.struct("entityId", "entitySource"))
                 .groupBy("entityKind", "entityType", "entityLabelNormalised")
                 .agg(f.collect_set(f.col("entityId")).alias("entityIds"))
             ),
@@ -267,7 +268,7 @@ class OnToma:
     ) -> DataFrame:
         """Extract query entity labels from the provided dataframe.
 
-        Entity labels are set up for normalisation via both the term and symbol tracks of the NLP pipeline.
+        Entity labels are set up for normalisation via either the term or the symbol track of the NLP pipeline.
 
         Args:
             df (DataFrame): DataFrame containing entity labels to be extracted.
@@ -285,16 +286,16 @@ class OnToma:
                 "entityLabel",
                 f.explode(get_alternative_translations(f.trim(f.col(label_col_name))))
             )
-            # all query entities will be normalised using both the term and symbol tracks of the NLP pipeline
-            .withColumn(
-                "nlpPipelineTrack",
-                f.explode(f.array(f.lit("term"), f.lit("symbol")))
-            )
             # disease labels require an additional cleaning step
             .withColumn(
                 "entityLabel",
                 f.when(f.col(type_col_name) == "DS", clean_disease_label(f.col("entityLabel")))
                 .otherwise(f.col("entityLabel"))
+            )
+            # query entities are normalised using either the term or the symbol track of the NLP pipeline
+            .withColumn(
+                "nlpPipelineTrack",
+                determine_track(f.col(label_col_name))
             )
         )
     
