@@ -1,14 +1,20 @@
 [project]
 name = "ontoma"
-version = "0.1.0"
-description = "Add your description here"
+version = "2.3.1"
+description = "Ontology mapping for Open Targets"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
     "ipykernel>=6.30.1",
     "numpy>=2.2.6",
+    "rapidfuzz>=3.14.1",
+    "torch>=2.8.0",
+    "transformers>=4.57.0,<5.0.0",
     "pyspark==3.5.7",
     "spark-nlp==6.1.5",
+    "pandas>=2.3.3",
+    "pyarrow>=22.0.0",
+    "sentencepiece>=0.2.1",
 ]
 
 [build-system]
@@ -17,3 +23,49 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/ontoma"]
+
+[tool.uv]
+index-strategy = "unsafe-best-match"
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[tool.uv.sources]
+torch = { index = "pytorch-cpu" }
+
+[dependency-groups]
+dev = [
+    "pytest>=8.4.2",
+]
+
+[tool.pytest.ini_options]
+# Test discovery
+python_files = "test_*.py"
+python_classes = "Test*"
+python_functions = "test_*"
+
+# Markers for categorizing tests
+markers = [
+    "slow: marks tests as slow (e.g., NER tests that download models)",
+    "integration: marks tests as integration tests",
+    "unit: marks tests as unit tests",
+]
+
+# Output options
+addopts = [
+    "-v",
+    "--strict-markers",
+    "--tb=short",
+]
+
+# Ignore directories
+testpaths = ["tests"]
+norecursedirs = [".git", ".venv", "__pycache__", "*.egg-info"]
+
+# Logging
+log_cli = false
+log_cli_level = "INFO"
+[tool.hatch.build.targets.sdist]
+include = ["src/**", "README.md", "LICENSE"]
