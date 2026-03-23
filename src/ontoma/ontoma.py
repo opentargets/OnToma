@@ -215,7 +215,7 @@ class OnToma:
                     )
                 )
             )
-            .drop("finished_term", "finished_symbol") #, "nlpPipelineTrack", "entityLabel")
+            .drop("finished_term", "finished_symbol")
         )
     
     @staticmethod
@@ -340,7 +340,9 @@ class OnToma:
         entity_col_name: str, 
         entity_kind: str,
         type_col_name: str | None = None, 
-        type_col: Column | None = None
+        type_col: Column | None = None,
+        include_normalised_entities: bool = False,
+        include_entity_source: bool = False
      ) -> DataFrame:
         """Map entities using the entity lookup table.
 
@@ -357,6 +359,8 @@ class OnToma:
             entity_kind (str): Kind (label or id) of the entity label.
             type_col_name (str | None): Name of the column containing the type of the entity label.
             type_col (Column | None): Column containing the type of the entity label.
+            include_normalised_entities (bool): When True, normalised entities are included in the output. Default is False.
+            include_entity_source (bool): When True, the source of the entity-id mapping is included in the output. Default is False.
 
         Returns:
             DataFrame: DataFrame with additional column containing a list of relevant entity ids for each entity label.
@@ -373,7 +377,10 @@ class OnToma:
             raise ValueError("Exactly one of 'type_col_name' or 'type_col' must be provided.")
         
         # create snapshot of columns from input dataframe
-        original_columns = df.columns
+        if include_normalised_entities:
+            groupby_columns = df.columns + ["entityLabelNormalised"]
+        else:
+            groupby_columns = df.columns
         
         # if type information is provided as a Column, add it to the input dataframe
         if type_col is not None:
@@ -415,11 +422,16 @@ class OnToma:
             )
         )
 
-        # aggregate results from both tracks
+        if include_entity_source:
+            result_column = "entityIds"
+        else:
+            result_column = "entityIds.entityId"
+
+        # aggregate results
         return (
             mapped_entities
-            .groupBy(original_columns)
-            .agg(f.array_distinct(f.flatten(f.collect_set(f.col("entityIds")))).alias(result_col_name))
+            .groupBy(groupby_columns)
+            .agg(f.array_distinct(f.flatten(f.collect_set(f.col(result_column)))).alias(result_col_name))
             # replace empty list with null
             .withColumn(
                 result_col_name,
