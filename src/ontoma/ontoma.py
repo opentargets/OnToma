@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-import logging
 from dataclasses import dataclass, field
 from functools import reduce
+from loguru import logger
 from typing import TYPE_CHECKING
 
 import pyspark.sql.functions as f
@@ -23,13 +23,6 @@ from ontoma.nlp_pipeline import NLPPipeline
 
 if TYPE_CHECKING:
     from pyspark.sql import Column, DataFrame, SparkSession
-
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
-handler = logging.StreamHandler()
-formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-handler.setFormatter(formatter)
-logger.addHandler(handler)
 
 
 @dataclass
@@ -72,7 +65,7 @@ class OnToma:
                 _df=cached_df,
                 _schema=ReadyEntityLUT.get_schema()
             )
-            logger.info(f"Loaded entity lookup table from {self.cache_dir}.")
+            logger.info(f"Loaded entity lookup table from {self.cache_dir}")
         
         # if entity_lut_list is provided, validate the input then generate the entity lookup table
         elif self.entity_lut_list:
@@ -82,13 +75,13 @@ class OnToma:
             if not all(isinstance(entity_lut, RawEntityLUT) for entity_lut in self.entity_lut_list):
                 raise TypeError("Each entity_lut must be a RawEntityLUT.")
 
-            logger.info(f"Generating entity lookup table.")
+            logger.info(f"Generating entity lookup table...")
             self._entity_lut = self._generate_entity_lut(self.entity_lut_list)
 
             # if cache_dir is provided, save the entity lookup table
             if self.cache_dir:
                 self._entity_lut.df.write.parquet(self.cache_dir)
-                logger.info(f"Saved entity lookup table to {self.cache_dir}.")
+                logger.info(f"Saved entity lookup table to {self.cache_dir}")
 
                 # specify to read from cached lut to speed up usage in the same session
                 self._entity_lut = ReadyEntityLUT(self.spark.read.parquet(self.cache_dir))

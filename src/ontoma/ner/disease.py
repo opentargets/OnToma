@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import logging
+from loguru import logger
 from typing import TYPE_CHECKING
 
 from ontoma.ner._pipelines import create_ner_pipeline
@@ -11,8 +11,6 @@ from pyspark.sql.types import StructType, StructField, ArrayType, StringType
 
 if TYPE_CHECKING:
     from pyspark.sql import DataFrame, SparkSession
-
-logger = logging.getLogger(__name__)
 
 BIOBERT_LABELS = ["DISEASE"]
 
