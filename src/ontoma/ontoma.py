@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import logging
-import os
 from dataclasses import dataclass, field
 from functools import reduce
 from typing import TYPE_CHECKING
@@ -90,6 +89,9 @@ class OnToma:
             if self.cache_dir:
                 self._entity_lut.df.write.parquet(self.cache_dir)
                 logger.info(f"Saved entity lookup table to {self.cache_dir}.")
+
+                # specify to read from cached lut to speed up usage in the same session
+                self._entity_lut = ReadyEntityLUT(self.spark.read.parquet(self.cache_dir))
             
             # cache_dir is not provided, so suggest specifying a cache_directory
             else:
