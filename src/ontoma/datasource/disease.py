@@ -44,16 +44,16 @@ class OpenTargetsDisease:
                         f.array(f.col("name")), "tbd", 1.0, "name"
                     ).alias("name"),
                     annotate_entity(
-                        f.col("synonyms.hasExactSynonym"), "tbd", 0.999, "exact_synonym"
+                        f.col("exactSynonyms"), "tbd", 0.999, "exact_synonym"
                     ).alias("exactSynonyms"),
                     annotate_entity(
-                        f.col("synonyms.hasNarrowSynonym"), "tbd", 0.998, "narrow_synonym"
+                        f.col("narrowSynonyms"), "tbd", 0.998, "narrow_synonym"
                     ).alias("narrowSynonyms"),
                     annotate_entity(
-                        f.col("synonyms.hasBroadSynonym"), "tbd", 0.997, "broad_synonym"
+                        f.col("broadSynonyms"), "tbd", 0.997, "broad_synonym"
                     ).alias("broadSynonyms"),
                     annotate_entity(
-                        f.col("synonyms.hasRelatedSynonym"), "tbd", 0.996, "related_synonym"
+                        f.col("relatedSynonyms"), "tbd", 0.996, "related_synonym"
                     ).alias("relatedSynonyms")
                 )
                 # flatten and explode array of structs
