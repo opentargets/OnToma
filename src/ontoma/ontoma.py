@@ -2,16 +2,16 @@
 
 from __future__ import annotations
 
-import logging
-import os
 from dataclasses import dataclass, field
 from functools import reduce
+from loguru import logger
 from typing import TYPE_CHECKING
 
 import pyspark.sql.functions as f
 from pyspark.sql import Window
 
 from ontoma.common.utils import (
+    determine_track,
     get_alternative_translations,
     clean_disease_label,
     format_identifier
@@ -23,13 +23,6 @@ from ontoma.nlp_pipeline import NLPPipeline
 
 if TYPE_CHECKING:
     from pyspark.sql import Column, DataFrame, SparkSession
-
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
-handler = logging.StreamHandler()
-formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-handler.setFormatter(formatter)
-logger.addHandler(handler)
 
 
 @dataclass
@@ -72,7 +65,7 @@ class OnToma:
                 _df=cached_df,
                 _schema=ReadyEntityLUT.get_schema()
             )
-            logger.info(f"Loaded entity lookup table from {self.cache_dir}.")
+            logger.info(f"Loaded entity lookup table from {self.cache_dir}")
         
         # if entity_lut_list is provided, validate the input then generate the entity lookup table
         elif self.entity_lut_list:
@@ -82,13 +75,16 @@ class OnToma:
             if not all(isinstance(entity_lut, RawEntityLUT) for entity_lut in self.entity_lut_list):
                 raise TypeError("Each entity_lut must be a RawEntityLUT.")
 
-            logger.info(f"Generating entity lookup table.")
+            logger.info(f"Generating entity lookup table...")
             self._entity_lut = self._generate_entity_lut(self.entity_lut_list)
 
             # if cache_dir is provided, save the entity lookup table
             if self.cache_dir:
                 self._entity_lut.df.write.parquet(self.cache_dir)
-                logger.info(f"Saved entity lookup table to {self.cache_dir}.")
+                logger.info(f"Saved entity lookup table to {self.cache_dir}")
+
+                # specify to read from cached lut to speed up usage in the same session
+                self._entity_lut = ReadyEntityLUT(self.spark.read.parquet(self.cache_dir))
             
             # cache_dir is not provided, so suggest specifying a cache_directory
             else:
@@ -214,7 +210,7 @@ class OnToma:
                     )
                 )
             )
-            .drop("finished_term", "finished_symbol") #, "nlpPipelineTrack", "entityLabel")
+            .drop("finished_term", "finished_symbol")
         )
     
     @staticmethod
@@ -234,6 +230,7 @@ class OnToma:
                 normalised_entity_lut.df
                 .withColumn("entityRank", f.dense_rank().over(w))
                 .filter(f.col("entityRank") == 1)
+                .withColumn("entityId", f.struct("entityId", "entitySource"))
                 .groupBy("entityKind", "entityType", "entityLabelNormalised")
                 .agg(f.collect_set(f.col("entityId")).alias("entityIds"))
             ),
@@ -272,7 +269,7 @@ class OnToma:
     ) -> DataFrame:
         """Extract query entity labels from the provided dataframe.
 
-        Entity labels are set up for normalisation via both the term and symbol tracks of the NLP pipeline.
+        Entity labels are set up for normalisation via either the term or the symbol track of the NLP pipeline.
 
         Args:
             df (DataFrame): DataFrame containing entity labels to be extracted.
@@ -290,16 +287,16 @@ class OnToma:
                 "entityLabel",
                 f.explode(get_alternative_translations(f.trim(f.col(label_col_name))))
             )
-            # all query entities will be normalised using both the term and symbol tracks of the NLP pipeline
-            .withColumn(
-                "nlpPipelineTrack",
-                f.explode(f.array(f.lit("term"), f.lit("symbol")))
-            )
             # disease labels require an additional cleaning step
             .withColumn(
                 "entityLabel",
                 f.when(f.col(type_col_name) == "DS", clean_disease_label(f.col("entityLabel")))
                 .otherwise(f.col("entityLabel"))
+            )
+            # query entities are normalised using either the term or the symbol track of the NLP pipeline
+            .withColumn(
+                "nlpPipelineTrack",
+                determine_track(f.col(label_col_name))
             )
         )
     
@@ -338,7 +335,9 @@ class OnToma:
         entity_col_name: str, 
         entity_kind: str,
         type_col_name: str | None = None, 
-        type_col: Column | None = None
+        type_col: Column | None = None,
+        include_normalised_entities: bool = False,
+        include_entity_source: bool = False
      ) -> DataFrame:
         """Map entities using the entity lookup table.
 
@@ -355,6 +354,8 @@ class OnToma:
             entity_kind (str): Kind (label or id) of the entity label.
             type_col_name (str | None): Name of the column containing the type of the entity label.
             type_col (Column | None): Column containing the type of the entity label.
+            include_normalised_entities (bool): When True, normalised entities are included in the output. Default is False.
+            include_entity_source (bool): When True, the source of the entity-id mapping is included in the output. Default is False.
 
         Returns:
             DataFrame: DataFrame with additional column containing a list of relevant entity ids for each entity label.
@@ -371,7 +372,10 @@ class OnToma:
             raise ValueError("Exactly one of 'type_col_name' or 'type_col' must be provided.")
         
         # create snapshot of columns from input dataframe
-        original_columns = df.columns
+        if include_normalised_entities:
+            groupby_columns = df.columns + ["entityLabelNormalised"]
+        else:
+            groupby_columns = df.columns
         
         # if type information is provided as a Column, add it to the input dataframe
         if type_col is not None:
@@ -413,11 +417,16 @@ class OnToma:
             )
         )
 
-        # aggregate results from both tracks
+        if include_entity_source:
+            result_column = "entityIds"
+        else:
+            result_column = "entityIds.entityId"
+
+        # aggregate results
         return (
             mapped_entities
-            .groupBy(original_columns)
-            .agg(f.array_distinct(f.flatten(f.collect_set(f.col("entityIds")))).alias(result_col_name))
+            .groupBy(groupby_columns)
+            .agg(f.array_distinct(f.flatten(f.collect_set(f.col(result_column)))).alias(result_col_name))
             # replace empty list with null
             .withColumn(
                 result_col_name,

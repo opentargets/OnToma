@@ -39,25 +39,25 @@ class OpenTargetsTarget:
                 .select(
                     f.col("id").alias("entityId"),
                     annotate_entity(
-                        f.array(f.col("approvedName")), 1.0, "term"
+                        f.array(f.col("approvedName")), "term", 1.0, "approved_name"
                     ).alias("name"),
                     annotate_entity(
-                        f.array(f.col("approvedSymbol")), 1.0, "symbol"
+                        f.array(f.col("approvedSymbol")), "symbol", 1.0, "approved_symbol"
                     ).alias("symbol"),
                     annotate_entity(
-                        f.col("nameSynonyms.label"), 0.999, "term"
+                        f.col("nameSynonyms.label"), "term", 0.999, "name_synonym"
                     ).alias("nameSynonyms"),
                     annotate_entity(
-                        f.col("symbolSynonyms.label"), 0.999, "symbol"
+                        f.col("symbolSynonyms.label"), "symbol", 0.999, "symbol_synonym"
                     ).alias("symbolSynonyms"),
                     annotate_entity(
-                        f.col("proteinIds.id"), 0.999, "symbol"
+                        f.col("proteinIds.id"), "symbol", 0.999, "protein_id"
                     ).alias("proteinIds"),
                     annotate_entity(
-                        f.col("obsoleteNames.label"), 0.998, "term"
+                        f.col("obsoleteNames.label"), "term", 0.998, "obsolete_name"
                     ).alias("obsoleteNames"),
                     annotate_entity(
-                        f.col("obsoleteSymbols.label"), 0.998, "symbol"
+                        f.col("obsoleteSymbols.label"), "symbol", 0.998, "obsolete_symbol"
                     ).alias("obsoleteSymbols")
                 )
                 # flatten and explode array of structs
@@ -89,6 +89,7 @@ class OpenTargetsTarget:
                     ).alias("entityLabel"),
                     f.col("entity.entityScore").alias("entityScore"), 
                     f.col("entity.nlpPipelineTrack").alias("nlpPipelineTrack"),
+                    f.col("entity.entitySource").alias("entitySource"),
                     f.lit("GP").alias("entityType"),
                     f.lit("label").alias("entityKind")
                 )
@@ -139,10 +140,13 @@ class OpenTargetsTarget:
                 .select(
                     f.col("id").alias("entityId"),
                     annotate_entity(
-                        f.col("dbXrefs"), 1.0, "symbol"
-                    ).alias("dbXrefs"),
+                        f.array(f.col("id")), "symbol", 1.0, "id"
+                    ).alias("identifier"),
                     annotate_entity(
-                        f.col("proteinIds.id"), 1.0, "symbol"
+                        f.col("dbXRefs"), "symbol", 0.999, "crossref"
+                    ).alias("crossRefs"),
+                    annotate_entity(
+                        f.col("proteinIds.id"), "symbol", 0.999, "protein_id"
                     ).alias("proteinIds")
                 )
                 # flatten and explode array of structs
@@ -151,7 +155,8 @@ class OpenTargetsTarget:
                     f.explode(
                         f.flatten(
                             f.array(
-                                f.col("dbXrefs"),
+                                f.col("identifier"),
+                                f.col("crossRefs"),
                                 f.col("proteinIds")
                             )
                         )
@@ -163,6 +168,7 @@ class OpenTargetsTarget:
                     f.col("entity.entityLabel").alias("entityLabel"),
                     f.col("entity.entityScore").alias("entityScore"),
                     f.col("entity.nlpPipelineTrack").alias("nlpPipelineTrack"),
+                    f.col("entity.entitySource").alias("entitySource"),
                     f.lit("GP").alias("entityType"),
                     f.lit("id").alias("entityKind")
                 )

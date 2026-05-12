@@ -25,6 +25,12 @@
             "metadata": {}
         },
         {
+            "name": "entitySource",
+            "type": "string",
+            "nullable": false,
+            "metadata": {}
+        },
+        {
             "name": "entityType",
             "type": "string",
             "nullable": false,
