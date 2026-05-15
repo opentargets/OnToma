@@ -238,30 +238,6 @@ class OnToma:
         )
     
     @staticmethod
-    def _check_mapping_compatibility(
-        lut: DataFrame, 
-        df: DataFrame, 
-        lut_col_name: str,
-        df_col_name: str
-    ) -> bool:
-        """Check if the entity lookup table can be used to map the entities in the provided dataframe.
-
-        Args:
-            lut (DataFrame): The entity lookup table.
-            df (DataFrame): The provided dataframe.
-            lut_col_name (str): Name of the column containing the entity property in the entity lookup table.
-            df_col_name (str): Name of the column containing the entity property in the provided dataframe.
-
-        Returns:
-            bool: True if all the entity properties are in the entity lookup table, False otherwise.
-        """
-        lut_properties = lut.select(lut_col_name).distinct().collect()
-
-        df_properties = df.select(df_col_name).distinct().collect()
-
-        return all(val in lut_properties for val in df_properties)
-    
-    @staticmethod
     def _extract_query_entity_labels(
         df: DataFrame,
         label_col_name: str,
@@ -361,8 +337,7 @@ class OnToma:
             DataFrame: DataFrame with additional column containing a list of relevant entity ids for each entity label.
         
         Raises:
-            ValueError: When both or none of 'type_col_name' or 'type_col' are provided,
-                or when the input dataframe contains unmappable entity types.
+            ValueError: When both or none of 'type_col_name' or 'type_col' are provided.
         """
         # validate input for the type column
         if (
@@ -382,17 +357,9 @@ class OnToma:
             type_col_name = "entityType"
             df = df.withColumn(type_col_name, type_col)
 
-        # check if all the entity types to be mapped are in the entity lookup table
-        if not self._check_mapping_compatibility(self.df, df, "entityType", type_col_name):
-            raise ValueError("Unable to map the provided entity type(s).")
-        
         # add kind information to the input dataframe
         df = df.withColumn("entityKind", f.lit(entity_kind))
 
-        # check if all the entity kinds to be mapped are in the entity lookup table
-        if not self._check_mapping_compatibility(self.df, df, "entityKind", "entityKind"):
-            raise ValueError("Unable to map the provided entity kind(s).")
-    
         # extract entities from input dataframe
         if entity_kind == "label":
             extracted_entities = self._extract_query_entity_labels(df, entity_col_name, type_col_name)
