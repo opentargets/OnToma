@@ -174,7 +174,17 @@ class OnToma:
     def _normalise_entities(df: DataFrame) -> DataFrame:
         """Normalise entities using an NLP pipeline.
 
-        The output column selected is determined by the NLP pipeline type specified.
+        The NLP pipeline is a pure function of ``(entityLabel,
+        nlpPipelineTrack)``: same input always produces the same normalised
+        label. Inputs with significant label repetition (a literature
+        matches dataset is the extreme case — billions of rows over only
+        tens of thousands of distinct labels) waste work running the
+        pipeline once per row.
+
+        Deduplicate ``(entityLabel, nlpPipelineTrack)`` before invoking
+        the pipeline, run it once per distinct pair, then join the
+        normalised label back to the original dataframe. The output
+        column selected is determined by ``nlpPipelineTrack``.
 
         Args:
             df (DataFrame): DataFrame containing entity labels to be normalised.
@@ -182,10 +192,10 @@ class OnToma:
         Returns:
             DataFrame: DataFrame with additional column containing normalised entity labels.
         """
-        normalised_entities = NLPPipeline.apply_pipeline(df, "entityLabel")
+        distinct_labels = df.select("entityLabel", "nlpPipelineTrack").distinct()
 
-        return (
-            normalised_entities
+        normalised_distinct = (
+            NLPPipeline.apply_pipeline(distinct_labels, "entityLabel")
             .withColumn(
                 "entityLabelNormalised",
                 f.when(
@@ -203,14 +213,25 @@ class OnToma:
                     f.col("nlpPipelineTrack") == "symbol",
                     f.array_join(
                         f.filter(
-                            f.col("finished_symbol"), 
+                            f.col("finished_symbol"),
                             lambda c: c.isNotNull() & (c != "")
                         ),
                         ""
                     )
                 )
             )
-            .drop("finished_term", "finished_symbol")
+            .select("entityLabel", "nlpPipelineTrack", "entityLabelNormalised")
+        )
+
+        # Catalyst will broadcast `normalised_distinct` automatically when
+        # its size fits the configured `spark.sql.autoBroadcastJoinThreshold`.
+        # For larger inputs (e.g. literature matches) the join falls back to
+        # a sort-merge, which is still far cheaper than running the NLP
+        # pipeline per row.
+        return df.join(
+            normalised_distinct,
+            on=["entityLabel", "nlpPipelineTrack"],
+            how="left",
         )
     
     @staticmethod
