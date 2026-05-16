@@ -192,7 +192,26 @@ class OnToma:
         Returns:
             DataFrame: DataFrame with additional column containing normalised entity labels.
         """
-        distinct_labels = df.select("entityLabel", "nlpPipelineTrack").distinct()
+        # The label distribution in real inputs (literature matches in
+        # particular) is Zipfian: a handful of labels — "cancer", common
+        # gene symbols — account for a large fraction of rows. A direct
+        # ``df.distinct()`` hash-partitions on the label and funnels all
+        # rows of a hot label into a single partition, producing severe
+        # task-duration skew (one task that handles many GBs of shuffle
+        # read while the rest finish in seconds).
+        #
+        # Salt the first distinct so hot labels spread across ``SALT_BUCKETS``
+        # partitions, then a second distinct collapses the salt. The second
+        # shuffle is bounded by ``num_distinct_labels × SALT_BUCKETS`` rows
+        # of just three columns, so it is small even at corpus scale.
+        SALT_BUCKETS = 50
+        distinct_labels = (
+            df.select("entityLabel", "nlpPipelineTrack")
+            .withColumn("_salt", (f.rand(seed=42) * SALT_BUCKETS).cast("int"))
+            .distinct()
+            .drop("_salt")
+            .distinct()
+        )
 
         normalised_distinct = (
             NLPPipeline.apply_pipeline(distinct_labels, "entityLabel")
