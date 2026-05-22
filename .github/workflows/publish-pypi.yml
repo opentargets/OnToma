@@ -1,0 +1,33 @@
+name: Publish to PyPI
+
+# Build and upload the package to PyPI whenever a GitHub Release is published.
+# `published` (rather than `created`) also fires when a release is promoted
+# from a draft, which is how releases are cut for this project. Pre-releases
+# trigger this too; switch to `types: [released]` to publish full releases only.
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    name: Build and publish
+    runs-on: ubuntu-latest
+    steps:
+      # The release event checks out the commit the release tag points at,
+      # so the build matches the tagged version exactly.
+      - name: Check out the released commit
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+
+      - name: Build sdist and wheel
+        run: uv build
+
+      - name: Publish to PyPI
+        env:
+          UV_PUBLISH_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
+        run: uv publish
