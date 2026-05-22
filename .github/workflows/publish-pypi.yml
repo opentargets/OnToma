@@ -1,12 +1,19 @@
 name: Publish to PyPI
 
-# Build and upload the package to PyPI whenever a GitHub Release is published.
-# `published` (rather than `created`) also fires when a release is promoted
-# from a draft, which is how releases are cut for this project. Pre-releases
-# trigger this too; switch to `types: [released]` to publish full releases only.
+# Build and upload the package to PyPI when a version tag is pushed.
+#
+# Triggered by pushing a `v*` tag, e.g.:
+#   git tag v2.4.2 && git push origin v2.4.2
+#
+# Tag-push events fire reliably. The `release` event does not: GitHub does not
+# deliver it for a release created on a tag that already existed, which is why
+# release-triggered publishing did not work here. The workflow runs from the
+# tagged commit, so the tag must be cut from a commit that already contains
+# this workflow file (i.e. tag `master` after this is merged).
 on:
-  release:
-    types: [published]
+  push:
+    tags:
+      - 'v*'
 
 permissions:
   contents: read
@@ -16,9 +23,9 @@ jobs:
     name: Build and publish
     runs-on: ubuntu-latest
     steps:
-      # The release event checks out the commit the release tag points at,
-      # so the build matches the tagged version exactly.
-      - name: Check out the released commit
+      # Defaults to github.sha: the commit the pushed tag points at, so the
+      # build matches the tagged version exactly.
+      - name: Check out the tagged commit
         uses: actions/checkout@v4
 
       - name: Install uv
