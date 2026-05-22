@@ -1,6 +1,7 @@
 name: Publish to PyPI
 
-# Build and upload the package to PyPI when a version tag is pushed.
+# Publish the package to PyPI and cut a GitHub Release when a version tag is
+# pushed.
 #
 # Triggered by pushing a `v*` tag, e.g.:
 #   git tag v2.4.2 && git push origin v2.4.2
@@ -15,8 +16,9 @@ on:
     tags:
       - 'v*'
 
+# `contents: write` is required for the Create GitHub Release step.
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   publish:
@@ -38,3 +40,12 @@ jobs:
         env:
           UV_PUBLISH_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
         run: uv publish
+
+      # Runs only after a successful PyPI publish, so a failed upload does not
+      # leave a GitHub Release behind. Uses the built-in GITHUB_TOKEN; the
+      # release it creates does not trigger further workflows (this one runs on
+      # tag push, not on release), so there is no loop.
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release create "$GITHUB_REF_NAME" --generate-notes
