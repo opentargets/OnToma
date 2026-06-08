@@ -64,6 +64,22 @@ def drug_label_rows(spark):
             [],
             [],
         ),
+        # Uppercase ChEMBL encoding, pattern carried in synonyms (not tradeNames)
+        (
+            "CHEMBLUPPER",
+            "MODAFINIL",
+            [],
+            ["MODAFINIL COMPONENT OF THN102"],
+            [],
+        ),
+        # Same product encoded in both tradeNames and synonyms -> deduped
+        (
+            "CHEMBLDUP",
+            "SOMEDRUGTWO",
+            ["Somedrugtwo component of dupprod"],
+            ["Somedrugtwo component of dupprod"],
+            [],
+        ),
     ]
     drug_index = spark.createDataFrame(data, schema=DRUG_INDEX_SCHEMA)
     result = OpenTargetsDrug.as_label_lut(drug_index)
@@ -118,3 +134,30 @@ def test_noisy_product_name_is_cleaned(drug_label_rows):
     labels = _labels(drug_label_rows, "CHEMBLNOISE")
     assert "weirdname" in labels
     assert "/weirdname" not in labels
+
+
+def test_component_pattern_extracted_from_synonyms(drug_label_rows):
+    """The pattern is also parsed from synonyms, not only trade names."""
+    rows = [
+        r
+        for r in drug_label_rows
+        if r["entityId"] == "CHEMBLUPPER" and r["entityLabel"] == "THN102"
+    ]
+    assert len(rows) == 1
+    assert rows[0]["entitySource"] == "trade_name_component"
+
+
+def test_component_pattern_is_case_insensitive(drug_label_rows):
+    """Uppercase 'COMPONENT OF' encoding is recognised and the phrase dropped."""
+    all_labels = {r["entityLabel"].lower() for r in drug_label_rows}
+    assert "modafinil component of thn102" not in all_labels
+
+
+def test_product_shared_across_fields_is_deduplicated(drug_label_rows):
+    """A product encoded in both trade names and synonyms yields one label row."""
+    rows = [
+        r
+        for r in drug_label_rows
+        if r["entityId"] == "CHEMBLDUP" and r["entityLabel"] == "dupprod"
+    ]
+    assert len(rows) == 1
