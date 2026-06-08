@@ -147,6 +147,33 @@ def get_alternative_translations(label: Column) -> Column:
         )
     )
 
+# Phrase that flags a combination-product membership inside a trade name or
+# synonym, e.g. "Ivacaftor component of symkevi". Case-insensitive.
+COMPONENT_OF_PATTERN = r"(?i) component of "
+
+def extract_combination_product(label: Column) -> Column:
+    """Extract the combination product from a "X component of Y" trade name.
+
+    Combination products are encoded in the drug index inside the trade names
+    (and some synonyms) of each component molecule, as
+    "{molecule} component of {product}" (e.g. "Ivacaftor component of symkevi").
+    This returns the product (Y), lightly cleaned, so it can be mapped back to
+    the component molecule id. Labels that do not match the pattern yield an
+    empty string, which downstream filtering discards.
+
+    Args:
+        label (Column): Column containing the trade name or synonym.
+
+    Returns:
+        Column: Column containing the cleaned combination product, or "".
+    """
+    product = f.regexp_extract(label, r"(?i)^.+ component of (.+)$", 1)
+    # light cleanup: strip leading/trailing punctuation and collapse whitespace
+    product = f.regexp_replace(product, r"^[\s/,;:-]+", "")
+    product = f.regexp_replace(product, r"[\s/,;:-]+$", "")
+    product = f.regexp_replace(product, r"\s+", " ")
+    return f.trim(product)
+
 def clean_disease_label(disease_label: Column) -> Column:
     """Clean disease label by removing prefixes.
 
