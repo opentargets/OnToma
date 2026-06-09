@@ -8,7 +8,9 @@ import pyspark.sql.functions as f
 
 from ontoma.dataset.raw_entity_lut import RawEntityLUT
 from ontoma.common.utils import (
+    COMPONENT_OF_PATTERN,
     annotate_entity,
+    extract_combination_product,
     get_alternative_translations
 )
 
@@ -40,6 +42,41 @@ class OpenTargetsDrug:
                     (~f.lower(f.col("name")).startswith("chembl"))
                     | (f.size(f.col("tradeNames")) > 0)
                     | (f.size(f.col("synonyms")) > 0)
+                )
+                # extract combination products encoded as "{molecule} component of {product}"
+                # in the trade names and synonyms (e.g. "Ivacaftor component of symkevi"),
+                # so the product (symkevi) maps to this component molecule's id
+                .withColumn(
+                    "combinationProducts",
+                    f.array_distinct(
+                        f.filter(
+                            f.transform(
+                                f.concat(
+                                    f.coalesce(f.col("tradeNames"), f.array()),
+                                    f.coalesce(f.col("synonyms"), f.array())
+                                ),
+                                lambda x: extract_combination_product(x)
+                            ),
+                            lambda x: f.length(x) > 0
+                        )
+                    )
+                )
+                # the "{molecule} component of {product}" phrase itself is never a
+                # useful query label, so drop it from the trade names and synonyms
+                # (the extracted product replaces it)
+                .withColumn(
+                    "tradeNames",
+                    f.filter(
+                        f.coalesce(f.col("tradeNames"), f.array()),
+                        lambda x: ~x.rlike(COMPONENT_OF_PATTERN)
+                    )
+                )
+                .withColumn(
+                    "synonyms",
+                    f.filter(
+                        f.coalesce(f.col("synonyms"), f.array()),
+                        lambda x: ~x.rlike(COMPONENT_OF_PATTERN)
+                    )
                 )
                 # filter crossReferences for sources that have labels
                 .withColumn(
@@ -78,6 +115,9 @@ class OpenTargetsDrug:
                         f.col("synonyms"), "tbd", 0.999, "synonym"
                     ).alias("synonyms"),
                     annotate_entity(
+                        f.col("combinationProducts"), "tbd", 0.999, "trade_name_component"
+                    ).alias("combinationProducts"),
+                    annotate_entity(
                         f.flatten(f.col("crossReferences")), "tbd", 0.998, "crossref"
                     ).alias("crossReferences")
                 )
@@ -90,6 +130,7 @@ class OpenTargetsDrug:
                                 f.col("name"),
                                 f.col("tradeNames"),
                                 f.col("synonyms"),
+                                f.col("combinationProducts"),
                                 f.col("crossReferences")
                             )
                         )
