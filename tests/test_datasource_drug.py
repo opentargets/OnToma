@@ -55,13 +55,15 @@ def drug_label_rows(spark):
     tradeNames / synonyms follow the {label, source} struct schema.
     """
     data = [
-        # Ivacaftor: combination product (symkevi) + plain trade name (Kalydeco)
+        # Ivacaftor: combination product (symkevi) + plain trade name (Kalydeco),
+        # a curated ChEMBL synonym (VX-770) + a mined AACT synonym (ivx-mined),
+        # and a DailyMed crossref label (to exercise the score tiers)
         (
             "CHEMBL2010601",
             "IVACAFTOR",
             _ls("Ivacaftor component of symkevi", "Kalydeco"),
-            _ls("Ivacaftor", "VX-770"),
-            [],
+            _ls("Ivacaftor", "VX-770") + [("ivx-mined", "AACT")],
+            [("DailyMed", ["ivacaftor-dm"])],
         ),
         # Tezacaftor: the other component of the same combination product
         (
@@ -176,3 +178,26 @@ def test_product_shared_across_fields_is_deduplicated(drug_label_rows):
         if r["entityId"] == "CHEMBLDUP" and r["entityLabel"] == "dupprod"
     ]
     assert len(rows) == 1
+
+
+def test_synonym_score_tiers_by_source(drug_label_rows):
+    """ChEMBL synonyms (0.999) outrank AACT synonyms (0.998), which outrank crossrefs (0.997)."""
+    chembl_syn = [r for r in drug_label_rows if r["entitySource"] == "synonym"]
+    aact_syn = [r for r in drug_label_rows if r["entitySource"] == "synonym_aact"]
+    crossref = [r for r in drug_label_rows if r["entitySource"] == "crossref"]
+
+    assert chembl_syn and aact_syn and crossref
+    assert all(r["entityScore"] == 0.999 for r in chembl_syn)
+    assert all(r["entityScore"] == 0.998 for r in aact_syn)
+    assert all(r["entityScore"] == 0.997 for r in crossref)
+
+
+def test_aact_synonym_label_present_with_source(drug_label_rows):
+    """The mined AACT synonym maps to its molecule, tagged with the AACT source."""
+    rows = [
+        r
+        for r in drug_label_rows
+        if r["entityId"] == "CHEMBL2010601" and r["entityLabel"] == "ivx-mined"
+    ]
+    assert len(rows) == 1
+    assert rows[0]["entitySource"] == "synonym_aact"
