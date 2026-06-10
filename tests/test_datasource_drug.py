@@ -11,12 +11,21 @@ from pyspark.sql.types import (
 from ontoma.datasource.drug import OpenTargetsDrug
 
 
+_LABEL_SOURCE = ArrayType(
+    StructType(
+        [
+            StructField("label", StringType()),
+            StructField("source", StringType()),
+        ]
+    )
+)
+
 DRUG_INDEX_SCHEMA = StructType(
     [
         StructField("id", StringType()),
         StructField("name", StringType()),
-        StructField("tradeNames", ArrayType(StringType())),
-        StructField("synonyms", ArrayType(StringType())),
+        StructField("tradeNames", _LABEL_SOURCE),
+        StructField("synonyms", _LABEL_SOURCE),
         StructField(
             "crossReferences",
             ArrayType(
@@ -32,27 +41,33 @@ DRUG_INDEX_SCHEMA = StructType(
 )
 
 
+def _ls(*names):
+    """Build a [{label, source}] struct list (all ChEMBL-sourced) for fixtures."""
+    return [(n, "ChEMBL") for n in names]
+
+
 @pytest.fixture(scope="module")
 def drug_label_rows(spark):
     """Collected label-LUT rows from a small in-memory drug index.
 
     Covers a combination product shared by two molecules (Symkevi =
     Ivacaftor + Tezacaftor), a plain trade name, and a noisy product name.
+    tradeNames / synonyms follow the {label, source} struct schema.
     """
     data = [
         # Ivacaftor: combination product (symkevi) + plain trade name (Kalydeco)
         (
             "CHEMBL2010601",
             "IVACAFTOR",
-            ["Ivacaftor component of symkevi", "Kalydeco"],
-            ["Ivacaftor", "VX-770"],
+            _ls("Ivacaftor component of symkevi", "Kalydeco"),
+            _ls("Ivacaftor", "VX-770"),
             [],
         ),
         # Tezacaftor: the other component of the same combination product
         (
             "CHEMBL3544914",
             "TEZACAFTOR",
-            ["Tezacaftor component of symkevi"],
+            _ls("Tezacaftor component of symkevi"),
             [],
             [],
         ),
@@ -60,7 +75,7 @@ def drug_label_rows(spark):
         (
             "CHEMBLNOISE",
             "SOMEDRUG",
-            ["Somedrug component of /weirdname"],
+            _ls("Somedrug component of /weirdname"),
             [],
             [],
         ),
@@ -69,15 +84,15 @@ def drug_label_rows(spark):
             "CHEMBLUPPER",
             "MODAFINIL",
             [],
-            ["MODAFINIL COMPONENT OF THN102"],
+            _ls("MODAFINIL COMPONENT OF THN102"),
             [],
         ),
         # Same product encoded in both tradeNames and synonyms -> deduped
         (
             "CHEMBLDUP",
             "SOMEDRUGTWO",
-            ["Somedrugtwo component of dupprod"],
-            ["Somedrugtwo component of dupprod"],
+            _ls("Somedrugtwo component of dupprod"),
+            _ls("Somedrugtwo component of dupprod"),
             [],
         ),
     ]

@@ -37,6 +37,11 @@ class OpenTargetsDrug:
         return RawEntityLUT(
             _df=(
                 drug_index
+                # the drug index ships tradeNames / synonyms as {label, source}
+                # structs (label = the name, source = provenance e.g. ChEMBL / AACT);
+                # this LUT only needs the label strings, so flatten to array<string>
+                .withColumn("tradeNames", f.transform(f.col("tradeNames"), lambda x: x["label"]))
+                .withColumn("synonyms", f.transform(f.col("synonyms"), lambda x: x["label"]))
                 # early filter: only process drugs with meaningful label information
                 .filter(
                     (~f.lower(f.col("name")).startswith("chembl"))
