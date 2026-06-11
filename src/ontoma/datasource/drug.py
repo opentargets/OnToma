@@ -134,25 +134,25 @@ class OpenTargetsDrug:
                 .select(
                     f.col("id").alias("entityId"),
                     annotate_entity(
-                        f.array(f.col("name")), "tbd", 1.0, "name"
+                        f.array(f.col("name")), "symbol", 1.0, "name"
                     ).alias("name"),
                     annotate_entity(
-                        f.col("tradeNames"), "tbd", 0.999, "trade_name"
+                        f.col("tradeNames"), "symbol", 0.999, "trade_name"
                     ).alias("tradeNames"),
                     # curated ChEMBL synonyms outrank LLM-mined AACT synonyms, which in
                     # turn outrank crossref-derived labels (LUT keeps the top-score id
                     # per normalised label, so an AACT-only label still maps)
                     annotate_entity(
-                        f.col("synonymsCurated"), "tbd", 0.999, "synonym"
+                        f.col("synonymsCurated"), "symbol", 0.999, "synonym"
                     ).alias("synonymsCurated"),
                     annotate_entity(
-                        f.col("synonymsInferred"), "tbd", 0.998, "synonym_aact"
+                        f.col("synonymsInferred"), "symbol", 0.998, "synonym_aact"
                     ).alias("synonymsInferred"),
                     annotate_entity(
-                        f.col("combinationProducts"), "tbd", 0.999, "trade_name_component"
+                        f.col("combinationProducts"), "symbol", 0.999, "trade_name_component"
                     ).alias("combinationProducts"),
                     annotate_entity(
-                        f.flatten(f.col("crossReferences")), "tbd", 0.997, "crossref"
+                        f.flatten(f.col("crossReferences")), "symbol", 0.997, "crossref"
                     ).alias("crossReferences")
                 )
                 # flatten and explode array of structs
