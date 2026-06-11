@@ -43,14 +43,14 @@ class OpenTargetsDrug:
                 # curated ChEMBL synonyms can be scored above LLM-mined AACT synonyms.
                 .withColumn("tradeNames", f.transform(f.col("tradeNames"), lambda x: x["label"]))
                 .withColumn(
-                    "synonymsChembl",
+                    "synonymsCurated",
                     f.transform(
                         f.filter(f.col("synonyms"), lambda s: s["source"] == "ChEMBL"),
                         lambda s: s["label"]
                     )
                 )
                 .withColumn(
-                    "synonymsAact",
+                    "synonymsInferred",
                     f.transform(
                         f.filter(f.col("synonyms"), lambda s: s["source"] == "AACT"),
                         lambda s: s["label"]
@@ -60,8 +60,8 @@ class OpenTargetsDrug:
                 .filter(
                     (~f.lower(f.col("name")).startswith("chembl"))
                     | (f.size(f.col("tradeNames")) > 0)
-                    | (f.size(f.col("synonymsChembl")) > 0)
-                    | (f.size(f.col("synonymsAact")) > 0)
+                    | (f.size(f.col("synonymsCurated")) > 0)
+                    | (f.size(f.col("synonymsInferred")) > 0)
                 )
                 # extract combination products encoded as "{molecule} component of {product}"
                 # in the trade names and synonyms (e.g. "Ivacaftor component of symkevi"),
@@ -73,8 +73,8 @@ class OpenTargetsDrug:
                             f.transform(
                                 f.concat(
                                     f.coalesce(f.col("tradeNames"), f.array()),
-                                    f.coalesce(f.col("synonymsChembl"), f.array()),
-                                    f.coalesce(f.col("synonymsAact"), f.array())
+                                    f.coalesce(f.col("synonymsCurated"), f.array()),
+                                    f.coalesce(f.col("synonymsInferred"), f.array())
                                 ),
                                 lambda x: extract_combination_product(x)
                             ),
@@ -93,16 +93,16 @@ class OpenTargetsDrug:
                     )
                 )
                 .withColumn(
-                    "synonymsChembl",
+                    "synonymsCurated",
                     f.filter(
-                        f.coalesce(f.col("synonymsChembl"), f.array()),
+                        f.coalesce(f.col("synonymsCurated"), f.array()),
                         lambda x: ~x.rlike(COMPONENT_OF_PATTERN)
                     )
                 )
                 .withColumn(
-                    "synonymsAact",
+                    "synonymsInferred",
                     f.filter(
-                        f.coalesce(f.col("synonymsAact"), f.array()),
+                        f.coalesce(f.col("synonymsInferred"), f.array()),
                         lambda x: ~x.rlike(COMPONENT_OF_PATTERN)
                     )
                 )
@@ -143,11 +143,11 @@ class OpenTargetsDrug:
                     # turn outrank crossref-derived labels (LUT keeps the top-score id
                     # per normalised label, so an AACT-only label still maps)
                     annotate_entity(
-                        f.col("synonymsChembl"), "tbd", 0.999, "synonym"
-                    ).alias("synonymsChembl"),
+                        f.col("synonymsCurated"), "tbd", 0.999, "synonym"
+                    ).alias("synonymsCurated"),
                     annotate_entity(
-                        f.col("synonymsAact"), "tbd", 0.998, "synonym_aact"
-                    ).alias("synonymsAact"),
+                        f.col("synonymsInferred"), "tbd", 0.998, "synonym_aact"
+                    ).alias("synonymsInferred"),
                     annotate_entity(
                         f.col("combinationProducts"), "tbd", 0.999, "trade_name_component"
                     ).alias("combinationProducts"),
@@ -163,8 +163,8 @@ class OpenTargetsDrug:
                             f.array(
                                 f.col("name"),
                                 f.col("tradeNames"),
-                                f.col("synonymsChembl"),
-                                f.col("synonymsAact"),
+                                f.col("synonymsCurated"),
+                                f.col("synonymsInferred"),
                                 f.col("combinationProducts"),
                                 f.col("crossReferences")
                             )
