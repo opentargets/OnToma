@@ -11,12 +11,21 @@ from pyspark.sql.types import (
 from ontoma.datasource.drug import OpenTargetsDrug
 
 
+_LABEL_SOURCE = ArrayType(
+    StructType(
+        [
+            StructField("label", StringType()),
+            StructField("source", StringType()),
+        ]
+    )
+)
+
 DRUG_INDEX_SCHEMA = StructType(
     [
         StructField("id", StringType()),
         StructField("name", StringType()),
-        StructField("tradeNames", ArrayType(StringType())),
-        StructField("synonyms", ArrayType(StringType())),
+        StructField("tradeNames", _LABEL_SOURCE),
+        StructField("synonyms", _LABEL_SOURCE),
         StructField(
             "crossReferences",
             ArrayType(
@@ -32,27 +41,35 @@ DRUG_INDEX_SCHEMA = StructType(
 )
 
 
+def _ls(*names):
+    """Build a [{label, source}] struct list (all ChEMBL-sourced) for fixtures."""
+    return [(n, "ChEMBL") for n in names]
+
+
 @pytest.fixture(scope="module")
 def drug_label_rows(spark):
     """Collected label-LUT rows from a small in-memory drug index.
 
     Covers a combination product shared by two molecules (Symkevi =
     Ivacaftor + Tezacaftor), a plain trade name, and a noisy product name.
+    tradeNames / synonyms follow the {label, source} struct schema.
     """
     data = [
-        # Ivacaftor: combination product (symkevi) + plain trade name (Kalydeco)
+        # Ivacaftor: combination product (symkevi) + plain trade name (Kalydeco),
+        # a curated ChEMBL synonym (VX-770) + a mined AACT synonym (ivx-mined),
+        # and a DailyMed crossref label (to exercise the score tiers)
         (
             "CHEMBL2010601",
             "IVACAFTOR",
-            ["Ivacaftor component of symkevi", "Kalydeco"],
-            ["Ivacaftor", "VX-770"],
-            [],
+            _ls("Ivacaftor component of symkevi", "Kalydeco"),
+            _ls("Ivacaftor", "VX-770") + [("ivx-mined", "AACT")],
+            [("DailyMed", ["ivacaftor-dm"])],
         ),
         # Tezacaftor: the other component of the same combination product
         (
             "CHEMBL3544914",
             "TEZACAFTOR",
-            ["Tezacaftor component of symkevi"],
+            _ls("Tezacaftor component of symkevi"),
             [],
             [],
         ),
@@ -60,7 +77,7 @@ def drug_label_rows(spark):
         (
             "CHEMBLNOISE",
             "SOMEDRUG",
-            ["Somedrug component of /weirdname"],
+            _ls("Somedrug component of /weirdname"),
             [],
             [],
         ),
@@ -69,15 +86,15 @@ def drug_label_rows(spark):
             "CHEMBLUPPER",
             "MODAFINIL",
             [],
-            ["MODAFINIL COMPONENT OF THN102"],
+            _ls("MODAFINIL COMPONENT OF THN102"),
             [],
         ),
         # Same product encoded in both tradeNames and synonyms -> deduped
         (
             "CHEMBLDUP",
             "SOMEDRUGTWO",
-            ["Somedrugtwo component of dupprod"],
-            ["Somedrugtwo component of dupprod"],
+            _ls("Somedrugtwo component of dupprod"),
+            _ls("Somedrugtwo component of dupprod"),
             [],
         ),
     ]
@@ -161,3 +178,26 @@ def test_product_shared_across_fields_is_deduplicated(drug_label_rows):
         if r["entityId"] == "CHEMBLDUP" and r["entityLabel"] == "dupprod"
     ]
     assert len(rows) == 1
+
+
+def test_synonym_score_tiers_by_source(drug_label_rows):
+    """ChEMBL synonyms (0.999) outrank AACT synonyms (0.998), which outrank crossrefs (0.997)."""
+    chembl_syn = [r for r in drug_label_rows if r["entitySource"] == "synonym"]
+    aact_syn = [r for r in drug_label_rows if r["entitySource"] == "synonym_aact"]
+    crossref = [r for r in drug_label_rows if r["entitySource"] == "crossref"]
+
+    assert chembl_syn and aact_syn and crossref
+    assert all(r["entityScore"] == 0.999 for r in chembl_syn)
+    assert all(r["entityScore"] == 0.998 for r in aact_syn)
+    assert all(r["entityScore"] == 0.997 for r in crossref)
+
+
+def test_aact_synonym_label_present_with_source(drug_label_rows):
+    """The mined AACT synonym maps to its molecule, tagged with the AACT source."""
+    rows = [
+        r
+        for r in drug_label_rows
+        if r["entityId"] == "CHEMBL2010601" and r["entityLabel"] == "ivx-mined"
+    ]
+    assert len(rows) == 1
+    assert rows[0]["entitySource"] == "synonym_aact"

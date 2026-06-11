@@ -37,11 +37,31 @@ class OpenTargetsDrug:
         return RawEntityLUT(
             _df=(
                 drug_index
+                # the drug index ships tradeNames / synonyms as {label, source}
+                # structs (label = the name, source = provenance e.g. ChEMBL / AACT).
+                # tradeNames are all ChEMBL-sourced; synonyms are split by source so
+                # curated ChEMBL synonyms can be scored above LLM-mined AACT synonyms.
+                .withColumn("tradeNames", f.transform(f.col("tradeNames"), lambda x: x["label"]))
+                .withColumn(
+                    "synonymsCurated",
+                    f.transform(
+                        f.filter(f.col("synonyms"), lambda s: s["source"] == "ChEMBL"),
+                        lambda s: s["label"]
+                    )
+                )
+                .withColumn(
+                    "synonymsInferred",
+                    f.transform(
+                        f.filter(f.col("synonyms"), lambda s: s["source"] == "AACT"),
+                        lambda s: s["label"]
+                    )
+                )
                 # early filter: only process drugs with meaningful label information
                 .filter(
                     (~f.lower(f.col("name")).startswith("chembl"))
                     | (f.size(f.col("tradeNames")) > 0)
-                    | (f.size(f.col("synonyms")) > 0)
+                    | (f.size(f.col("synonymsCurated")) > 0)
+                    | (f.size(f.col("synonymsInferred")) > 0)
                 )
                 # extract combination products encoded as "{molecule} component of {product}"
                 # in the trade names and synonyms (e.g. "Ivacaftor component of symkevi"),
@@ -53,7 +73,8 @@ class OpenTargetsDrug:
                             f.transform(
                                 f.concat(
                                     f.coalesce(f.col("tradeNames"), f.array()),
-                                    f.coalesce(f.col("synonyms"), f.array())
+                                    f.coalesce(f.col("synonymsCurated"), f.array()),
+                                    f.coalesce(f.col("synonymsInferred"), f.array())
                                 ),
                                 lambda x: extract_combination_product(x)
                             ),
@@ -72,9 +93,16 @@ class OpenTargetsDrug:
                     )
                 )
                 .withColumn(
-                    "synonyms",
+                    "synonymsCurated",
                     f.filter(
-                        f.coalesce(f.col("synonyms"), f.array()),
+                        f.coalesce(f.col("synonymsCurated"), f.array()),
+                        lambda x: ~x.rlike(COMPONENT_OF_PATTERN)
+                    )
+                )
+                .withColumn(
+                    "synonymsInferred",
+                    f.filter(
+                        f.coalesce(f.col("synonymsInferred"), f.array()),
                         lambda x: ~x.rlike(COMPONENT_OF_PATTERN)
                     )
                 )
@@ -111,14 +139,20 @@ class OpenTargetsDrug:
                     annotate_entity(
                         f.col("tradeNames"), "tbd", 0.999, "trade_name"
                     ).alias("tradeNames"),
+                    # curated ChEMBL synonyms outrank LLM-mined AACT synonyms, which in
+                    # turn outrank crossref-derived labels (LUT keeps the top-score id
+                    # per normalised label, so an AACT-only label still maps)
                     annotate_entity(
-                        f.col("synonyms"), "tbd", 0.999, "synonym"
-                    ).alias("synonyms"),
+                        f.col("synonymsCurated"), "tbd", 0.999, "synonym"
+                    ).alias("synonymsCurated"),
+                    annotate_entity(
+                        f.col("synonymsInferred"), "tbd", 0.998, "synonym_aact"
+                    ).alias("synonymsInferred"),
                     annotate_entity(
                         f.col("combinationProducts"), "tbd", 0.999, "trade_name_component"
                     ).alias("combinationProducts"),
                     annotate_entity(
-                        f.flatten(f.col("crossReferences")), "tbd", 0.998, "crossref"
+                        f.flatten(f.col("crossReferences")), "tbd", 0.997, "crossref"
                     ).alias("crossReferences")
                 )
                 # flatten and explode array of structs
@@ -129,7 +163,8 @@ class OpenTargetsDrug:
                             f.array(
                                 f.col("name"),
                                 f.col("tradeNames"),
-                                f.col("synonyms"),
+                                f.col("synonymsCurated"),
+                                f.col("synonymsInferred"),
                                 f.col("combinationProducts"),
                                 f.col("crossReferences")
                             )
