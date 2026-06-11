@@ -293,7 +293,8 @@ class OnToma:
             # query entities are normalised using either the term or the symbol track of the NLP pipeline
             .withColumn(
                 "nlpPipelineTrack",
-                determine_track(f.col(label_col_name))
+                f.when(f.col(type_col_name) == "CD", f.lit("symbol"))
+                .otherwise(determine_track(f.col(label_col_name)))
             )
         )
     
