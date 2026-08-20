@@ -45,7 +45,7 @@ def determine_track(label: Column) -> Column:
     The label will be processed using the "symbol" track if it is an acronym,
     determined using the following criteria:
     - does not contain spaces, and
-    1. is 3 characters or less, or
+    1. is 4 characters or less, or
     2. is 11 characters or less, and contains 50% or more uppercase letters
 
     Args:
@@ -58,7 +58,7 @@ def determine_track(label: Column) -> Column:
         (
             ~label.contains(" ") &
             (
-                (f.length(label) <= 3) |
+                (f.length(label) <= 4) |
                 ((f.length(label) <= 11) & (_uppercase_proportion(label) > 0.5))
             )
         ),
