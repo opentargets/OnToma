@@ -589,7 +589,7 @@ wheels = [
 
 [[package]]
 name = "ontoma"
-version = "2.5.1"
+version = "2.5.2"
 source = { editable = "." }
 dependencies = [
     { name = "loguru" },
@@ -613,6 +613,7 @@ ner = [
 dev = [
     { name = "ipykernel" },
     { name = "pytest" },
+    { name = "setuptools" },
 ]
 
 [package.metadata]
@@ -634,6 +635,7 @@ provides-extras = ["ner"]
 dev = [
     { name = "ipykernel", specifier = ">=7.2.0" },
     { name = "pytest", specifier = ">=9.0.3" },
+    { name = "setuptools", specifier = ">=79.0.0" },
 ]
 
 [[package]]
