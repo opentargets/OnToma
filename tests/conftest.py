@@ -14,7 +14,7 @@ def spark():
     """
     config = (
         SparkConf()
-        .set("spark.jars.packages", "com.johnsnowlabs.nlp:spark-nlp_2.12:6.1.3")
+        .set("spark.jars.packages", "com.johnsnowlabs.nlp:spark-nlp_2.12:6.1.5")
         .set("spark.driver.memory", "4g")
         .set("spark.sql.shuffle.partitions", "2")  # Reduce for faster tests
     )

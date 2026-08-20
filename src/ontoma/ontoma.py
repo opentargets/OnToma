@@ -44,13 +44,14 @@ class OnToma:
             ValueError: When required Spark NLP configuration is missing or when provided inputs are not valid.
             TypeError: When entity_lut_list is not a list or when elements of entity_lut_list are not RawEntityLUT.
         """
-        # check for required spark config
-        if not self._check_spark_config(
-            spark=self.spark,
-            config_key="spark.jars.packages",
-            expected_value="spark-nlp"
-        ):
-            raise ValueError("Spark session is missing configuration required for Spark NLP.")
+        # Spark NLP must be on the classpath; how the jars were loaded
+        # (spark.jars.packages, spark.jars, or a custom image) is irrelevant.
+        if not self._spark_nlp_available(self.spark):
+            raise ValueError(
+                "Spark NLP is not available on the Spark classpath. Load it via "
+                "spark.jars.packages, spark.jars, or a Spark image that bundles "
+                "com.johnsnowlabs.nlp:spark-nlp."
+            )
         
         # if spark can read cache_dir, set cache_exists to True, otherwise False
         try:
@@ -103,22 +104,30 @@ class OnToma:
         return self._entity_lut.df
     
     @staticmethod
-    def _check_spark_config(spark: SparkSession, config_key: str, expected_value: str) -> bool:
-        """Checks if the spark session has the required configuration set with the expected value.
+    def _spark_nlp_available(spark: SparkSession) -> bool:
+        """Check whether Spark NLP is available on the Spark classpath.
+
+        Probes the JVM for the Spark NLP entrypoint class rather than inspecting
+        a config string: py4j resolves a class that is on the classpath to a
+        ``JavaClass`` and an absent one to a ``JavaPackage``. This validates the
+        actual capability, so it is agnostic to how the jars were loaded
+        (``spark.jars.packages``, ``spark.jars``, or a custom Spark image) —
+        unlike a ``spark.jars.packages`` string check, which reports false
+        negatives for the latter two.
 
         Args:
             spark (SparkSession): Spark session.
-            config_key (str): Required Spark configuration key.
-            expected_value (str): Expected Spark configuration value.
 
         Returns:
-            bool: True if the required configuration is set with the expected value, False otherwise.
+            bool: True if the Spark NLP classes resolve on the JVM, else False.
         """
         try:
-            actual_value = spark.conf.get(config_key)
+            from py4j.java_gateway import JavaClass
+
+            entrypoint = spark._jvm.com.johnsnowlabs.nlp.DocumentAssembler
+            return isinstance(entrypoint, JavaClass)
         except Exception:
             return False
-        return expected_value in actual_value
 
     def _generate_entity_lut(self: OnToma, lut_list: list[RawEntityLUT]) -> ReadyEntityLUT:
         """Wrapper containing logic for generating an entity lookup table ready to be used for entity mapping given a list of raw entity lookup tables.
