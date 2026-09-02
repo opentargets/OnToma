@@ -27,8 +27,7 @@ class NLPPipeline:
         "you you'd you'll you're you've your yours yourself yourselves"
     ).split()
 
-    # Combine with ["a", "i"] and their capitalized versions
-    all_stop_words = ["a", "i"] + google_stop_words + [word.capitalize() for word in google_stop_words]
+    all_stop_words = google_stop_words + [word.capitalize() for word in google_stop_words]
 
     @classmethod
     def generate_pipeline(
