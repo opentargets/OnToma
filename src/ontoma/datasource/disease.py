@@ -117,10 +117,13 @@ class OpenTargetsDisease:
                         f.array(f.col("id")), "symbol", 1.0, "id"
                     ).alias("identifier"),
                     annotate_entity(
-                        f.col("dbXRefs"), "symbol", 0.999, "crossref"
+                        f.col("obsoleteTerms"), "symbol", 0.999, "obsolete_id"
+                    ).alias("obsoleteTerms"),
+                    annotate_entity(
+                        f.col("dbXRefs"), "symbol", 0.998, "crossref"
                     ).alias("crossRefs"),
                     annotate_entity(
-                        f.col("obsoleteXRefs"), "symbol", 0.998, "obsolete_crossref"
+                        f.col("obsoleteXRefs"), "symbol", 0.997, "obsolete_crossref"
                     ).alias("obsoleteCrossRefs")
                 )
                 # flatten and explode array of structs
@@ -128,8 +131,9 @@ class OpenTargetsDisease:
                     "entity",
                     f.explode(
                         f.flatten(
-                            f.array(    
+                            f.array(
                                 f.col("identifier"),
+                                f.col("obsoleteTerms"),
                                 f.col("crossRefs"),
                                 f.col("obsoleteCrossRefs")
                             )
