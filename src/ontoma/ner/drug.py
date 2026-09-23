@@ -56,7 +56,6 @@ def create_biobert_drug_ner():
     """
     return create_ner_pipeline(
         model_name="alvaroalon2/biobert_chemical_ner",
-        tokenizer_name="dmis-lab/biobert-base-cased-v1.1",
         aggregation_strategy="max",
     )
 
