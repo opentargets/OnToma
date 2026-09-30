@@ -2,6 +2,15 @@
 
 Named Entity Recognition (NER) preprocessing for OnToma entity mapping.
 
+
+## Installation
+
+With `uv`:
+
+```bash
+uv add 'ontoma[ner]'
+```
+
 ## Purpose
 
 The NER module extracts clean entity names from raw text labels **before** mapping them to ontology IDs. This is useful when your input data contains:
