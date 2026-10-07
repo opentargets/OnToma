@@ -4,11 +4,10 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Self
 
 from pyspark.sql import DataFrame
 from pyspark.sql import types as t
-from typing_extensions import Self
 
 from ontoma.common.schemas import SchemaValidationError, compare_struct_schemas
 
