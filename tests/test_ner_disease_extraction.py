@@ -83,7 +83,8 @@ def test_extract_disease_entities_skips_blank_texts(spark, monkeypatch):
 
     result_pdf = result_df.toPandas()
     for i, (raw_text, expected_entities) in enumerate(test_data):
-        actual_entities = result_pdf.iloc[i]["disease_entities"]
+        # toPandas() returns array columns as lists before Spark 4.2 and as numpy arrays from 4.2
+        actual_entities = list(result_pdf.iloc[i]["disease_entities"])
         assert actual_entities == expected_entities, (
             f"Failed for '{raw_text}': "
             f"expected {expected_entities}, got {actual_entities}"
