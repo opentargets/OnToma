@@ -7,8 +7,8 @@ requires-python = ">=3.11,<3.14"
 dependencies = [
     "loguru>=0.7.3",
     "numpy>=2.2.6",
-    "pyspark==3.5.7",
-    "spark-nlp==6.1.5",
+    "pyspark>=3.5.7,<5",
+    "spark-nlp>=6.1.5,<8",
 ]
 
 [project.optional-dependencies]

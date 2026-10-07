@@ -21,20 +21,20 @@ Successfully mapped entities may be mapped to multiple identifiers.
 
 ### Java Runtime Environment
 
-OnToma requires OpenJDK 8 or 11 to be installed on your system, as it's a prerequisite for PySpark and Spark-NLP.
+OnToma requires a Java runtime, as it's a prerequisite for PySpark and Spark-NLP: OpenJDK 8, 11 or 17 for Spark 3.5, and OpenJDK 17 or 21 for Spark 4. OpenJDK 17 works with both.
 
 #### macOS Installation
 
-Install OpenJDK 8 or 11 using Homebrew:
+Install OpenJDK 17 using Homebrew:
 
 ```bash
-brew install openjdk@11
+brew install openjdk@17
 ```
 
 After installation, you need to set the `JAVA_HOME` environment variable. Add the following to your shell configuration file (e.g., `~/.zshrc` or `~/.bash_profile`):
 
 ```bash
-export JAVA_HOME="/opt/homebrew/opt/openjdk@11/libexec/openjdk.jdk/Contents/Home"
+export JAVA_HOME="/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home"
 export PATH="$JAVA_HOME/bin:$PATH"
 ```
 
@@ -58,16 +58,18 @@ pip install ontoma
 
 ## Spark session configuration
 
-OnToma requires a Spark session configured to include the Spark NLP library.
+OnToma requires a Spark session configured to include the Spark NLP library. OnToma supports Spark 3.5 and Spark 4; Spark 4 needs Spark NLP 7.0.0 or newer. `spark_nlp_coordinate()` returns the Spark NLP artifact matching the installed PySpark and Spark NLP versions (Scala 2.12 for Spark 3, Scala 2.13 for Spark 4).
 
 ```python
 from pyspark.sql import SparkSession
 from pyspark.conf import SparkConf
 
+from ontoma import spark_nlp_coordinate
+
 # add Spark NLP library to Spark configuration
 config = (
     SparkConf()
-    .set("spark.jars.packages", "com.johnsnowlabs.nlp:spark-nlp_2.12:6.1.3")
+    .set("spark.jars.packages", spark_nlp_coordinate())
 )
 
 # create Spark session

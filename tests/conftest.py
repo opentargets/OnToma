@@ -4,6 +4,8 @@ import pytest
 from pyspark.sql import SparkSession
 from pyspark.conf import SparkConf
 
+from ontoma.spark_nlp import spark_nlp_coordinate
+
 
 @pytest.fixture(scope="session")
 def spark():
@@ -14,7 +16,7 @@ def spark():
     """
     config = (
         SparkConf()
-        .set("spark.jars.packages", "com.johnsnowlabs.nlp:spark-nlp_2.12:6.1.5")
+        .set("spark.jars.packages", spark_nlp_coordinate())
         .set("spark.driver.memory", "4g")
         .set("spark.sql.shuffle.partitions", "2")  # Reduce for faster tests
     )
