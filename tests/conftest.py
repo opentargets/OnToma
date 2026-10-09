@@ -24,5 +24,5 @@ def spark():
     spark = SparkSession.builder.config(conf=config).master("local[2]").getOrCreate()
     
     yield spark
-    
+
     spark.stop()

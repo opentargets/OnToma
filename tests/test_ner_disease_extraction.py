@@ -40,9 +40,9 @@ def test_extract_disease_entities_basic(spark, monkeypatch):
         output_col="disease_entities",
     )
 
-    result_pdf = result_df.toPandas()
+    rows = result_df.collect()
     for i, (raw_text, expected_entities) in enumerate(test_data):
-        actual_entities = result_pdf.iloc[i]["disease_entities"]
+        actual_entities = rows[i]["disease_entities"]
         assert sorted(actual_entities) == sorted(expected_entities), (
             f"Failed for '{raw_text}': "
             f"expected {expected_entities}, got {actual_entities}"
@@ -81,10 +81,9 @@ def test_extract_disease_entities_skips_blank_texts(spark, monkeypatch):
         output_col="disease_entities",
     )
 
-    result_pdf = result_df.toPandas()
+    rows = result_df.collect()
     for i, (raw_text, expected_entities) in enumerate(test_data):
-        # toPandas() returns array columns as lists before Spark 4.2 and as numpy arrays from 4.2
-        actual_entities = list(result_pdf.iloc[i]["disease_entities"])
+        actual_entities = rows[i]["disease_entities"]
         assert actual_entities == expected_entities, (
             f"Failed for '{raw_text}': "
             f"expected {expected_entities}, got {actual_entities}"
@@ -92,6 +91,38 @@ def test_extract_disease_entities_skips_blank_texts(spark, monkeypatch):
 
     # Pipeline should only run for non-empty inputs
     assert calls == ["Rare syndrome"]
+
+
+def test_extract_disease_entities_preserves_other_columns(spark, monkeypatch):
+    """Nulls and types in passed-through columns survive extraction unchanged."""
+    monkeypatch.setattr(
+        disease_module,
+        "create_biobert_disease_ner",
+        lambda: lambda text: [{"entity_group": "DISEASE", "word": "Syndrome"}],
+    )
+
+    df = spark.createDataFrame(
+        [
+            (1, "Rare syndrome", None, None),
+            (2, None, "note", 7),
+            (3, "Rare syndrome", "other", None),
+        ],
+        "id int, raw_indication string, note string, count int",
+    )
+
+    result_df = disease_module.extract_disease_entities(
+        spark=spark,
+        df=df,
+        input_col="raw_indication",
+        output_col="disease_entities",
+    )
+
+    assert result_df.columns == ["id", "raw_indication", "note", "count", "disease_entities"]
+    assert {row.id: row.asDict() for row in result_df.collect()} == {
+        1: {"id": 1, "raw_indication": "Rare syndrome", "note": None, "count": None, "disease_entities": ["syndrome"]},
+        2: {"id": 2, "raw_indication": None, "note": "note", "count": 7, "disease_entities": []},
+        3: {"id": 3, "raw_indication": "Rare syndrome", "note": "other", "count": None, "disease_entities": ["syndrome"]},
+    }
 
 
 def test_extract_disease_entities_invalid_column(spark):

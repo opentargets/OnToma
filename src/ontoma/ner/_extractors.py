@@ -7,7 +7,73 @@ It's separated from _pipelines.py which handles model loading/creation.
 from __future__ import annotations
 
 import re
+from typing import TYPE_CHECKING
+
 import torch
+from pyspark.sql import functions as f
+from pyspark.sql.types import ArrayType, StringType, StructField, StructType
+
+if TYPE_CHECKING:
+    from pyspark.sql import DataFrame, SparkSession
+
+
+def _quoted(name: str) -> str:
+    """Quote a column name so dots and other characters are taken literally."""
+    return "`" + name.replace("`", "``") + "`"
+
+
+def collect_distinct_texts(df: DataFrame, input_col: str) -> list[str]:
+    """Collect the distinct non-null values of a text column, sorted.
+
+    Args:
+        df: Spark DataFrame
+        input_col: Column containing the texts
+
+    Returns:
+        Sorted list of distinct non-null texts
+    """
+    col = f.col(_quoted(input_col))
+    rows = df.select(col).where(col.isNotNull()).distinct().collect()
+    return sorted(row[0] for row in rows)
+
+
+def attach_extractions(
+    spark: SparkSession,
+    df: DataFrame,
+    input_col: str,
+    output_col: str,
+    texts: list[str],
+    extractions: list[list[str]],
+) -> DataFrame:
+    """Join per-text extractions back onto the DataFrame by text value.
+
+    Args:
+        spark: Active Spark session
+        df: Spark DataFrame the texts were collected from
+        input_col: Column containing the texts
+        output_col: Column name for the extractions
+        texts: Distinct texts
+        extractions: Extracted entities, one list per text
+
+    Returns:
+        The input DataFrame with the extractions column appended (nullable, as before); empty for
+        null texts
+    """
+    lookup = spark.createDataFrame(
+        list(zip(texts, extractions)),
+        StructType(
+            [
+                StructField("text", StringType(), False),
+                StructField("extractions", ArrayType(StringType()), True),
+            ]
+        ),
+    )
+    return df.join(f.broadcast(lookup), df[_quoted(input_col)] == lookup["text"], "left").select(
+        df["*"],
+        f.when(lookup["text"].isNotNull(), lookup["extractions"])
+        .otherwise(f.array().cast(ArrayType(StringType())))
+        .alias(output_col),
+    )
 
 
 def extract_with_regex(text: str, patterns: list[str]) -> set:

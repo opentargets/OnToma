@@ -5,9 +5,8 @@ from __future__ import annotations
 from loguru import logger
 from typing import TYPE_CHECKING
 
+from ontoma.ner._extractors import attach_extractions, collect_distinct_texts
 from ontoma.ner._pipelines import create_ner_pipeline
-
-from pyspark.sql.types import StructType, StructField, ArrayType, StringType
 
 if TYPE_CHECKING:
     from pyspark.sql import DataFrame, SparkSession
@@ -38,18 +37,20 @@ def extract_disease_entities(
 
     Note:
         - First run will download models (~430MB)
-        - Processing converts Spark DF → Pandas → NER → Spark DF
+        - NER runs on the driver, once per distinct input text
+        - The input DataFrame is persisted, and the result reads from it
         - On Apple Silicon, uses MPS acceleration automatically
     """
     if input_col not in df.columns:
         raise ValueError(f"Column '{input_col}' not found in DataFrame")
 
+    df = df.persist()
+
     logger.info("load biobert model...")
     biobert_pipeline = create_biobert_disease_ner()
 
-    logger.info("convert spark dataframe to pandas for ner processing...")
-    pdf = df.toPandas()
-    texts = pdf[input_col].fillna("").tolist()
+    logger.info("collect distinct texts for ner processing...")
+    texts = collect_distinct_texts(df, input_col)
 
     all_results = []
     for text in texts:
@@ -72,15 +73,8 @@ def extract_disease_entities(
 
         all_results.append(sorted(list(results)))
 
-    pdf[output_col] = all_results
-
-    logger.info("convert results back to Spark DataFrame...")
-    result_df = spark.createDataFrame(
-        pdf,
-        schema=StructType(
-            df.schema.fields + [StructField(output_col, ArrayType(StringType()), True)]
-        ),
-    )
+    logger.info("join results back to Spark DataFrame...")
+    result_df = attach_extractions(spark, df, input_col, output_col, texts, all_results)
 
     logger.info("disease entity extraction complete.")
 
