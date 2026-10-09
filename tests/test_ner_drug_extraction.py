@@ -2,6 +2,7 @@
 
 import pytest
 
+from ontoma.ner import drug as drug_module
 from ontoma.ner.drug import extract_drug_entities
 
 
@@ -84,6 +85,39 @@ def test_extract_drug_entities_biobert_only(spark):
         assert sorted(actual_drugs) == sorted(expected_drugs), (
             f"Failed for '{raw_label}': expected {expected_drugs}, got {actual_drugs}"
         )
+
+
+def test_extract_drug_entities_preserves_other_columns(spark_arrow_off, monkeypatch):
+    """Nulls and types in passed-through columns survive extraction unchanged."""
+    def mock_pipeline(texts):
+        return [[{"entity_group": "CHEMICAL", "word": text.split()[0]}] if text else [] for text in texts]
+
+    monkeypatch.setattr(drug_module, "create_biobert_drug_ner", lambda: mock_pipeline)
+
+    df = spark_arrow_off.createDataFrame(
+        [
+            (1, "aspirin 100mg", None, None),
+            (2, None, "note", 7),
+            (3, "aspirin 100mg", "other", None),
+        ],
+        "id int, raw_drug_label string, note string, count int",
+    )
+
+    result_df = drug_module.extract_drug_entities(
+        spark=spark_arrow_off,
+        df=df,
+        input_col="raw_drug_label",
+        output_col="extracted_drugs",
+        use_biobert=True,
+        use_drugtemist=False,
+    )
+
+    assert result_df.columns == ["id", "raw_drug_label", "note", "count", "extracted_drugs"]
+    assert {row.id: row.asDict() for row in result_df.collect()} == {
+        1: {"id": 1, "raw_drug_label": "aspirin 100mg", "note": None, "count": None, "extracted_drugs": ["aspirin"]},
+        2: {"id": 2, "raw_drug_label": None, "note": "note", "count": 7, "extracted_drugs": []},
+        3: {"id": 3, "raw_drug_label": "aspirin 100mg", "note": "other", "count": None, "extracted_drugs": ["aspirin"]},
+    }
 
 
 def test_extract_drug_entities_invalid_config(spark):

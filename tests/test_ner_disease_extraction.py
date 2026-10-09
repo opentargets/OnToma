@@ -94,6 +94,38 @@ def test_extract_disease_entities_skips_blank_texts(spark, monkeypatch):
     assert calls == ["Rare syndrome"]
 
 
+def test_extract_disease_entities_preserves_other_columns(spark_arrow_off, monkeypatch):
+    """Nulls and types in passed-through columns survive extraction unchanged."""
+    monkeypatch.setattr(
+        disease_module,
+        "create_biobert_disease_ner",
+        lambda: lambda text: [{"entity_group": "DISEASE", "word": "Syndrome"}],
+    )
+
+    df = spark_arrow_off.createDataFrame(
+        [
+            (1, "Rare syndrome", None, None),
+            (2, None, "note", 7),
+            (3, "Rare syndrome", "other", None),
+        ],
+        "id int, raw_indication string, note string, count int",
+    )
+
+    result_df = disease_module.extract_disease_entities(
+        spark=spark_arrow_off,
+        df=df,
+        input_col="raw_indication",
+        output_col="disease_entities",
+    )
+
+    assert result_df.columns == ["id", "raw_indication", "note", "count", "disease_entities"]
+    assert {row.id: row.asDict() for row in result_df.collect()} == {
+        1: {"id": 1, "raw_indication": "Rare syndrome", "note": None, "count": None, "disease_entities": ["syndrome"]},
+        2: {"id": 2, "raw_indication": None, "note": "note", "count": 7, "disease_entities": []},
+        3: {"id": 3, "raw_indication": "Rare syndrome", "note": "other", "count": None, "disease_entities": ["syndrome"]},
+    }
+
+
 def test_extract_disease_entities_invalid_column(spark):
     """Invalid input columns should raise ValueError."""
     df = spark.createDataFrame(

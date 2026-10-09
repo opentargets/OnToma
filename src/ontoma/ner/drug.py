@@ -5,9 +5,12 @@ from __future__ import annotations
 from loguru import logger
 from typing import TYPE_CHECKING, List
 
-from pyspark.sql.types import StructType, StructField, ArrayType, StringType
-
-from ontoma.ner._extractors import extract_with_regex, extract_entities_from_batch
+from ontoma.ner._extractors import (
+    attach_extractions,
+    collect_distinct_texts,
+    extract_with_regex,
+    extract_entities_from_batch,
+)
 from ontoma.ner._pipelines import create_ner_pipeline
 
 if TYPE_CHECKING:
@@ -232,7 +235,7 @@ def extract_drug_entities(
 
     Note:
         - First run will download models (~430MB for BioBERT, ~480MB for DrugTEMIST)
-        - Processing converts Spark DF → Pandas → NER → Spark DF
+        - NER runs on the driver, once per distinct input text
         - On Apple Silicon, uses MPS acceleration automatically
         - DrugTEMIST only runs on texts where BioBERT finds nothing (efficient)
     """
@@ -256,14 +259,12 @@ def extract_drug_entities(
         logger.info("load drugtemist model...")
         drugtemist_pipeline = create_drugtemist_drug_ner()
 
-    logger.info("convert spark dataframe to pandas for NER processing...")
-    pdf = df.toPandas()
+    logger.info("collect distinct texts for NER processing...")
+    drug_texts = collect_distinct_texts(df, input_col)
 
     logger.info(
-        f"extract drug entities from {len(pdf)} rows (batch_size={batch_size})..."
+        f"extract drug entities from {len(drug_texts)} distinct texts (batch_size={batch_size})..."
     )
-    drug_texts = pdf[input_col].fillna("").tolist()
-
     extracted = _process_batch_tiered(
         texts=drug_texts,
         biobert_pipeline=biobert_pipeline,
@@ -272,15 +273,8 @@ def extract_drug_entities(
         batch_size=batch_size,
     )
 
-    pdf[output_col] = extracted
-
-    logger.info("convert results back to Spark DataFrame...")
-    result_df = spark.createDataFrame(
-        pdf,
-        StructType(
-            df.schema.fields + [StructField(output_col, ArrayType(StringType()), True)]
-        ),
-    )
+    logger.info("join results back to Spark DataFrame...")
+    result_df = attach_extractions(spark, df, input_col, output_col, drug_texts, extracted)
 
     logger.info("drug entity extraction complete.")
 

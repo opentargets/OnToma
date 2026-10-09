@@ -24,5 +24,15 @@ def spark():
     spark = SparkSession.builder.config(conf=config).master("local[2]").getOrCreate()
     
     yield spark
-    
+
     spark.stop()
+
+
+@pytest.fixture
+def spark_arrow_off(spark):
+    """Spark session with Arrow-based pandas conversion disabled, as in production."""
+    key = "spark.sql.execution.arrow.pyspark.enabled"
+    previous = spark.conf.get(key)
+    spark.conf.set(key, "false")
+    yield spark
+    spark.conf.set(key, previous)
