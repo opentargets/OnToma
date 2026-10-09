@@ -38,10 +38,13 @@ def extract_disease_entities(
     Note:
         - First run will download models (~430MB)
         - NER runs on the driver, once per distinct input text
+        - The input DataFrame is persisted, and the result reads from it
         - On Apple Silicon, uses MPS acceleration automatically
     """
     if input_col not in df.columns:
         raise ValueError(f"Column '{input_col}' not found in DataFrame")
+
+    df = df.persist()
 
     logger.info("load biobert model...")
     biobert_pipeline = create_biobert_disease_ner()

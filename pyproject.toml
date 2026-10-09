@@ -16,14 +16,13 @@ ner = [
     "rapidfuzz>=3.14.1",
     "torch>=2.8.0",
     "transformers>=4.57.0,<6.0.0",
-    "pandas>=2.3.3",
-    "pyarrow>=22.0.0",
     "sentencepiece>=0.2.1",
 ]
 
 [dependency-groups]
 dev = [
     "ipykernel>=7.2.0",
+    "pandas>=2.3.3",
     "pytest>=9.0.3",
     "setuptools>=79.0.0",  # provides distutils shim for pyspark on Python >=3.12
 ]

@@ -236,6 +236,7 @@ def extract_drug_entities(
     Note:
         - First run will download models (~430MB for BioBERT, ~480MB for DrugTEMIST)
         - NER runs on the driver, once per distinct input text
+        - The input DataFrame is persisted, and the result reads from it
         - On Apple Silicon, uses MPS acceleration automatically
         - DrugTEMIST only runs on texts where BioBERT finds nothing (efficient)
     """
@@ -258,6 +259,8 @@ def extract_drug_entities(
     if use_drugtemist:
         logger.info("load drugtemist model...")
         drugtemist_pipeline = create_drugtemist_drug_ner()
+
+    df = df.persist()
 
     logger.info("collect distinct texts for NER processing...")
     drug_texts = collect_distinct_texts(df, input_col)

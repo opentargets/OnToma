@@ -17,6 +17,11 @@ if TYPE_CHECKING:
     from pyspark.sql import DataFrame, SparkSession
 
 
+def _quoted(name: str) -> str:
+    """Quote a column name so dots and other characters are taken literally."""
+    return "`" + name.replace("`", "``") + "`"
+
+
 def collect_distinct_texts(df: DataFrame, input_col: str) -> list[str]:
     """Collect the distinct non-null values of a text column, sorted.
 
@@ -27,7 +32,8 @@ def collect_distinct_texts(df: DataFrame, input_col: str) -> list[str]:
     Returns:
         Sorted list of distinct non-null texts
     """
-    rows = df.select(input_col).where(f.col(input_col).isNotNull()).distinct().collect()
+    col = f.col(_quoted(input_col))
+    rows = df.select(col).where(col.isNotNull()).distinct().collect()
     return sorted(row[0] for row in rows)
 
 
@@ -50,21 +56,23 @@ def attach_extractions(
         extractions: Extracted entities, one list per text
 
     Returns:
-        The input DataFrame with the extractions column appended; empty for null texts
+        The input DataFrame with the extractions column appended (nullable, as before); empty for
+        null texts
     """
-    key_col = f"__{output_col}_text"
     lookup = spark.createDataFrame(
         list(zip(texts, extractions)),
         StructType(
             [
-                StructField(key_col, StringType(), False),
-                StructField(output_col, ArrayType(StringType()), True),
+                StructField("text", StringType(), False),
+                StructField("extractions", ArrayType(StringType()), True),
             ]
         ),
     )
-    return df.join(f.broadcast(lookup), df[input_col] == lookup[key_col], "left").select(
-        *[df[c] for c in df.columns],
-        f.coalesce(lookup[output_col], f.array().cast(ArrayType(StringType()))).alias(output_col),
+    return df.join(f.broadcast(lookup), df[_quoted(input_col)] == lookup["text"], "left").select(
+        df["*"],
+        f.when(lookup["text"].isNotNull(), lookup["extractions"])
+        .otherwise(f.array().cast(ArrayType(StringType())))
+        .alias(output_col),
     )
 
 
