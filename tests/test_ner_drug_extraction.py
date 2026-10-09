@@ -47,10 +47,10 @@ def test_extract_drug_entities(spark):
         batch_size=128
     )
     
-    result_pdf = result_df.toPandas()
+    rows = result_df.collect()
     for i, (raw_label, expected_drugs) in enumerate(test_data):
-        actual_drugs = result_pdf.iloc[i]["extracted_drugs"]
-        
+        actual_drugs = rows[i]["extracted_drugs"]
+
         # Sort both for comparison
         assert sorted(actual_drugs) == sorted(expected_drugs), (
             f"Failed for '{raw_label}': "
@@ -79,22 +79,22 @@ def test_extract_drug_entities_biobert_only(spark):
         batch_size=128
     )
     
-    result_pdf = result_df.toPandas()
+    rows = result_df.collect()
     for i, (raw_label, expected_drugs) in enumerate(test_data):
-        actual_drugs = result_pdf.iloc[i]["extracted_drugs"]
+        actual_drugs = rows[i]["extracted_drugs"]
         assert sorted(actual_drugs) == sorted(expected_drugs), (
             f"Failed for '{raw_label}': expected {expected_drugs}, got {actual_drugs}"
         )
 
 
-def test_extract_drug_entities_preserves_other_columns(spark_arrow_off, monkeypatch):
+def test_extract_drug_entities_preserves_other_columns(spark, monkeypatch):
     """Nulls and types in passed-through columns survive extraction unchanged."""
     def mock_pipeline(texts):
         return [[{"entity_group": "CHEMICAL", "word": text.split()[0]}] if text else [] for text in texts]
 
     monkeypatch.setattr(drug_module, "create_biobert_drug_ner", lambda: mock_pipeline)
 
-    df = spark_arrow_off.createDataFrame(
+    df = spark.createDataFrame(
         [
             (1, "aspirin 100mg", None, None),
             (2, None, "note", 7),
@@ -104,7 +104,7 @@ def test_extract_drug_entities_preserves_other_columns(spark_arrow_off, monkeypa
     )
 
     result_df = drug_module.extract_drug_entities(
-        spark=spark_arrow_off,
+        spark=spark,
         df=df,
         input_col="raw_drug_label",
         output_col="extracted_drugs",

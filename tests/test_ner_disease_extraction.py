@@ -40,9 +40,9 @@ def test_extract_disease_entities_basic(spark, monkeypatch):
         output_col="disease_entities",
     )
 
-    result_pdf = result_df.toPandas()
+    rows = result_df.collect()
     for i, (raw_text, expected_entities) in enumerate(test_data):
-        actual_entities = result_pdf.iloc[i]["disease_entities"]
+        actual_entities = rows[i]["disease_entities"]
         assert sorted(actual_entities) == sorted(expected_entities), (
             f"Failed for '{raw_text}': "
             f"expected {expected_entities}, got {actual_entities}"
@@ -81,10 +81,9 @@ def test_extract_disease_entities_skips_blank_texts(spark, monkeypatch):
         output_col="disease_entities",
     )
 
-    result_pdf = result_df.toPandas()
+    rows = result_df.collect()
     for i, (raw_text, expected_entities) in enumerate(test_data):
-        # toPandas() returns array columns as lists before Spark 4.2 and as numpy arrays from 4.2
-        actual_entities = list(result_pdf.iloc[i]["disease_entities"])
+        actual_entities = rows[i]["disease_entities"]
         assert actual_entities == expected_entities, (
             f"Failed for '{raw_text}': "
             f"expected {expected_entities}, got {actual_entities}"
@@ -94,7 +93,7 @@ def test_extract_disease_entities_skips_blank_texts(spark, monkeypatch):
     assert calls == ["Rare syndrome"]
 
 
-def test_extract_disease_entities_preserves_other_columns(spark_arrow_off, monkeypatch):
+def test_extract_disease_entities_preserves_other_columns(spark, monkeypatch):
     """Nulls and types in passed-through columns survive extraction unchanged."""
     monkeypatch.setattr(
         disease_module,
@@ -102,7 +101,7 @@ def test_extract_disease_entities_preserves_other_columns(spark_arrow_off, monke
         lambda: lambda text: [{"entity_group": "DISEASE", "word": "Syndrome"}],
     )
 
-    df = spark_arrow_off.createDataFrame(
+    df = spark.createDataFrame(
         [
             (1, "Rare syndrome", None, None),
             (2, None, "note", 7),
@@ -112,7 +111,7 @@ def test_extract_disease_entities_preserves_other_columns(spark_arrow_off, monke
     )
 
     result_df = disease_module.extract_disease_entities(
-        spark=spark_arrow_off,
+        spark=spark,
         df=df,
         input_col="raw_indication",
         output_col="disease_entities",
