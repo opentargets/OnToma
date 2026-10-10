@@ -677,7 +677,7 @@ requires-dist = [
     { name = "sentencepiece", marker = "extra == 'ner'", specifier = ">=0.2.1" },
     { name = "spark-nlp", specifier = ">=6.1.5,<8" },
     { name = "torch", marker = "extra == 'ner'", specifier = ">=2.8.0", index = "https://download.pytorch.org/whl/cpu" },
-    { name = "transformers", marker = "extra == 'ner'", specifier = ">=4.57.0,<6.0.0" },
+    { name = "transformers", marker = "extra == 'ner'", specifier = ">=4.57.0" },
 ]
 provides-extras = ["ner"]
 
